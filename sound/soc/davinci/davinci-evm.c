@@ -61,7 +61,7 @@ static int evm_hw_params(struct snd_pcm_substream *substream,
 	/* On AM335X, CODEC gets MCLK from external Xtal (12MHz). */
 	else if (machine_is_am335xevm())
 #ifdef CONFIG_MACH_AM335XEVM
-		if (am335x_evm_get_id() == EVM_SK)
+		if (am335x_evm_get_id() == EVM_SK || am335x_evm_get_id()== ARIA_BOARD)
 			sysclk = 24000000;
 		else
 #endif
@@ -271,6 +271,19 @@ static struct snd_soc_dai_link am335x_evm_sk_dai = {
 	.ops = &evm_ops,
 };
 
+static struct snd_soc_dai_link am335x_aria_dai = {
+	.name = "TLV320AIC3X",
+	.stream_name = "AIC3X",
+	.cpu_dai_name = "davinci-mcasp.1",
+	.codec_dai_name = "tlv320aic3x-hifi",
+	.codec_name = "tlv320aic3x-codec.1-001b",
+	.platform_name = "davinci-pcm-audio",
+	.init = evm_aic3x_init,
+	.ops = &evm_ops,
+};
+
+
+
 /* davinci dm6446 evm audio machine driver */
 static struct snd_soc_card dm6446_snd_soc_card_evm = {
 	.name = "DaVinci DM6446 EVM",
@@ -323,6 +336,12 @@ static struct snd_soc_card am335x_evm_sk_snd_soc_card = {
 	.num_links = 1,
 };
 
+static struct snd_soc_card am335x_aria_snd_soc_card = {
+	.name = "AM335X ARIA",
+	.dai_link = &am335x_aria_dai,
+	.num_links = 1,
+};
+
 static struct platform_device *evm_snd_device;
 
 static int __init evm_init(void)
@@ -355,6 +374,8 @@ static int __init evm_init(void)
 		if (am335x_evm_get_id() == EVM_SK)
 			evm_snd_dev_data = &am335x_evm_sk_snd_soc_card;
 #endif
+        if (am335x_evm_get_id() == ARIA_BOARD)
+            evm_snd_dev_data =  &am335x_aria_snd_soc_card;
 		index = 0;
 	} else
 		return -EINVAL;

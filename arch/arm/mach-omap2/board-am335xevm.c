@@ -188,8 +188,15 @@ static struct snd_platform_data am335x_evm_snd_data1 = {
 			omap_pm_get_dev_context_loss_count,
 };
 
-static u8 am335x_evm_sk_iis_serializer_direction1[] = {
+static u8 am335x_aria_iis_serializer_direction1[] = {
 	INACTIVE_MODE,	INACTIVE_MODE,	TX_MODE,	RX_MODE,
+	INACTIVE_MODE,	INACTIVE_MODE,	INACTIVE_MODE,	INACTIVE_MODE,
+	INACTIVE_MODE,	INACTIVE_MODE,	INACTIVE_MODE,	INACTIVE_MODE,
+	INACTIVE_MODE,	INACTIVE_MODE,	INACTIVE_MODE,	INACTIVE_MODE,
+};
+
+static u8 am335x_evm_sk_iis_serializer_direction1[] = {
+	INACTIVE_MODE,	INACTIVE_MODE,	TX_MODE,	INACTIVE_MODE,
 	INACTIVE_MODE,	INACTIVE_MODE,	INACTIVE_MODE,	INACTIVE_MODE,
 	INACTIVE_MODE,	INACTIVE_MODE,	INACTIVE_MODE,	INACTIVE_MODE,
 	INACTIVE_MODE,	INACTIVE_MODE,	INACTIVE_MODE,	INACTIVE_MODE,
@@ -197,11 +204,25 @@ static u8 am335x_evm_sk_iis_serializer_direction1[] = {
 
 static struct snd_platform_data am335x_evm_sk_snd_data1 = {
 	.tx_dma_offset	= 0x46400000,	/* McASP1 */
-	.rx_dma_offset	= 0x46400000,
+	//.rx_dma_offset	= 0x46400000,
 	.op_mode	= DAVINCI_MCASP_IIS_MODE,
 	.num_serializer	= ARRAY_SIZE(am335x_evm_sk_iis_serializer_direction1),
 	.tdm_slots	= 2,
 	.serial_dir	= am335x_evm_sk_iis_serializer_direction1,
+	.asp_chan_q	= EVENTQ_2,
+	.version	= MCASP_VERSION_3,
+	.txnumevt	= 32,
+	//.rxnumevt	= 32,
+	.get_context_loss_count	= omap_pm_get_dev_context_loss_count,
+};
+
+static struct snd_platform_data am335x_aria_snd_data1 = {
+	.tx_dma_offset	= 0x46400000,	/* McASP1 */
+	.rx_dma_offset	= 0x46400000,
+	.op_mode	= DAVINCI_MCASP_IIS_MODE,
+	.num_serializer	= ARRAY_SIZE(am335x_aria_iis_serializer_direction1),
+	.tdm_slots	= 2,
+	.serial_dir	= am335x_aria_iis_serializer_direction1,
 	.asp_chan_q	= EVENTQ_2,
 	.version	= MCASP_VERSION_3,
 	.txnumevt	= 32,
@@ -1085,6 +1106,9 @@ static void lcdc_init(int evm_id, int profile)
 	case EVM_SK:
 		lcdc_pdata = &NHD_480272MF_ATXI_pdata;
 		break;
+    case ARIA_BOARD:
+		lcdc_pdata = &NHD_480272MF_ATXI_pdata;
+        break;    
 	default:
 		pr_err("LCDC not supported on this evm (%d)\n",evm_id);
 		return;
@@ -1641,6 +1665,9 @@ static void mcasp1_init(int evm_id, int profile)
 	switch (evm_id) {
 	case EVM_SK:
 		am335x_register_mcasp(&am335x_evm_sk_snd_data1, 1);
+		break;
+    case ARIA_BOARD:
+		am335x_register_mcasp(&am335x_aria_snd_data1, 1);
 		break;
 	default:
 		am335x_register_mcasp(&am335x_evm_snd_data1, 1);
@@ -2238,9 +2265,11 @@ static struct evm_dev_cfg aria_cfg[] = {
     {mcasp1_init, DEV_ON_BASEBOARD, PROFILE_NONE},
     {aria_mii1_init, DEV_ON_BASEBOARD, PROFILE_NONE},
 	{mmc0_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
+	{lcdc_init,	DEV_ON_BASEBOARD, PROFILE_NONE },
+	{mfd_tscadc_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
     {NULL, 0, 0},
 };
-
+	
 /* EVM - Starter Kit */
 static struct evm_dev_cfg evm_sk_dev_cfg[] = {
 	{am335x_rtc_init, DEV_ON_BASEBOARD, PROFILE_ALL},
@@ -2463,7 +2492,7 @@ static void setup_aria(void){
     /* Aria has Micro-SD slot which doesn't have Write Protect pin */
     am335x_mmc[0].gpio_wp = -EINVAL;
 
-    _configure_device(EVM_SK, aria_cfg, PROFILE_NONE);
+    _configure_device(ARIA_BOARD, aria_cfg, PROFILE_NONE);
 
 	/* TPS65217 regulator has full constraints */
 	//regulator_has_full_constraints();  //this may cause net or audio fail, plz invstigate.
