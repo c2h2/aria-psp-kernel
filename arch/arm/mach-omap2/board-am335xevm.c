@@ -189,7 +189,7 @@ static struct snd_platform_data am335x_evm_snd_data1 = {
 };
 
 static u8 am335x_evm_sk_iis_serializer_direction1[] = {
-	INACTIVE_MODE,	INACTIVE_MODE,	TX_MODE,	INACTIVE_MODE,
+	INACTIVE_MODE,	INACTIVE_MODE,	TX_MODE,	RX_MODE,
 	INACTIVE_MODE,	INACTIVE_MODE,	INACTIVE_MODE,	INACTIVE_MODE,
 	INACTIVE_MODE,	INACTIVE_MODE,	INACTIVE_MODE,	INACTIVE_MODE,
 	INACTIVE_MODE,	INACTIVE_MODE,	INACTIVE_MODE,	INACTIVE_MODE,
@@ -197,7 +197,7 @@ static u8 am335x_evm_sk_iis_serializer_direction1[] = {
 
 static struct snd_platform_data am335x_evm_sk_snd_data1 = {
 	.tx_dma_offset	= 0x46400000,	/* McASP1 */
-	/*.rx_dma_offset	= 0x46400000,*/
+	.rx_dma_offset	= 0x46400000,
 	.op_mode	= DAVINCI_MCASP_IIS_MODE,
 	.num_serializer	= ARRAY_SIZE(am335x_evm_sk_iis_serializer_direction1),
 	.tdm_slots	= 2,
@@ -205,8 +205,8 @@ static struct snd_platform_data am335x_evm_sk_snd_data1 = {
 	.asp_chan_q	= EVENTQ_2,
 	.version	= MCASP_VERSION_3,
 	.txnumevt	= 32,
-	.get_context_loss_count	=
-			omap_pm_get_dev_context_loss_count,
+	.rxnumevt	= 32,
+	.get_context_loss_count	= omap_pm_get_dev_context_loss_count,
 };
 
 static struct omap2_hsmmc_info am335x_mmc[] __initdata = {
@@ -548,6 +548,26 @@ static struct pinmux_config rgmii2_pin_mux[] = {
 /* Module pin mux for mii1 */
 static struct pinmux_config mii1_pin_mux[] = {
 	{"mii1_rxerr.mii1_rxerr", OMAP_MUX_MODE0 | AM33XX_PIN_INPUT_PULLDOWN},
+	{"mii1_txen.mii1_txen", OMAP_MUX_MODE0 | AM33XX_PIN_OUTPUT},
+	{"mii1_rxdv.mii1_rxdv", OMAP_MUX_MODE0 | AM33XX_PIN_INPUT_PULLDOWN},
+	{"mii1_txd3.mii1_txd3", OMAP_MUX_MODE0 | AM33XX_PIN_OUTPUT},
+	{"mii1_txd2.mii1_txd2", OMAP_MUX_MODE0 | AM33XX_PIN_OUTPUT},
+	{"mii1_txd1.mii1_txd1", OMAP_MUX_MODE0 | AM33XX_PIN_OUTPUT},
+	{"mii1_txd0.mii1_txd0", OMAP_MUX_MODE0 | AM33XX_PIN_OUTPUT},
+	{"mii1_txclk.mii1_txclk", OMAP_MUX_MODE0 | AM33XX_PIN_INPUT_PULLDOWN},
+	{"mii1_rxclk.mii1_rxclk", OMAP_MUX_MODE0 | AM33XX_PIN_INPUT_PULLDOWN},
+	{"mii1_rxd3.mii1_rxd3", OMAP_MUX_MODE0 | AM33XX_PIN_INPUT_PULLDOWN},
+	{"mii1_rxd2.mii1_rxd2", OMAP_MUX_MODE0 | AM33XX_PIN_INPUT_PULLDOWN},
+	{"mii1_rxd1.mii1_rxd1", OMAP_MUX_MODE0 | AM33XX_PIN_INPUT_PULLDOWN},
+	{"mii1_rxd0.mii1_rxd0", OMAP_MUX_MODE0 | AM33XX_PIN_INPUT_PULLDOWN},
+	{"mdio_data.mdio_data", OMAP_MUX_MODE0 | AM33XX_PIN_INPUT_PULLUP},
+	{"mdio_clk.mdio_clk", OMAP_MUX_MODE0 | AM33XX_PIN_OUTPUT_PULLUP},
+	{NULL, 0},
+};
+
+/* Module pin mux for mii1 */
+static struct pinmux_config aria_mii1_pin_mux[] = {
+	//{"mii1_rxerr.mii1_rxerr", OMAP_MUX_MODE0 | AM33XX_PIN_INPUT_PULLDOWN},
 	{"mii1_txen.mii1_txen", OMAP_MUX_MODE0 | AM33XX_PIN_OUTPUT},
 	{"mii1_rxdv.mii1_rxdv", OMAP_MUX_MODE0 | AM33XX_PIN_INPUT_PULLDOWN},
 	{"mii1_txd3.mii1_txd3", OMAP_MUX_MODE0 | AM33XX_PIN_OUTPUT},
@@ -1105,6 +1125,11 @@ static void mii1_init(int evm_id, int profile)
 	return;
 }
 
+static void aria_mii1_init(int evm_id, int profile){
+    setup_pin_mux(aria_mii1_pin_mux);
+    return;
+}
+
 static void rmii1_init(int evm_id, int profile)
 {
 	setup_pin_mux(rmii1_pin_mux);
@@ -1620,7 +1645,6 @@ static void mcasp1_init(int evm_id, int profile)
 	default:
 		am335x_register_mcasp(&am335x_evm_snd_data1, 1);
 	}
-
 	return;
 }
 
@@ -2207,6 +2231,16 @@ static struct evm_dev_cfg beagleboneblack_dev_cfg[] = {
 	{NULL, 0, 0},
 };
 
+
+static struct evm_dev_cfg aria_cfg[] = {
+    {am335x_rtc_init, DEV_ON_BASEBOARD, PROFILE_NONE},
+    {tps65217_init, DEV_ON_BASEBOARD, PROFILE_NONE},
+    {mcasp1_init, DEV_ON_BASEBOARD, PROFILE_NONE},
+    {aria_mii1_init, DEV_ON_BASEBOARD, PROFILE_NONE},
+	{mmc0_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
+    {NULL, 0, 0},
+};
+
 /* EVM - Starter Kit */
 static struct evm_dev_cfg evm_sk_dev_cfg[] = {
 	{am335x_rtc_init, DEV_ON_BASEBOARD, PROFILE_ALL},
@@ -2423,6 +2457,21 @@ static void setup_beagleboneblack(void)
 	am33xx_cpsw_init(AM33XX_CPSW_MODE_MII, NULL, NULL);
 }
 
+static void setup_aria(void){
+    pr_info("The board is an Aria.\n");
+
+    /* Aria has Micro-SD slot which doesn't have Write Protect pin */
+    am335x_mmc[0].gpio_wp = -EINVAL;
+
+    _configure_device(EVM_SK, aria_cfg, PROFILE_NONE);
+
+	/* TPS65217 regulator has full constraints */
+	//regulator_has_full_constraints();  //this may cause net or audio fail, plz invstigate.
+
+    am33xx_cpsw_init(AM33XX_CPSW_MODE_MII, NULL, NULL);
+}
+
+
 /* EVM - Starter Kit */
 static void setup_starterkit(void)
 {
@@ -2492,64 +2541,66 @@ static void am335x_evm_setup(struct memory_accessor *mem_acc, void *context)
 	}
 
 	if (config.header != AM335X_EEPROM_HEADER) {
-		pr_err("AM335X: wrong header 0x%x, expected 0x%x\n",
-			config.header, AM335X_EEPROM_HEADER);
-		goto out;
-	}
+		pr_err("AM335X: wrong header 0x%x, expected 0x%x\n", config.header, AM335X_EEPROM_HEADER);
+		setup_aria();
+        //goto out;
+	}else{
 
-	if (strncmp("A335", config.name, 4)) {
-		pr_err("Board %s\ndoesn't look like an AM335x board\n",
-			config.name);
-		goto out;
-	}
+    	if (strncmp("A335", config.name, 4)) {
+	    	pr_err("Board %s\ndoesn't look like an AM335x board\n",
+		    	config.name);
+		    goto out;
+	    }
 
-	snprintf(tmp, sizeof(config.name) + 1, "%s", config.name);
-	pr_info("Board name: %s\n", tmp);
-	snprintf(tmp, sizeof(config.version) + 1, "%s", config.version);
-	pr_info("Board version: %s\n", tmp);
+    	snprintf(tmp, sizeof(config.name) + 1, "%s", config.name);
+	    pr_info("Board name: %s\n", tmp);
+    	snprintf(tmp, sizeof(config.version) + 1, "%s", config.version);
+    	pr_info("Board version: %s\n", tmp);
 
-	if (!strncmp("A335BONE", config.name, 8)) {
-		daughter_brd_detected = false;
-		if(!strncmp("00A1", config.version, 4) ||
-		   !strncmp("00A2", config.version, 4))
-			setup_beaglebone_old();
-		else
-			setup_beaglebone();
-	} else if (!strncmp("A335BNLT", config.name, 8)) {
-		setup_beagleboneblack();
-	} else if (!strncmp("A335X_SK", config.name, 8)) {
-		daughter_brd_detected = false;
-		setup_starterkit();
-	} else {
-		/* only 6 characters of options string used for now */
-		snprintf(tmp, 7, "%s", config.opt);
-		pr_info("SKU: %s\n", tmp);
+	    if (!strncmp("A335BONE", config.name, 8)) {
+	    	daughter_brd_detected = false;
+	    	if(!strncmp("00A1", config.version, 4) ||
+	    	   !strncmp("00A2", config.version, 4))
+	    		setup_beaglebone_old();
+	    	else
+		    	setup_beaglebone();
+    	} else if (!strncmp("A335BNLT", config.name, 8)) {
+	    	setup_beagleboneblack();
+    	} else if (!strncmp("A335X_SK", config.name, 8)) {
+	    	daughter_brd_detected = false;
+		    setup_starterkit();
+    	} else {
+	    	/* only 6 characters of options string used for now */
+    		snprintf(tmp, 7, "%s", config.opt);
+	    	pr_info("SKU: %s\n", tmp);
 
-		if (!strncmp("SKU#01", config.opt, 6))
-			setup_general_purpose_evm();
-		else if (!strncmp("SKU#02", config.opt, 6))
-			setup_ind_auto_motor_ctrl_evm();
-		else
-			goto out;
-	}
+		    if (!strncmp("SKU#01", config.opt, 6))
+			    setup_general_purpose_evm();
+		    else if (!strncmp("SKU#02", config.opt, 6))
+			    setup_ind_auto_motor_ctrl_evm();
+		    else
+			    goto out;
+	    }
 
-	am335x_opp_update();
+	    am335x_opp_update();
 
-	/*
-	 * For now, Beaglebone Black uses PG 2.0 that are speed binned and operate
-	 * up to 1GHz. So re-enable Turbo and Nitro modes,
-	 */
-	if (!strncmp("A335BNLT", config.name, 8)) {
-		struct device *mpu_dev;
+    	/*
+	     * For now, Beaglebone Black uses PG 2.0 that are speed binned and operate
+    	 * up to 1GHz. So re-enable Turbo and Nitro modes,
+    	 */
+    	if (!strncmp("A335BNLT", config.name, 8)) {
+    		struct device *mpu_dev;
 
-		mpu_dev = omap_device_get_by_hwmod_name("mpu");
-		opp_enable(mpu_dev,
-			    AM33XX_ES2_0_OPPTURBO_FREQ);
-		opp_enable(mpu_dev,
-			    AM33XX_ES2_0_OPPNITRO_FREQ);
-	}
+    		mpu_dev = omap_device_get_by_hwmod_name("mpu");
+    		opp_enable(mpu_dev,
+    			    AM33XX_ES2_0_OPPTURBO_FREQ);
+    		opp_enable(mpu_dev,
+    			    AM33XX_ES2_0_OPPNITRO_FREQ);
+    	}
+    }
 
 	/* SmartReflex also requires board information. */
+    //TODO temp fix
 	am33xx_sr_init();
 
 	return;
