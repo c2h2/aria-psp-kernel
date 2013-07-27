@@ -2267,6 +2267,8 @@ static struct evm_dev_cfg aria_cfg[] = {
 	{mmc0_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{lcdc_init,	DEV_ON_BASEBOARD, PROFILE_NONE },
 	{mfd_tscadc_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
+	{usb0_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
+	{usb1_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
     {NULL, 0, 0},
 };
 	
@@ -2761,7 +2763,8 @@ static struct omap_musb_board_data musb_board_data = {
 	 * mode[4:7] = USB1PORT's mode
 	 * AM335X beta EVM has USB0 in OTG mode and USB1 in host mode.
 	 */
-	.mode           = (MUSB_HOST << 4) | MUSB_OTG,
+	//.mode           = (MUSB_HOST << 4) | MUSB_OTG,
+	.mode           = (MUSB_HOST << 4) | MUSB_HOST,
 	.power		= 500,
 	.instances	= 1,
 };
