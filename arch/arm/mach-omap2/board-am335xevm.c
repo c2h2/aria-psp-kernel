@@ -2314,6 +2314,7 @@ static struct evm_dev_cfg aria_cfg[] = {
 	{lcdc_init,	DEV_ON_BASEBOARD, PROFILE_NONE },
 	{mfd_tscadc_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
   {aria_gpio_led_init,  DEV_ON_BASEBOARD, PROFILE_ALL},
+	{uart1_wl12xx_init, DEV_ON_BASEBOARD, PROFILE_ALL},
 	{usb0_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{usb1_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
     {NULL, 0, 0},
