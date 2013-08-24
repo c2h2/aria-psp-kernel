@@ -745,6 +745,14 @@ static struct pinmux_config gpio_led_mux[] = {
 	{NULL, 0},
 };
 
+/* pinmux for led device */
+static struct pinmux_config aria_gpio_led_mux[] = {
+	{"mcasp0_ahclkr.gpio3_17", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
+	{"mcasp0_fsr.gpio3_19", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
+	{NULL, 0},
+};
+
+
 static struct pinmux_config gpio_ddr_vtt_enb_pin_mux[] = {
 	{"ecap0_in_pwm0_out.gpio0_7", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{NULL, 0},
@@ -2009,9 +2017,27 @@ static struct gpio_led gpio_leds[] = {
 	},
 };
 
+static struct gpio_led aria_gpio_leds[] = {
+	{
+		.name			= "am335x:ARIA:heartbeat",
+		.gpio			= GPIO_TO_PIN(3, 17),	/* LD2 */
+		.default_trigger	= "heartbeat",
+	},
+	{
+		.name			= "am335x:ARIA:mmc0",
+		.gpio			= GPIO_TO_PIN(3, 19),	/* LD1 */
+		.default_trigger	= "mmc0",
+	},
+};
+
 static struct gpio_led_platform_data gpio_led_info = {
 	.leds		= gpio_leds,
 	.num_leds	= ARRAY_SIZE(gpio_leds),
+};
+
+static struct gpio_led_platform_data aria_gpio_led_info = {
+	.leds		= aria_gpio_leds,
+	.num_leds	= ARRAY_SIZE(aria_gpio_leds),
 };
 
 static struct platform_device leds_gpio = {
@@ -2022,6 +2048,15 @@ static struct platform_device leds_gpio = {
 	},
 };
 
+static struct platform_device aria_leds_gpio = {
+	.name	= "leds-gpio",
+	.id	= -1,
+	.dev	= {
+		.platform_data	= &aria_gpio_led_info,
+	},
+};
+
+
 static void gpio_led_init(int evm_id, int profile)
 {
 	int err;
@@ -2031,6 +2066,17 @@ static void gpio_led_init(int evm_id, int profile)
 	if (err)
 		pr_err("failed to register gpio led device\n");
 }
+
+static void aria_gpio_led_init(int evm_id, int profile)
+{
+	int err;
+
+	setup_pin_mux(aria_gpio_led_mux);
+	err = platform_device_register(&aria_leds_gpio);
+	if (err)
+		pr_err("failed to register gpio led device\n");
+}
+
 
 /* setup spi0 */
 static void spi0_init(int evm_id, int profile)
@@ -2267,6 +2313,7 @@ static struct evm_dev_cfg aria_cfg[] = {
 	{mmc0_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{lcdc_init,	DEV_ON_BASEBOARD, PROFILE_NONE },
 	{mfd_tscadc_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
+  {aria_gpio_led_init,  DEV_ON_BASEBOARD, PROFILE_ALL},
 	{usb0_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{usb1_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
     {NULL, 0, 0},
