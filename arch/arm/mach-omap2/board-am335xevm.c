@@ -87,6 +87,8 @@
 #define AR8051_DEBUG_RGMII_CLK_DLY_REG	0x5
 #define AR8051_RGMII_TX_CLK_DLY		BIT(8)
 
+#define EEPROM_24c02 1
+
 static const struct display_panel disp_panel = {
 	WVGA,
 	32,
@@ -2707,13 +2709,23 @@ static struct at24_platform_data am335x_daughter_board_eeprom_info = {
 	.context        = (void *)NULL,
 };
 
+#if EEPROM_24c02
 static struct at24_platform_data am335x_baseboard_eeprom_info = {
-	.byte_len       = (256*1024) / 8,
-	.page_size      = 64,
-	.flags          = AT24_FLAG_ADDR16,
+	.byte_len       = 2048 / 8,
+	.page_size      = 8,
+	.flags          = 0,
 	.setup          = am335x_evm_setup,
 	.context        = (void *)NULL,
 };
+#else
+static struct at24_platform_data am335x_baseboard_eeprom_info = {
+  .byte_len       = (256*1024) / 8,
+  .page_size      = 64,
+  .flags          = AT24_FLAG_ADDR16,
+  .setup          = am335x_evm_setup,
+  .context        = (void *)NULL,
+};
+#endif
 
 static struct regulator_init_data am335x_dummy = {
 	.constraints.always_on	= true,
@@ -2786,7 +2798,11 @@ static struct i2c_board_info __initdata am335x_i2c0_boardinfo[] = {
 	},
 	{
 		/* Baseboard board EEPROM */
+#if EEPROM_24c02
+		I2C_BOARD_INFO("24c02", BASEBOARD_I2C_ADDR),
+#else
 		I2C_BOARD_INFO("24c256", BASEBOARD_I2C_ADDR),
+#endif
 		.platform_data  = &am335x_baseboard_eeprom_info,
 	},
 	{
