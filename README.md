@@ -5,9 +5,6 @@ Init from ti ezsdk v0.6.0, linux-3.2.0-psp04.06.00.11 sdk
 
 This git is Linux 3.2 kernel source files Aria Board, Starts from $39 Texas Instruments Coretex-A8 Stamp Board.
 
-For more info, plz visit: [Aria Board Homepage](http://ariaboard.com/) 
-
-
 For more info, plz visit: [Aria Board Homepage](http://ariaboard.com/) http://ariaboard.com/
 
 Prerequisites Packages on x64 Ubuntu 12.04
