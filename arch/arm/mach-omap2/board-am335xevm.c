@@ -98,8 +98,9 @@ static const struct display_panel disp_panel = {
 
 /* LCD backlight platform Data */
 #define AM335X_BACKLIGHT_MAX_BRIGHTNESS        100
-#define AM335X_BACKLIGHT_DEFAULT_BRIGHTNESS    100
-#define AM335X_PWM_PERIOD_NANO_SECONDS        (5000 * 10)
+#define AM335X_BACKLIGHT_DEFAULT_BRIGHTNESS    80
+//#define AM335X_PWM_PERIOD_NANO_SECONDS        (5000 * 10)
+#define AM335X_PWM_PERIOD_NANO_SECONDS         5000000
 
 static struct platform_pwm_backlight_data am335x_backlight_data0 = {
 	.pwm_id         = "ecap.0",
@@ -749,7 +750,8 @@ static struct pinmux_config gpio_led_mux[] = {
 
 /* pinmux for led device */
 static struct pinmux_config aria_gpio_led_mux[] = {
-	{"mcasp0_ahclkr.gpio3_17", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
+//	{"mcasp0_ahclkr.gpio3_17", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
+	{"mcasp0_aclkr.gpio3_18", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
 	{"mcasp0_fsr.gpio3_19", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
 	{NULL, 0},
 };
@@ -1068,6 +1070,10 @@ static int __init backlight_init(void)
 			am335x_backlight.dev.platform_data =
 				&am335x_backlight_data2;
 			break;
+        case ARIA_BOARD: 
+            ecap_index = 2;
+            am335x_backlight.dev.platform_data = &am335x_backlight_data2;
+            break;
 		default:
 			pr_err("%s: Error on attempting to enable backlight,"
 				" not supported\n", __func__);
@@ -2022,7 +2028,7 @@ static struct gpio_led gpio_leds[] = {
 static struct gpio_led aria_gpio_leds[] = {
 	{
 		.name			= "am335x:ARIA:heartbeat",
-		.gpio			= GPIO_TO_PIN(3, 17),	/* LD2 */
+		.gpio			= GPIO_TO_PIN(3, 18),	/* LD2 */
 		.default_trigger	= "heartbeat",
 	},
 	{
@@ -2309,6 +2315,7 @@ static struct evm_dev_cfg beagleboneblack_dev_cfg[] = {
 
 static struct evm_dev_cfg aria_cfg[] = {
     {am335x_rtc_init, DEV_ON_BASEBOARD, PROFILE_NONE},
+	{enable_ecap2,     DEV_ON_BASEBOARD, PROFILE_ALL},
     {tps65217_init, DEV_ON_BASEBOARD, PROFILE_NONE},
     {mcasp1_init, DEV_ON_BASEBOARD, PROFILE_NONE},
     {aria_mii1_init, DEV_ON_BASEBOARD, PROFILE_NONE},
