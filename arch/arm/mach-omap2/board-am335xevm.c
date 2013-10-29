@@ -2319,6 +2319,7 @@ static struct evm_dev_cfg aria_cfg[] = {
     {tps65217_init, DEV_ON_BASEBOARD, PROFILE_NONE},
     {mcasp1_init, DEV_ON_BASEBOARD, PROFILE_NONE},
     {aria_mii1_init, DEV_ON_BASEBOARD, PROFILE_NONE},
+	{mmc1_emmc_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{mmc0_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{lcdc_init,	DEV_ON_BASEBOARD, PROFILE_NONE },
 	{mfd_tscadc_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
