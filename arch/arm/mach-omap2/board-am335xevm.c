@@ -2636,9 +2636,10 @@ static void am335x_evm_setup(struct memory_accessor *mem_acc, void *context)
 	}else{
 
     	if (strncmp("A335", config.name, 4)) {
-	    	pr_err("Board %s\ndoesn't look like an AM335x board\n",
+	    	pr_err("Assuming Aria Board.",
 		    	config.name);
-		    goto out;
+		setup_aria();
+		    goto _skip;
 	    }
 
     	snprintf(tmp, sizeof(config.name) + 1, "%s", config.name);
@@ -2688,6 +2689,7 @@ static void am335x_evm_setup(struct memory_accessor *mem_acc, void *context)
     	}
     }
 
+_skip:
 	/* SmartReflex also requires board information. */
     //TODO temp fix
 	am33xx_sr_init();
