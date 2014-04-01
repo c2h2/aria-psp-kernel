@@ -13,9 +13,7 @@ PWD=`pwd`
 clean_tgt(){
   cd $PWD
   rm -rf $DEPLOY
-  mkdir -p $DEPLOY
-  mkdir -p $DEPLOY/uboot
-
+ 
   cp .config config.old
   make clean ARCH=arm
   cp config.old .config
@@ -24,6 +22,10 @@ clean_tgt(){
 build_tgt(){
   start_time=$(date +%s)
   cd $PWD
+  
+  mkdir -p $DEPLOY
+  mkdir -p $DEPLOY/uboot
+
 
   make -j$CORES uImage modules ARCH=arm | tee -a $LOG_FILE
   make ARCH=arm modules_install INSTALL_MOD_PATH=$DEPLOY/
