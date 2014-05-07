@@ -2107,8 +2107,7 @@ static void spi1_init(int evm_id, int profile)
 
 static int beaglebone_phy_fixup(struct phy_device *phydev)
 {
-	phydev->supported &= ~(SUPPORTED_100baseT_Half |
-				SUPPORTED_100baseT_Full);
+	//phydev->supported &= ~(SUPPORTED_100baseT_Half | SUPPORTED_100baseT_Full);
 
 	return 0;
 }
@@ -2315,18 +2314,19 @@ static struct evm_dev_cfg beagleboneblack_dev_cfg[] = {
 
 static struct evm_dev_cfg aria_cfg[] = {
     {am335x_rtc_init, DEV_ON_BASEBOARD, PROFILE_NONE},
+    	{mcasp1_init, DEV_ON_BASEBOARD, PROFILE_NONE},
 	{enable_ecap2,     DEV_ON_BASEBOARD, PROFILE_ALL},
-    {tps65217_init, DEV_ON_BASEBOARD, PROFILE_NONE},
-    {mcasp1_init, DEV_ON_BASEBOARD, PROFILE_NONE},
-    {aria_mii1_init, DEV_ON_BASEBOARD, PROFILE_NONE},
-	{mmc1_emmc_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
+    	{tps65217_init, DEV_ON_BASEBOARD, PROFILE_NONE},
+//	{mmc1_emmc_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{mmc0_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{lcdc_init,	DEV_ON_BASEBOARD, PROFILE_NONE },
 	{mfd_tscadc_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
   {aria_gpio_led_init,  DEV_ON_BASEBOARD, PROFILE_ALL},
-	{uart1_wl12xx_init, DEV_ON_BASEBOARD, PROFILE_ALL},
+//	{uart1_wl12xx_init, DEV_ON_BASEBOARD, PROFILE_ALL},
+    	{mii1_init, DEV_ON_BASEBOARD, PROFILE_NONE},
 	{usb0_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{usb1_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
+	{spi0_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
     {NULL, 0, 0},
 };
 	
@@ -2557,7 +2557,10 @@ static void setup_aria(void){
 	/* TPS65217 regulator has full constraints */
 	//regulator_has_full_constraints();  //this may cause net or audio fail, plz invstigate.
 
-    am33xx_cpsw_init(AM33XX_CPSW_MODE_MII, NULL, NULL);
+	phy_register_fixup_for_uid(BBB_PHY_ID, BBB_PHY_MASK, beaglebone_phy_fixup);
+
+    am33xx_cpsw_init(AM33XX_CPSW_MODE_MII, "0:00", NULL);
+
 }
 
 

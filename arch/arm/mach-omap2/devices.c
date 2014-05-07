@@ -1720,7 +1720,7 @@ int am33xx_cpsw_init(enum am33xx_cpsw_mac_mode mode, unsigned char *phy_id0,
 		pr_err("could not find cpgmac0 hwmod data\n");
 		return -ENODEV;
 	}
-
+	 am33xx_cpsw_pdata.slaves = 1;
 	pdev = omap_device_build("davinci_mdio", 0, oh, &am33xx_cpsw_mdiopdata,
 			sizeof(am33xx_cpsw_mdiopdata), NULL, 0, 0);
 	if (IS_ERR(pdev))

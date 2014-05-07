@@ -36,6 +36,8 @@
 #include <asm/irq.h>
 #include <asm/uaccess.h>
 
+#define _PHY_MASK            0xfffffffe
+
 /**
  * mdiobus_alloc - allocate a mii_bus structure
  *
@@ -87,6 +89,7 @@ static struct class mdio_bus_class = {
 int mdiobus_register(struct mii_bus *bus)
 {
 	int i, err;
+	printk(KERN_ERR "c2h2: 1st bus->phy_mask: %d \n", bus->phy_mask);
 
 	if (NULL == bus || NULL == bus->name ||
 			NULL == bus->read ||
@@ -102,21 +105,35 @@ int mdiobus_register(struct mii_bus *bus)
 	dev_set_name(&bus->dev, "%s", bus->id);
 
 	err = device_register(&bus->dev);
+	
+	printk(KERN_ERR "c2h2: 2nd bus->phy_mask: %d \n", bus->phy_mask);
+
+	printk(KERN_ERR "c2h2: mii_bus %s registering..\n", bus->id);
 	if (err) {
 		printk(KERN_ERR "mii_bus %s failed to register\n", bus->id);
 		return -EINVAL;
 	}
 
 	mutex_init(&bus->mdio_lock);
+	printk(KERN_ERR "c2h2: 3rd bus->phy_mask: %d \n", bus->phy_mask);
 
 	if (bus->reset)
 		bus->reset(bus);
+/*
+	while(bus->phy_mask == -5){
+		bus->reset(bus);
+    	 	printk(KERN_ERR "c2h2: reset phy_mask: %d \n", bus->phy_mask);
+	}
+*/
 
 	for (i = 0; i < PHY_MAX_ADDR; i++) {
+		printk(KERN_ERR "c2h2: bus->phy_mask: %d \n", bus->phy_mask);
+
 		if ((bus->phy_mask & (1 << i)) == 0) {
 			struct phy_device *phydev;
 
 			phydev = mdiobus_scan(bus, i);
+			printk(KERN_ERR "c2h2: mdiobus_scanning addr: %d ..\n", i);
 			if (IS_ERR(phydev)) {
 				err = PTR_ERR(phydev);
 				goto error;

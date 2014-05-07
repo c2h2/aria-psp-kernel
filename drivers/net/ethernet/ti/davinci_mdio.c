@@ -147,6 +147,10 @@ static int davinci_mdio_reset(struct mii_bus *bus)
 
 	/* get phy mask from the alive register */
 	phy_mask = __raw_readl(&data->regs->alive);
+	dev_info(data->dev, "c2h2: phy_mask = %d.\n", phy_mask);
+	phy_mask = 1;
+	dev_info(data->dev, "c2h2: phy_mask_fix = %d.\n", phy_mask);
+
 	if (phy_mask) {
 		/* restrict mdio bus to live phys only */
 		dev_info(data->dev, "detected phy mask %x\n", ~phy_mask);
@@ -362,7 +366,7 @@ static int __devinit davinci_mdio_probe(struct platform_device *pdev)
 	}
 
 	/* register the mii bus */
-	ret = mdiobus_register(data->bus);
+	ret = mdiobus_register(data->bus); //where shit from
 	if (ret)
 		goto bail_out;
 

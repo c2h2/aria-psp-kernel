@@ -73,6 +73,7 @@ int phy_register_fixup(const char *bus_id, u32 phy_uid, u32 phy_uid_mask,
 		int (*run)(struct phy_device *))
 {
 	struct phy_fixup *fixup;
+	printk(KERN_ERR,"c2h2: phy_register_fixup called\n");
 
 	fixup = kzalloc(sizeof(struct phy_fixup), GFP_KERNEL);
 	if (!fixup)
@@ -95,6 +96,7 @@ EXPORT_SYMBOL(phy_register_fixup);
 int phy_register_fixup_for_uid(u32 phy_uid, u32 phy_uid_mask,
 		int (*run)(struct phy_device *))
 {
+	printk(KERN_ERR,"c2h2: phy_register_fixup_for_uid called\n");
 	return phy_register_fixup(PHY_ANY_ID, phy_uid, phy_uid_mask, run);
 }
 EXPORT_SYMBOL(phy_register_fixup_for_uid);
@@ -113,6 +115,7 @@ EXPORT_SYMBOL(phy_register_fixup_for_id);
  */
 static int phy_needs_fixup(struct phy_device *phydev, struct phy_fixup *fixup)
 {
+	printk(KERN_ERR,"phy_needs_fixup called");
 	if (strcmp(fixup->bus_id, dev_name(&phydev->dev)) != 0)
 		if (strcmp(fixup->bus_id, PHY_ANY_ID) != 0)
 			return 0;
@@ -128,6 +131,7 @@ static int phy_needs_fixup(struct phy_device *phydev, struct phy_fixup *fixup)
 /* Runs any matching fixups for this phydev */
 int phy_scan_fixups(struct phy_device *phydev)
 {
+	printk(KERN_ERR,"phy_scan_fixup called");
 	struct phy_fixup *fixup;
 
 	mutex_lock(&phy_fixup_lock);
