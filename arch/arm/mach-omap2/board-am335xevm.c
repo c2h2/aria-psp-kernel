@@ -1320,6 +1320,16 @@ static struct spi_board_info am335x_spi0_slave_info[] = {
 	},
 };
 
+static struct spi_board_info aria_spi0_info[] = {
+	{
+		.modalias = "spidev",
+		.max_speed_hz = 500000, // 500 KHz
+		.bus_num = 1,
+		.chip_select = 0,
+		.mode = SPI_MODE_1,
+	},
+};
+
 static struct spi_board_info am335x_spi1_slave_info[] = {
 	{
 		.modalias      = "m25p80",
@@ -2090,8 +2100,7 @@ static void aria_gpio_led_init(int evm_id, int profile)
 static void spi0_init(int evm_id, int profile)
 {
 	setup_pin_mux(spi0_pin_mux);
-	spi_register_board_info(am335x_spi0_slave_info,
-			ARRAY_SIZE(am335x_spi0_slave_info));
+	spi_register_board_info(aria_spi0_info,	ARRAY_SIZE(aria_spi0_info));
 	return;
 }
 
@@ -2314,17 +2323,18 @@ static struct evm_dev_cfg beagleboneblack_dev_cfg[] = {
 
 
 static struct evm_dev_cfg aria_cfg[] = {
-    {am335x_rtc_init, DEV_ON_BASEBOARD, PROFILE_NONE},
+	{am335x_rtc_init, DEV_ON_BASEBOARD, PROFILE_NONE},
 	{enable_ecap2,     DEV_ON_BASEBOARD, PROFILE_ALL},
-    {tps65217_init, DEV_ON_BASEBOARD, PROFILE_NONE},
-    {mcasp1_init, DEV_ON_BASEBOARD, PROFILE_NONE},
-    {aria_mii1_init, DEV_ON_BASEBOARD, PROFILE_NONE},
+	{mfd_tscadc_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
+	{lcdc_init,	DEV_ON_BASEBOARD, PROFILE_NONE },
+	{aria_gpio_led_init,  DEV_ON_BASEBOARD, PROFILE_ALL},
+	{tps65217_init, DEV_ON_BASEBOARD, PROFILE_NONE},
+	{mcasp1_init, DEV_ON_BASEBOARD, PROFILE_NONE},
+	{aria_mii1_init, DEV_ON_BASEBOARD, PROFILE_NONE},
 	{mmc1_emmc_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{mmc0_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
-	{lcdc_init,	DEV_ON_BASEBOARD, PROFILE_NONE },
-	{mfd_tscadc_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
-  {aria_gpio_led_init,  DEV_ON_BASEBOARD, PROFILE_ALL},
-	{uart1_wl12xx_init, DEV_ON_BASEBOARD, PROFILE_ALL},
+	{spi0_init,     DEV_ON_BASEBOARD, PROFILE_ALL},
+	//{uart1_wl12xx_init, DEV_ON_BASEBOARD, PROFILE_ALL},
 	{usb0_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{usb1_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
     {NULL, 0, 0},
