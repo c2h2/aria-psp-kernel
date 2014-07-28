@@ -609,6 +609,20 @@ static struct pinmux_config aria_mii1_pin_mux[] = {
 	{NULL, 0},
 };
 
+/* Module pin mux for rmii2 */
+static struct pinmux_config aria_rmii2_pin_mux[] = {
+        {"gpmc_a0.rmii2_txen", OMAP_MUX_MODE3 | AM33XX_PIN_OUTPUT},
+        {"gpmc_a4.rmii2_txd1", OMAP_MUX_MODE3 | AM33XX_PIN_OUTPUT},
+        {"gpmc_a5.rmii2_txd0", OMAP_MUX_MODE3 | AM33XX_PIN_OUTPUT},
+        {"gpmc_a10.rmii2_rxd1", OMAP_MUX_MODE3 | AM33XX_PIN_INPUT_PULLDOWN},
+        {"gpmc_a11.rmii2_rxd0", OMAP_MUX_MODE3 | AM33XX_PIN_INPUT_PULLDOWN},
+        {"gpmc_wait0.rmii2_crs_dv", OMAP_MUX_MODE3 | AM33XX_PIN_INPUT_PULLDOWN},
+        {"gpmc_wpn.rmii2_rxerr", OMAP_MUX_MODE3 | AM33XX_PIN_INPUT_PULLDOWN},
+        {"mdio_data.mdio_data", OMAP_MUX_MODE0 | AM33XX_PIN_INPUT_PULLUP},
+        {"mdio_clk.mdio_clk", OMAP_MUX_MODE0 | AM33XX_PIN_OUTPUT_PULLUP},
+{"mii1_col.rmii2_refclk", OMAP_MUX_MODE1 | AM33XX_PIN_INPUT_PULLDOWN},
+	{NULL, 0},
+};
 /* Module pin mux for rmii1 */
 static struct pinmux_config rmii1_pin_mux[] = {
 	{"mii1_crs.rmii1_crs_dv", OMAP_MUX_MODE1 | AM33XX_PIN_INPUT_PULLDOWN},
@@ -1167,6 +1181,11 @@ static void mii1_init(int evm_id, int profile)
 
 static void aria_mii1_init(int evm_id, int profile){
     setup_pin_mux(aria_mii1_pin_mux);
+    return;
+}
+
+static void aria_rmii2_init(int evm_id, int profile){
+    setup_pin_mux(aria_rmii2_pin_mux);
     return;
 }
 
@@ -2324,13 +2343,14 @@ static struct evm_dev_cfg beagleboneblack_dev_cfg[] = {
 
 static struct evm_dev_cfg aria_cfg[] = {
 	{am335x_rtc_init, DEV_ON_BASEBOARD, PROFILE_NONE},
-	{enable_ecap2,     DEV_ON_BASEBOARD, PROFILE_ALL},
-	{mfd_tscadc_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
-	{lcdc_init,	DEV_ON_BASEBOARD, PROFILE_NONE },
-	{aria_gpio_led_init,  DEV_ON_BASEBOARD, PROFILE_ALL},
+	//{enable_ecap2,     DEV_ON_BASEBOARD, PROFILE_ALL},
+	//{mfd_tscadc_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
+	//{lcdc_init,	DEV_ON_BASEBOARD, PROFILE_NONE },
+	//{aria_gpio_led_init,  DEV_ON_BASEBOARD, PROFILE_ALL},
 	{tps65217_init, DEV_ON_BASEBOARD, PROFILE_NONE},
-	{mcasp1_init, DEV_ON_BASEBOARD, PROFILE_NONE},
 	{aria_mii1_init, DEV_ON_BASEBOARD, PROFILE_NONE},
+	{aria_rmii2_init, DEV_ON_BASEBOARD, PROFILE_NONE},
+	//{mcasp1_init, DEV_ON_BASEBOARD, PROFILE_NONE},
 	{mmc1_emmc_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{mmc0_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{spi0_init,     DEV_ON_BASEBOARD, PROFILE_ALL},
@@ -2567,7 +2587,9 @@ static void setup_aria(void){
 	/* TPS65217 regulator has full constraints */
 	//regulator_has_full_constraints();  //this may cause net or audio fail, plz invstigate.
 
-    am33xx_cpsw_init(AM33XX_CPSW_MODE_MII, NULL, NULL);
+    //am33xx_cpsw_init(AM33XX_CPSW_MODE_MII, NULL, NULL);
+//phy_register_fixup_for_uid(BBB_PHY_ID, BBB_PHY_MASK, beaglebone_phy_fixup);
+    am33xx_cpsw_init(AM33XX_CPSW_MODE_MII_RMII, NULL, NULL);
 }
 
 
