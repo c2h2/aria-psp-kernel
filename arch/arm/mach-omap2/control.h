@@ -375,7 +375,7 @@
 #define AM33XX_RMII_MODE_EN		((1 << 0) | (1 << 2))
 #define AM33XX_RGMII_MODE_EN		((0x2 << 0) | (0x2 << 2) | \
 					(AM33XX_RGMII_DISABLE_INT_DLY))
-#define AM33XX_MII_RMII_MODE_EN		0x04 // MII1 + RMII2 
+#define AM33XX_MII_RMII_MODE_EN		0x84 // MII1 + RMII2 
 
 /*
  * CONTROL AM33XX PWMSS_CTRL register to enable time base clock Enable
