@@ -617,7 +617,7 @@ static struct pinmux_config aria_rmii2_pin_mux[] = {
         {"gpmc_a10.rmii2_rxd1", OMAP_MUX_MODE3 | AM33XX_PIN_INPUT_PULLDOWN},
         {"gpmc_a11.rmii2_rxd0", OMAP_MUX_MODE3 | AM33XX_PIN_INPUT_PULLDOWN},
         {"gpmc_wait0.rmii2_crs_dv", OMAP_MUX_MODE3 | AM33XX_PIN_INPUT_PULLDOWN},
-        {"gpmc_wpn.rmii2_rxerr", OMAP_MUX_MODE3 | AM33XX_PIN_INPUT_PULLDOWN},
+        {"gpmc_wpn.rmii2_rxerr", OMAP_MUX_MODE3 | AM33XX_PIN_INPUT_PULLDOWN}, //caution, conflit
         {"mdio_data.mdio_data", OMAP_MUX_MODE0 | AM33XX_PIN_INPUT_PULLUP},
         {"mdio_clk.mdio_clk", OMAP_MUX_MODE0 | AM33XX_PIN_OUTPUT_PULLUP},
 {"mii1_col.rmii2_refclk", OMAP_MUX_MODE1 | AM33XX_PIN_INPUT_PULLDOWN},
@@ -715,6 +715,18 @@ static struct pinmux_config mmc1_cd_only_pin_mux[] = {
 	{NULL, 0},
 };
 
+static struct pinmux_config uart5_pin_mux[] = {
+	{"lcd_data9.uart5_rxd", AM33XX_PIN_INPUT_PULLUP},
+	{"lcd_data8.uart5_txd", AM33XX_PULL_ENBL},
+	{NULL, 0},
+};
+
+static struct pinmux_config uart4_pin_mux[] = {
+	{"uart0_ctsn.uart4_rxd", AM33XX_PIN_INPUT_PULLUP},
+	{"uart0_rtsn.uart4_txd", AM33XX_PULL_ENBL},
+	{NULL, 0},
+};
+
 /* Module pin mux for uart3 */
 static struct pinmux_config uart3_pin_mux[] = {
 	{"spi0_cs1.uart3_rxd", AM33XX_PIN_INPUT_PULLUP},
@@ -744,6 +756,13 @@ static struct pinmux_config uart2_pin_mux[] = {
 	{NULL, 0},
 };
 
+/* Module pin mux for uart2 sec */
+static struct pinmux_config uart2_sec_pin_mux[] = {
+	{".uart2_rxd", OMAP_MUX_MODE1 | AM33XX_SLEWCTRL_SLOW | AM33XX_PIN_INPUT_PULLUP},
+	{".uart2_txd", OMAP_MUX_MODE1 | AM33XX_PULL_UP | AM33XX_PULL_DISA | AM33XX_SLEWCTRL_SLOW},
+	{NULL, 0},
+};
+
 /* pinmux for gpio based key */
 static struct pinmux_config gpio_keys_pin_mux[] = {
 	{"gpmc_wait0.gpio0_30", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
@@ -764,11 +783,38 @@ static struct pinmux_config gpio_led_mux[] = {
 
 /* pinmux for led device */
 static struct pinmux_config aria_gpio_led_mux[] = {
-//	{"mcasp0_ahclkr.gpio3_17", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
-	{"mcasp0_aclkr.gpio3_18", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
-	{"mcasp0_fsr.gpio3_19", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
+	{"lcd_data0.gpio2_6", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+	{"lcd_data1.gpio2_7", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{NULL, 0},
 };
+static struct pinmux_config aria_gpios_mux[] = {
+//	{"mcasp0_ahclkr.gpio3_17", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
+	{"mcasp0_aclkx.gpio3_14", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
+	{"mcasp0_fsx.gpio3_15", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
+	{"mcasp0_axr0.gpio3_16", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
+	{"mcasp0_ahclkr.gpio3_17", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
+	{"mcasp0_aclkr.gpio3_18", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
+	{"mcasp0_fsr.gpio3_19", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
+	{"mcasp0_axr1.gpio3_20", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
+	{"mcasp0_ahclkx.gpio3_21", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
+//	{"lcd_data0.gpio2_6", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+//	{"lcd_data1.gpio2_7", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+	{"lcd_data2.gpio2_8", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+	{"lcd_data3.gpio2_9", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+	{"lcd_data4.gpio2_10", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
+	{"gpmc_csn3.gpio2_0", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
+	{"gpmc_clk.gpio2_1", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
+	{"gpmc_ad8.gpio2_22", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
+	{"gpmc_ad9.gpio2_23", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
+	{"gpmc_ad10.gpio2_26", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
+	{"gpmc_ad11.gpio2_27", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
+	{"gpmc_ad12.gpio1_12", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
+	{"gpmc_ad13.gpio1_13", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
+	{"gpmc_ad14.gpio1_14", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
+	{"gpmc_ad15.gpio1_15", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
+	{NULL, 0},
+};
+
 
 
 static struct pinmux_config gpio_ddr_vtt_enb_pin_mux[] = {
@@ -1013,6 +1059,12 @@ static struct pinmux_config uart1_wl12xx_pin_mux[] = {
 	{NULL, 0},
 };
 
+static struct pinmux_config uart1_pin_mux[] = {
+	{"uart1_rxd.uart1_rxd", OMAP_MUX_MODE0 | AM33XX_PIN_INPUT_PULLUP},
+	{"uart1_txd.uart1_txd", OMAP_MUX_MODE0 | AM33XX_PULL_ENBL},
+	{NULL, 0},
+};
+
 static struct pinmux_config wl12xx_pin_mux[] = {
 	{"gpmc_a0.gpio1_16", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{"mcasp0_ahclkr.gpio3_17", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
@@ -1207,6 +1259,20 @@ static void usb1_init(int evm_id, int profile)
 	return;
 }
 
+/* setup uart4 */
+static void uart5_init(int evm_id, int profile)
+{
+	setup_pin_mux(uart5_pin_mux);
+	return;
+}
+
+/* setup uart4 */
+static void uart4_init(int evm_id, int profile)
+{
+	setup_pin_mux(uart4_pin_mux);
+	return;
+}
+
 /* setup uart3 */
 static void uart3_init(int evm_id, int profile)
 {
@@ -1218,6 +1284,13 @@ static void uart3_init(int evm_id, int profile)
 static void uart2_init(int evm_id, int profile)
 {
 	setup_pin_mux(uart2_pin_mux);
+	return;
+}
+
+/* setup uart2 */
+static void uart2_sec_init(int evm_id, int profile)
+{
+	setup_pin_mux(uart2_sec_pin_mux);
 	return;
 }
 
@@ -1786,6 +1859,11 @@ static void uart1_wl12xx_init(int evm_id, int profile)
 	setup_pin_mux(uart1_wl12xx_pin_mux);
 }
 
+static void uart1_init(int evm_id, int profile)
+{
+	setup_pin_mux(uart1_pin_mux);
+}
+
 static void wl12xx_bluetooth_enable(void)
 {
 	int status = gpio_request(am335xevm_wlan_data.bt_enable_gpio,
@@ -2057,12 +2135,12 @@ static struct gpio_led gpio_leds[] = {
 static struct gpio_led aria_gpio_leds[] = {
 	{
 		.name			= "am335x:ARIA:heartbeat",
-		.gpio			= GPIO_TO_PIN(3, 18),	/* LD2 */
+		.gpio			= GPIO_TO_PIN(2, 6),	/* LD2 */
 		.default_trigger	= "heartbeat",
 	},
 	{
 		.name			= "am335x:ARIA:mmc0",
-		.gpio			= GPIO_TO_PIN(3, 19),	/* LD1 */
+		.gpio			= GPIO_TO_PIN(2, 7),	/* LD1 */
 		.default_trigger	= "mmc0",
 	},
 };
@@ -2113,6 +2191,12 @@ static void aria_gpio_led_init(int evm_id, int profile)
 	if (err)
 		pr_err("failed to register gpio led device\n");
 }
+
+static void aria_gpios_init(int evm_id, int profile)
+{
+	setup_pin_mux(aria_gpios_mux);
+}
+
 
 
 /* setup spi0 */
@@ -2346,7 +2430,7 @@ static struct evm_dev_cfg aria_cfg[] = {
 	//{enable_ecap2,     DEV_ON_BASEBOARD, PROFILE_ALL},
 	//{mfd_tscadc_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	//{lcdc_init,	DEV_ON_BASEBOARD, PROFILE_NONE },
-	//{aria_gpio_led_init,  DEV_ON_BASEBOARD, PROFILE_ALL},
+	{aria_gpio_led_init,  DEV_ON_BASEBOARD, PROFILE_ALL},
 	{tps65217_init, DEV_ON_BASEBOARD, PROFILE_NONE},
 	{aria_mii1_init, DEV_ON_BASEBOARD, PROFILE_NONE},
 	{aria_rmii2_init, DEV_ON_BASEBOARD, PROFILE_NONE},
@@ -2354,9 +2438,16 @@ static struct evm_dev_cfg aria_cfg[] = {
 	{mmc1_emmc_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{mmc0_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{spi0_init,     DEV_ON_BASEBOARD, PROFILE_ALL},
+	{i2c2_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	//{uart1_wl12xx_init, DEV_ON_BASEBOARD, PROFILE_ALL},
+	{uart1_init, DEV_ON_BASEBOARD, PROFILE_ALL},
+	{uart2_sec_init, DEV_ON_BASEBOARD, PROFILE_ALL},
+	//{uart3_init, DEV_ON_BASEBOARD, PROFILE_ALL}, //spi conflit
+	{uart4_init, DEV_ON_BASEBOARD, PROFILE_ALL},
+	{uart5_init, DEV_ON_BASEBOARD, PROFILE_ALL},
 	{usb0_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{usb1_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
+	{aria_gpios_init, DEV_ON_BASEBOARD, PROFILE_ALL},
     {NULL, 0, 0},
 };
 	
