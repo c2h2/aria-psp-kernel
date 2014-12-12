@@ -44,6 +44,8 @@
 #include <linux/rtc/rtc-omap.h>
 #include <linux/opp.h>
 
+#include <linux/sht15.h>
+
 /* LCD controller is similar to DA850 */
 #include <video/da8xx-fb.h>
 
@@ -787,6 +789,12 @@ static struct pinmux_config matrix_keypad_pin_mux[] = {
 	{NULL, 0},
 };
 
+static struct pinmux_config sht15_pin_mux[] = {
+	{"mcasp0_axr1.gpio3_20", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
+        {"mcasp0_ahclkx.gpio3_21", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
+        {NULL, 0},
+};
+
 /* Keys mapping */
 static const uint32_t am335x_evm_matrix_keys[] = {
 	KEY(0, 0, KEY_MENU),
@@ -829,6 +837,29 @@ static struct platform_device am335x_evm_keyboard = {
 		.platform_data = &am335x_evm_keypad_platform_data,
 	},
 };
+
+static struct sht15_platform_data platform_data_sht15 = {
+	.gpio_data =  3*32+20,
+	.gpio_sck  =  3*32+21,
+};
+ 
+static struct platform_device sht15 = {
+	.name = "sht15",
+	.id = -1,
+	.dev = {
+		.platform_data = &platform_data_sht15,
+	},
+};
+
+static void sht15_init(){
+	int err;
+
+        setup_pin_mux(sht15_pin_mux);
+        err = platform_device_register(&sht15);
+        if (err) {
+                pr_err("failed to register sht15.\n");
+        }
+}
 
 static void matrix_keypad_init(int evm_id, int profile)
 {
@@ -2337,6 +2368,7 @@ static struct evm_dev_cfg aria_cfg[] = {
 	//{uart1_wl12xx_init, DEV_ON_BASEBOARD, PROFILE_ALL},
 	{usb0_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{usb1_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
+	{sht15_init},
     {NULL, 0, 0},
 };
 	
