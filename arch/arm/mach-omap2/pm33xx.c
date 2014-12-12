@@ -602,6 +602,7 @@ void am33xx_push_sram_idle(void)
 
 static int __init am33xx_pm_init(void)
 {
+	return  -ENODEV; //c2h2 disable
 	int ret;
 #ifdef CONFIG_SUSPEND
 	void __iomem *base;
