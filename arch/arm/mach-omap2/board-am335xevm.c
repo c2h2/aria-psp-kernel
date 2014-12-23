@@ -1122,8 +1122,8 @@ static void lcdc_init(int evm_id, int profile)
 	case EVM_SK:
 		lcdc_pdata = &NHD_480272MF_ATXI_pdata;
 		break;
-    case ARIA_BOARD:
-		lcdc_pdata = &NHD_480272MF_ATXI_pdata;
+	case ARIA_BOARD:
+		lcdc_pdata = &TFC_S9700RTWV35TR_01B_pdata;
         break;    
 	default:
 		pr_err("LCDC not supported on this evm (%d)\n",evm_id);
@@ -2335,8 +2335,8 @@ static struct evm_dev_cfg aria_cfg[] = {
 	{mmc0_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{spi0_init,     DEV_ON_BASEBOARD, PROFILE_ALL},
 	//{uart1_wl12xx_init, DEV_ON_BASEBOARD, PROFILE_ALL},
-	{usb0_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
-	{usb1_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
+	//{usb0_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
+	//{usb1_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
     {NULL, 0, 0},
 };
 	
