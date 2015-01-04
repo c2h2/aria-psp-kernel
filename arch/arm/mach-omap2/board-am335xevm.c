@@ -98,7 +98,7 @@ static const struct display_panel disp_panel = {
 
 /* LCD backlight platform Data */
 #define AM335X_BACKLIGHT_MAX_BRIGHTNESS        100
-#define AM335X_BACKLIGHT_DEFAULT_BRIGHTNESS    80
+#define AM335X_BACKLIGHT_DEFAULT_BRIGHTNESS    70
 //#define AM335X_PWM_PERIOD_NANO_SECONDS        (5000 * 10)
 #define AM335X_PWM_PERIOD_NANO_SECONDS         5000000
 
@@ -141,6 +141,12 @@ struct da8xx_lcdc_platform_data TFC_S9700RTWV35TR_01B_pdata = {
 	.manu_name		= "ThreeFive",
 	.controller_data	= &lcd_cfg,
 	.type			= "TFC_S9700RTWV35TR_01B",
+};
+
+struct da8xx_lcdc_platform_data SAT079AT50DHY0_A4_pdata = {
+	.manu_name		= "SAT",
+	.controller_data        = &lcd_cfg,
+        .type                   = "SAT079AT50DHY0-A4",
 };
 
 struct da8xx_lcdc_platform_data  NHD_480272MF_ATXI_pdata = {
@@ -1114,22 +1120,8 @@ static void lcdc_init(int evm_id, int profile)
 				"register LCDC\n");
 		return;
 	}
-	switch (evm_id) {
-	case GEN_PURP_EVM:
-	case GEN_PURP_DDR3_EVM:
-		lcdc_pdata = &TFC_S9700RTWV35TR_01B_pdata;
-		break;
-	case EVM_SK:
-		lcdc_pdata = &NHD_480272MF_ATXI_pdata;
-		break;
-	case ARIA_BOARD:
-		lcdc_pdata = &TFC_S9700RTWV35TR_01B_pdata;
-        break;    
-	default:
-		pr_err("LCDC not supported on this evm (%d)\n",evm_id);
-		return;
-	}
-
+	//lcdc_pdata = &TFC_S9700RTWV35TR_01B_pdata;
+	lcdc_pdata = &SAT079AT50DHY0_A4_pdata;
 	lcdc_pdata->get_context_loss_count = omap_pm_get_dev_context_loss_count;
 
 	if (am33xx_register_lcdc(lcdc_pdata))
@@ -2331,13 +2323,10 @@ static struct evm_dev_cfg aria_cfg[] = {
 	{tps65217_init, DEV_ON_BASEBOARD, PROFILE_NONE},
 	{mcasp1_init, DEV_ON_BASEBOARD, PROFILE_NONE},
 	{aria_mii1_init, DEV_ON_BASEBOARD, PROFILE_NONE},
-	{mmc1_emmc_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
+	{evm_nand_init, DEV_ON_BASEBOARD, PROFILE_ALL},
 	{mmc0_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{spi0_init,     DEV_ON_BASEBOARD, PROFILE_ALL},
-	//{uart1_wl12xx_init, DEV_ON_BASEBOARD, PROFILE_ALL},
-	//{usb0_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
-	//{usb1_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
-    {NULL, 0, 0},
+	{NULL, 0, 0},
 };
 	
 /* EVM - Starter Kit */

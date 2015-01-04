@@ -290,6 +290,20 @@ static struct da8xx_panel known_lcd_panels[] = {
 		.pxl_clk = 9000000,
 		.invert_pxl_clk = 0,
 	},
+	/* SAT079AT50DHY0-A4 */
+        [4] = {
+                .name = "SAT079AT50DHY0-A4",
+                .width = 800,
+                .height = 480,
+                .hfp = 210,
+                .hbp = 46,
+                .hsw = 10,
+                .vfp = 22,
+                .vbp = 23,
+                .vsw = 5,
+                .pxl_clk = 30000000,
+                .invert_pxl_clk = 0,
+        },
 };
 
 static inline bool is_raster_enabled(void)
