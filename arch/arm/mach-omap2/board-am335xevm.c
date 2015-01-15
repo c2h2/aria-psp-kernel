@@ -839,8 +839,8 @@ static struct platform_device am335x_evm_keyboard = {
 };
 
 static struct sht15_platform_data platform_data_sht15 = {
-	.gpio_data =  3*32+20,
-	.gpio_sck  =  3*32+21,
+	.gpio_data =  3*32+21,
+	.gpio_sck  =  3*32+20,
 };
  
 static struct platform_device sht15 = {
@@ -2364,7 +2364,8 @@ static struct evm_dev_cfg aria_cfg[] = {
 	{aria_mii1_init, DEV_ON_BASEBOARD, PROFILE_NONE},
 	{mmc1_emmc_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{mmc0_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
-	{spi0_init,     DEV_ON_BASEBOARD, PROFILE_ALL},
+	//{spi0_init,     DEV_ON_BASEBOARD, PROFILE_ALL},
+	{uart2_init,     DEV_ON_BASEBOARD, PROFILE_ALL},
 	{uart1_wl12xx_init, DEV_ON_BASEBOARD, PROFILE_ALL},
 	{usb0_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{usb1_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
