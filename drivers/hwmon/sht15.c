@@ -42,9 +42,9 @@
 #define SHT15_SOFT_RESET		0x1E
 
 /* Min timings */
-#define SHT15_TSCKL			100	/* (nsecs) clock low */
-#define SHT15_TSCKH			100	/* (nsecs) clock high */
-#define SHT15_TSU			150	/* (nsecs) data setup time */
+#define SHT15_TSCKL			100000	/* (nsecs) clock low */
+#define SHT15_TSCKH			100000	/* (nsecs) clock high */
+#define SHT15_TSU			150000	/* (nsecs) data setup time */
 #define SHT15_TSRST			11	/* (msecs) soft reset time */
 
 /* Status Register Bits */
