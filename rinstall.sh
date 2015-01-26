@@ -13,10 +13,10 @@ IP=$1
 HOST=root@${IP}
 
 echo "Installing kernel uImage into ${HOST}"
-rsync -avz deploy/uboot/ ${HOST}:/boot/uboot/
+rsync -av deploy/uboot/ ${HOST}:/boot/uboot/
 
 echo "Installing kernel modules into ${HOST}"
-rsync -avz --delete deploy/lib/modules/ ${HOST}:/lib/modules/
+rsync -av --delete deploy/lib/modules/ ${HOST}:/lib/modules/
 
 echo "Rebooting remote host ${HOST}"
 ssh ${HOST} reboot
