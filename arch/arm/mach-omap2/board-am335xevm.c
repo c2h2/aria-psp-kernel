@@ -2364,12 +2364,12 @@ static struct evm_dev_cfg aria_cfg[] = {
 	{aria_mii1_init, DEV_ON_BASEBOARD, PROFILE_NONE},
 	{mmc1_emmc_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{mmc0_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
-	//{spi0_init,     DEV_ON_BASEBOARD, PROFILE_ALL},
-	{uart2_init,     DEV_ON_BASEBOARD, PROFILE_ALL},
+	{spi0_init,     DEV_ON_BASEBOARD, PROFILE_ALL},
+	//{uart2_init,     DEV_ON_BASEBOARD, PROFILE_ALL},
 	{uart1_wl12xx_init, DEV_ON_BASEBOARD, PROFILE_ALL},
 	{usb0_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{usb1_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
-	{sht15_init},
+//	{sht15_init},
     {NULL, 0, 0},
 };
 	
