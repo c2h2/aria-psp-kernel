@@ -151,6 +151,13 @@ struct da8xx_lcdc_platform_data  NHD_480272MF_ATXI_pdata = {
 	.type                   = "NHD-4.3-ATXI#-T-1",
 };
 
+struct da8xx_lcdc_platform_data TM097TDH02_pdata = {
+	.manu_name              = "TM",
+	.controller_data        = &lcd_cfg,
+	.type                   = "TM097TDH02",
+};
+
+
 #include "common.h"
 
 #include <linux/lis3lv02d.h>
@@ -1153,8 +1160,8 @@ static void lcdc_init(int evm_id, int profile)
 	case EVM_SK:
 		lcdc_pdata = &NHD_480272MF_ATXI_pdata;
 		break;
-    case ARIA_BOARD:
-		lcdc_pdata = &NHD_480272MF_ATXI_pdata;
+	case ARIA_BOARD:
+		lcdc_pdata = &TM097TDH02_pdata;
         break;    
 	default:
 		pr_err("LCDC not supported on this evm (%d)\n",evm_id);
