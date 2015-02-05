@@ -44,7 +44,9 @@
 #include <linux/rtc/rtc-omap.h>
 #include <linux/opp.h>
 
-#include <linux/sht15.h>
+#include <linux/tca6416_keypad.h>
+
+
 
 /* LCD controller is similar to DA850 */
 #include <video/da8xx-fb.h>
@@ -796,12 +798,6 @@ static struct pinmux_config matrix_keypad_pin_mux[] = {
 	{NULL, 0},
 };
 
-static struct pinmux_config sht15_pin_mux[] = {
-	{"mcasp0_axr1.gpio3_20", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
-        {"mcasp0_ahclkx.gpio3_21", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
-        {NULL, 0},
-};
-
 /* Keys mapping */
 static const uint32_t am335x_evm_matrix_keys[] = {
 	KEY(0, 0, KEY_MENU),
@@ -845,28 +841,122 @@ static struct platform_device am335x_evm_keyboard = {
 	},
 };
 
-static struct sht15_platform_data platform_data_sht15 = {
-	.gpio_data =  3*32+21,
-	.gpio_sck  =  3*32+20,
+
+
+/* Keypad Initialization */
+#define KEYPAD_BUTTON(ev_type, ev_code, act_low) \
+{                                                               \
+        .type           = ev_type,                              \
+        .code           = ev_code,                              \
+        .active_low     = act_low,                              \
+}
+
+#define KEYPAD_BUTTON_LOW(event_code) KEYPAD_BUTTON(EV_KEY, event_code, 1)
+
+
+static struct tca6416_button tca_keys[] = {
+        KEYPAD_BUTTON_LOW(KEY_HOME),
+        KEYPAD_BUTTON_LOW(KEY_MENU),
+        KEYPAD_BUTTON_LOW(KEY_BACK),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
 };
- 
-static struct platform_device sht15 = {
-	.name = "sht15",
-	.id = -1,
-	.dev = {
-		.platform_data = &platform_data_sht15,
+
+/*
+static struct tca6416_button tca_buttons[] ={
+	{        // Configuration parameters 
+        .code = KEY_1,               // input event code (KEY_*, SW_*) 
+        .active_low = 1,
+        .type = EV_KEY,               // input event type (EV_KEY, EV_SW) 
+	},
+	{        // Configuration parameters 
+        .code = KEY_2,               // input event code (KEY_*, SW_*) 
+        .active_low = 1,
+        .type = EV_KEY,               // input event type (EV_KEY, EV_SW) 
 	},
 };
+*/
+/*
+static struct tca6416_button xga_gpio_keys[] = {
+         KEYPAD_BUTTON_LOW(KEY_HOME),
+         KEYPAD_BUTTON_LOW(KEY_MENU),
+         KEYPAD_BUTTON_LOW(KEY_BACK),
+         KEYPAD_BUTTON_LOW(KEY_POWER),
+};
+*/
 
-static void sht15_init(){
-	int err;
-
-        setup_pin_mux(sht15_pin_mux);
-        err = platform_device_register(&sht15);
-        if (err) {
-                pr_err("failed to register sht15.\n");
-        }
-}
+static struct tca6416_keys_platform_data tca6416_info = {
+        .buttons=tca_buttons,
+        .nbuttons=ARRAY_SIZE(tca_buttons),
+        .rep=1,     /* enable input subsystem auto repeat */
+        .pinmask=0xFFFF,
+        .invert=0,
+        .irq_is_gpio=0,
+        .use_polling=1,        /* use polling if Interrupt is not connected*/
+};
 
 static void matrix_keypad_init(int evm_id, int profile)
 {
@@ -1711,6 +1801,10 @@ static void i2c1_init(int evm_id, int profile)
 }
 
 static struct i2c_board_info am335x_i2c2_boardinfo[] = {
+	{
+		I2C_BOARD_INFO("tca6416-keys", 0x20),
+		.platform_data = &tca6416_info,
+	},
 };
 
 static void i2c2_init(int evm_id, int profile)
@@ -2363,7 +2457,6 @@ static struct evm_dev_cfg beagleboneblack_dev_cfg[] = {
 static struct evm_dev_cfg aria_cfg[] = {
 	{am335x_rtc_init, DEV_ON_BASEBOARD, PROFILE_NONE},
 	{enable_ecap2,     DEV_ON_BASEBOARD, PROFILE_ALL},
-	{mfd_tscadc_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{lcdc_init,	DEV_ON_BASEBOARD, PROFILE_NONE },
 	{aria_gpio_led_init,  DEV_ON_BASEBOARD, PROFILE_ALL},
 	{tps65217_init, DEV_ON_BASEBOARD, PROFILE_NONE},
@@ -2371,12 +2464,12 @@ static struct evm_dev_cfg aria_cfg[] = {
 	{aria_mii1_init, DEV_ON_BASEBOARD, PROFILE_NONE},
 	{mmc1_emmc_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{mmc0_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
+	{i2c2_init,	DEV_ON_BASEBOARD, PROFILE_ALL},
 	//{spi0_init,     DEV_ON_BASEBOARD, PROFILE_ALL},
-	{uart2_init,     DEV_ON_BASEBOARD, PROFILE_ALL},
-	{uart1_wl12xx_init, DEV_ON_BASEBOARD, PROFILE_ALL},
+	//{uart2_init,     DEV_ON_BASEBOARD, PROFILE_ALL},
+	//{uart1_wl12xx_init, DEV_ON_BASEBOARD, PROFILE_ALL},
 	{usb0_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{usb1_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
-	{sht15_init},
     {NULL, 0, 0},
 };
 	
@@ -2866,16 +2959,6 @@ static struct i2c_board_info __initdata am335x_i2c0_boardinfo[] = {
 		.platform_data  = &am335x_baseboard_eeprom_info,
 	},
 	{
-		I2C_BOARD_INFO("cpld_reg", 0x35),
-	},
-	{
-		I2C_BOARD_INFO("tlc59108", 0x40),
-	},
-	{
-		I2C_BOARD_INFO("tps65910", TPS65910_I2C_ID1),
-		.platform_data  = &am335x_tps65910_info,
-	},
-	{
 		I2C_BOARD_INFO("tlv320aic3x", 0x1b),
 	},
 };
@@ -2929,8 +3012,6 @@ static void __init am335x_evm_i2c_init(void)
 {
 	/* Initially assume General Purpose EVM Config */
 	am335x_evm_id = GEN_PURP_EVM;
-
-	evm_init_cpld();
 
 	omap_register_i2c_bus(1, 100, am335x_i2c0_boardinfo,
 				ARRAY_SIZE(am335x_i2c0_boardinfo));
