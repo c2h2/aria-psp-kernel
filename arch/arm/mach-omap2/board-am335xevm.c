@@ -855,17 +855,17 @@ static struct platform_device am335x_evm_keyboard = {
 
 
 static struct tca6416_button tca_keys[] = {
-        KEYPAD_BUTTON_LOW(KEY_HOME),
-        KEYPAD_BUTTON_LOW(KEY_MENU),
-        KEYPAD_BUTTON_LOW(KEY_BACK),
-        KEYPAD_BUTTON_LOW(KEY_POWER),
-        KEYPAD_BUTTON_LOW(KEY_POWER),
-        KEYPAD_BUTTON_LOW(KEY_POWER),
-        KEYPAD_BUTTON_LOW(KEY_POWER),
-        KEYPAD_BUTTON_LOW(KEY_POWER),
-        KEYPAD_BUTTON_LOW(KEY_POWER),
-        KEYPAD_BUTTON_LOW(KEY_POWER),
-        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_1),
+        KEYPAD_BUTTON_LOW(KEY_2),
+        KEYPAD_BUTTON_LOW(KEY_3),
+        KEYPAD_BUTTON_LOW(KEY_4),
+        KEYPAD_BUTTON_LOW(KEY_5),
+        KEYPAD_BUTTON_LOW(KEY_6),
+        KEYPAD_BUTTON_LOW(KEY_7),
+        KEYPAD_BUTTON_LOW(KEY_8),
+        KEYPAD_BUTTON_LOW(KEY_9),
+        KEYPAD_BUTTON_LOW(KEY_0),
+        KEYPAD_BUTTON_LOW(KEY_A),
         KEYPAD_BUTTON_LOW(KEY_POWER),
         KEYPAD_BUTTON_LOW(KEY_POWER),
         KEYPAD_BUTTON_LOW(KEY_POWER),
@@ -925,7 +925,7 @@ static struct tca6416_button tca_keys[] = {
         KEYPAD_BUTTON_LOW(KEY_POWER),
 };
 
-/*
+
 static struct tca6416_button tca_buttons[] ={
 	{        // Configuration parameters 
         .code = KEY_1,               // input event code (KEY_*, SW_*) 
@@ -938,7 +938,7 @@ static struct tca6416_button tca_buttons[] ={
         .type = EV_KEY,               // input event type (EV_KEY, EV_SW) 
 	},
 };
-*/
+
 /*
 static struct tca6416_button xga_gpio_keys[] = {
          KEYPAD_BUTTON_LOW(KEY_HOME),
@@ -949,8 +949,8 @@ static struct tca6416_button xga_gpio_keys[] = {
 */
 
 static struct tca6416_keys_platform_data tca6416_info = {
-        .buttons=tca_buttons,
-        .nbuttons=ARRAY_SIZE(tca_buttons),
+        .buttons=tca_keys,
+        .nbuttons=ARRAY_SIZE(tca_keys),
         .rep=1,     /* enable input subsystem auto repeat */
         .pinmask=0xFFFF,
         .invert=0,

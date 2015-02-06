@@ -26,6 +26,7 @@
 #define TCA6416_OUTPUT         1
 #define TCA6416_INVERT         2
 #define TCA6416_DIRECTION      3
+#define DEBUG_TCA6416          1
 
 static const struct i2c_device_id tca6416_id[] = {
 	{ "tca6416-keys", 16, },
@@ -87,23 +88,119 @@ static int tca6416_read_reg(struct tca6416_keypad_chip *chip, int reg, u16 *val)
 	*val = (u16)retval;
 	return 0;
 }
+static int tca6416_get_1_bit(int val)
+{
+    int i;
+
+    for(i=0; i< 16; i++)
+    {
+        if((val & 0x01) != 0)
+        {
+            return i;
+        }
+        else
+            val >>= 1;
+    }
+
+    return 0;
+}
 
 static void tca6416_keys_scan(struct tca6416_keypad_chip *chip)
 {
 	struct input_dev *input = chip->input;
-	u16 reg_val, val;
-	int error, i, pin_index;
+	u16 reg_val, col,row, val;
+	int error, pin_index = 0;
 
-	error = tca6416_read_reg(chip, TCA6416_INPUT, &reg_val);
+    //set P0 in,P1 out
+    error = tca6416_write_reg(chip, TCA6416_DIRECTION, 0x00ff);
+    if (error)
+        return;
+
+    error = tca6416_write_reg(chip,TCA6416_OUTPUT,0x0000);
 	if (error)
-		return;
+	    return;
+    
+    error = tca6416_read_reg(chip,TCA6416_INPUT, &reg_val);
+    if(reg_val == 0xff)
+        return;
+    #ifdef DEBUG_TCA6416
+        printk("TCA6416: row: %x\t",reg_val);
+    #endif 
+    row = tca6416_get_1_bit((~reg_val) & 0xff);
+        
+    #ifdef DEBUG_TCA6416
+        printk("row bit: %d\t",row);
+    #endif 
+    //set P0 out, P1 in
+    error = tca6416_write_reg(chip, TCA6416_DIRECTION, 0xff00);
+    if (error)
+        return;
 
-	reg_val &= chip->pinmask;
+    error = tca6416_write_reg(chip,TCA6416_OUTPUT,0x0000);
+	if (error)
+	    return;
 
-	/* Figure out which lines have changed */
-	val = reg_val ^ chip->reg_input;
-	chip->reg_input = reg_val;
+    error = tca6416_read_reg(chip,TCA6416_INPUT, &reg_val);
+    reg_val >>= 8;
+    if(reg_val == 0xff)
+        return;
+        
+    #ifdef DEBUG_TCA6416
+        printk("col: %x\t",reg_val);
+    #endif 
+    col = tca6416_get_1_bit((~reg_val) & 0xff);
+    #ifdef DEBUG_TCA6416
+        printk("col bit: %d\t",col);
+    #endif 
+    val = row * 8 + col;
+    #ifdef DEBUG_TCA6416
+        printk("val: %d\n",val);
+    #endif
+ //   if(val != 0)
+    
+        struct tca6416_button *button = &chip->buttons[val];
+        unsigned int type = button->type ?: EV_KEY;
+        int state = 0;
+            
+        input_event(input, EV_KEY, button->code, 0);
+        input_sync(input);
+   
 
+    /* Figure out which lines have changed */
+//	val = reg_val ^ chip->reg_input;
+
+#if 0
+    for(i=0,pin_index=0; i<8; i++)
+    {
+        error = tca6416_write_reg(chip,TCA6416_OUTPUT,((~(0x0100 << i)) & 0xff00));
+        if (error)
+            return;
+        
+        error = tca6416_read_reg(chip,TCA6416_INPUT, &reg_val);
+        if (error)
+            return;
+        if(reg_val == 0xff)
+            continue;
+        n = tca6416_get_1_bit((~reg_val) & 0xff);
+
+        val = val * 8 + n;
+#ifdef DEBUG_TCA6416
+        printk("TCA6416: key_val: %d\t",val);
+#endif
+        if(reg_val != 0)
+        {
+            struct tca6416_button *button = &chip->buttons[pin_index];
+            unsigned int type = button->type ?: EV_KEY;
+            int state = 0;
+            
+            button->code = val;
+            input_event(input, type, button->code, !!state);
+            input_sync(input);
+        }
+    }
+#endif
+    
+/*
 	for (i = 0, pin_index = 0; i < 16; i++) {
 		if (val & (1 << i)) {
 			struct tca6416_button *button = &chip->buttons[pin_index];
@@ -118,6 +215,7 @@ static void tca6416_keys_scan(struct tca6416_keypad_chip *chip)
 		if (chip->pinmask & (1 << i))
 			pin_index++;
 	}
+*/
 }
 
 /*
@@ -174,13 +272,13 @@ static int __devinit tca6416_setup_registers(struct tca6416_keypad_chip *chip)
 	if (error)
 		return error;
 
-	error = tca6416_read_reg(chip, TCA6416_DIRECTION, &chip->reg_direction);
-	if (error)
-		return error;
+//	error = tca6416_read_reg(chip, TCA6416_DIRECTION, &chip->reg_direction);
+//	if (error)
+//		return error;
 
-	/* ensure that keypad pins are set to input */
+	/* ensurr that keypad pins are set to input */
 	error = tca6416_write_reg(chip, TCA6416_DIRECTION,
-				  chip->reg_direction | chip->pinmask);
+				  0x00ff);
 	if (error)
 		return error;
 
