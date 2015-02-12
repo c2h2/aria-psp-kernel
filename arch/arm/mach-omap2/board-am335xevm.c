@@ -767,6 +767,20 @@ static struct pinmux_config aria_gpio_led_mux[] = {
 	{NULL, 0},
 };
 
+/* pinmux for xga gpios */
+static struct pinmux_config aria_xga_gpio_mux[] = {
+        {"mcasp0_aclkx.gpio3_14", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+        {"mcasp0_fsx.gpio3_15", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+        {"mcasp0_axr0.gpio3_16", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+        {"mcasp0_aclkr.gpio3_18", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+        {"mcasp0_fsr.gpio3_19", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+        {"mcasp0_axr1.gpio3_20", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+        {"mcasp0_ahclkx.gpio3_21", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+        {"xdma_event_intr1.gpio0_20", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+        {"gpmc_ben1.gpio1_28", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+        {NULL, 0},
+};
+
 
 static struct pinmux_config gpio_ddr_vtt_enb_pin_mux[] = {
 	{"ecap0_in_pwm0_out.gpio0_7", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
@@ -1192,6 +1206,18 @@ static struct pinmux_config uart1_wl12xx_pin_mux[] = {
 	{"uart1_rxd.uart1_rxd", OMAP_MUX_MODE0 | AM33XX_PIN_INPUT_PULLUP},
 	{"uart1_txd.uart1_txd", OMAP_MUX_MODE0 | AM33XX_PULL_ENBL},
 	{NULL, 0},
+};
+
+static struct pinmux_config uart1_pin_mux[] = {
+        {"uart1_rxd.uart1_rxd", OMAP_MUX_MODE0 | AM33XX_PIN_INPUT_PULLUP}, 
+        {"uart1_txd.uart1_txd", OMAP_MUX_MODE0 | AM33XX_PULL_ENBL},
+        {NULL, 0},
+};
+
+static struct pinmux_config uart4_pin_mux[] = {
+        {"uart0_ctsn.uart4_rxd", OMAP_MUX_MODE1 | AM33XX_PIN_INPUT_PULLUP}, //gpio1-8
+        {"uart0_rtsn.uart4_txd", OMAP_MUX_MODE1 | AM33XX_PULL_ENBL}, //gpio1-9
+        {NULL, 0},
 };
 
 static struct pinmux_config wl12xx_pin_mux[] = {
@@ -1966,6 +1992,16 @@ static void uart1_wl12xx_init(int evm_id, int profile)
 	setup_pin_mux(uart1_wl12xx_pin_mux);
 }
 
+static void uart1_init(int evm_id, int profile)
+{
+        setup_pin_mux(uart1_pin_mux);
+}
+
+static void uart4_init(int evm_id, int profile)
+{
+        setup_pin_mux(uart4_pin_mux);
+}
+
 static void wl12xx_bluetooth_enable(void)
 {
 	int status = gpio_request(am335xevm_wlan_data.bt_enable_gpio,
@@ -2295,6 +2331,12 @@ static void aria_gpio_led_init(int evm_id, int profile)
 }
 
 
+static void aria_xga_gpio_init(int evm_id, int profile)
+{
+        setup_pin_mux(aria_xga_gpio_mux);
+	return;
+}
+
 /* setup spi0 */
 static void spi0_init(int evm_id, int profile)
 {
@@ -2525,16 +2567,15 @@ static struct evm_dev_cfg aria_cfg[] = {
 	{am335x_rtc_init, DEV_ON_BASEBOARD, PROFILE_NONE},
 	{enable_ecap2,     DEV_ON_BASEBOARD, PROFILE_ALL},
 	{lcdc_init,	DEV_ON_BASEBOARD, PROFILE_NONE },
-	{aria_gpio_led_init,  DEV_ON_BASEBOARD, PROFILE_ALL},
+	{aria_xga_gpio_init, DEV_ON_BASEBOARD, PROFILE_ALL},
 	{tps65217_init, DEV_ON_BASEBOARD, PROFILE_NONE},
-	{mcasp1_init, DEV_ON_BASEBOARD, PROFILE_NONE},
+	//{mcasp1_init, DEV_ON_BASEBOARD, PROFILE_NONE}, //we dont need sound
 	{aria_mii1_init, DEV_ON_BASEBOARD, PROFILE_NONE},
 	{mmc1_emmc_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{mmc0_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{i2c2_init,	DEV_ON_BASEBOARD, PROFILE_ALL},
-	//{spi0_init,     DEV_ON_BASEBOARD, PROFILE_ALL},
-	//{uart2_init,     DEV_ON_BASEBOARD, PROFILE_ALL},
-	//{uart1_wl12xx_init, DEV_ON_BASEBOARD, PROFILE_ALL},
+	{uart1_init, 	DEV_ON_BASEBOARD, PROFILE_ALL},
+	{uart4_init,     DEV_ON_BASEBOARD, PROFILE_ALL},
 	{usb0_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{usb1_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
     {NULL, 0, 0},
