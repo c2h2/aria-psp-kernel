@@ -1215,8 +1215,8 @@ static struct pinmux_config uart1_pin_mux[] = {
 };
 
 static struct pinmux_config uart4_pin_mux[] = {
-        {"uart0_ctsn.uart4_rxd", OMAP_MUX_MODE0 | AM33XX_PIN_INPUT_PULLUP}, //gpio1-8
-        {"uart0_rtsn.uart4_txd", OMAP_MUX_MODE0 | AM33XX_PULL_ENBL}, //gpio1-9
+        {"uart0_ctsn.uart4_rxd", OMAP_MUX_MODE1 | AM33XX_PIN_INPUT_PULLUP}, //gpio1-8
+        {"uart0_rtsn.uart4_txd", OMAP_MUX_MODE1 | AM33XX_PULL_ENBL}, //gpio1-9
         {NULL, 0},
 };
 
