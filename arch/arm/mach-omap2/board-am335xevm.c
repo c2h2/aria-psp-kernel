@@ -778,6 +778,8 @@ static struct pinmux_config aria_xga_gpio_mux[] = {
         {"mcasp0_ahclkx.gpio3_21", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
         {"xdma_event_intr1.gpio0_20", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
         {"gpmc_ben1.gpio1_28", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+        {"gpmc_a8.gpio1_24", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
+        {"gpmc_a9.gpio1_25", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
         {NULL, 0},
 };
 
