@@ -26,7 +26,7 @@
 #define TCA6416_OUTPUT         1
 #define TCA6416_INVERT         2
 #define TCA6416_DIRECTION      3
-#define DEBUG_TCA6416          1
+//#define DEBUG_TCA6416          1
 
 #define MATRIX_MAX_COLS 8
 
@@ -161,7 +161,7 @@ static uint16_t tca6416_get_val(uint16_t col, uint16_t row)
     uint16_t val;
  
     val = tca6416_get_1_bit((~col) & 0xff);
-    val = val * 8 + tca6416_get_1_bit((~row) & 0xff) + 1;
+    val = val * 8 + tca6416_get_1_bit((~row) & 0xff);
     
     return val;
 }
@@ -218,20 +218,14 @@ static void tca6416_keys_scan(struct tca6416_keypad_chip *chip)
     val =  tca6416_get_val(col, row);
     button = &chip->buttons[val];
 
-    if(val == tca6416_get_val(chip->last_key_col, chip->last_key_row))
-    {
-        button->active_low = 1;
-        input_event(input, EV_KEY, button->code, button->active_low);
-        input_sync(input);    
-    }
-    else
-    {
-        button->active_low = 1;
-        input_event(input, EV_KEY, button->code, button->active_low);
-        input_sync(input);
-        chip->last_key_row = row;
-        chip->last_key_col = col;
-    }
+#ifdef DEBUG_TCA6416
+    printk("val: %d\t",val);
+#endif
+    button->active_low = 1;
+    input_event(input, EV_KEY, button->code, button->active_low);
+    input_sync(input);
+    chip->last_key_row = row;
+    chip->last_key_col = col;
 
     /* Figure out which lines have changed */
 }
