@@ -716,14 +716,14 @@ static struct pinmux_config mmc1_cd_only_pin_mux[] = {
 };
 
 static struct pinmux_config uart5_pin_mux[] = {
-	{"lcd_data9.uart5_rxd", AM33XX_PIN_INPUT_PULLUP},
-	{"lcd_data8.uart5_txd", AM33XX_PULL_ENBL},
+	{"lcd_data9.uart5_rxd", OMAP_MUX_MODE4 | AM33XX_PIN_INPUT_PULLUP},
+	{"lcd_data8.uart5_txd", OMAP_MUX_MODE4 | AM33XX_PULL_ENBL},
 	{NULL, 0},
 };
 
 static struct pinmux_config uart4_pin_mux[] = {
-	{"uart0_ctsn.uart4_rxd", AM33XX_PIN_INPUT_PULLUP},
-	{"uart0_rtsn.uart4_txd", AM33XX_PULL_ENBL},
+	{"uart1_ctsn.uart4_rxd", OMAP_MUX_MODE2 | AM33XX_PIN_INPUT_PULLUP},
+	{"uart1_rtsn.uart4_txd", OMAP_MUX_MODE2 | AM33XX_PULL_ENBL},
 	{NULL, 0},
 };
 
@@ -804,10 +804,10 @@ static struct pinmux_config aria_gpios_mux[] = {
 	{"lcd_data4.gpio2_10", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
 	{"gpmc_csn3.gpio2_0", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
 	{"gpmc_clk.gpio2_1", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
-	{"gpmc_ad8.gpio2_22", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
-	{"gpmc_ad9.gpio2_23", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
-	{"gpmc_ad10.gpio2_26", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
-	{"gpmc_ad11.gpio2_27", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
+	{"gpmc_ad8.gpio0_22", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
+	{"gpmc_ad9.gpio0_23", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
+	{"gpmc_ad10.gpio0_26", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
+	{"gpmc_ad11.gpio0_27", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
 	{"gpmc_ad12.gpio1_12", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
 	{"gpmc_ad13.gpio1_13", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
 	{"gpmc_ad14.gpio1_14", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
@@ -1747,12 +1747,6 @@ static void lis331dlh_init(int evm_id, int profile)
 static struct i2c_board_info am335x_i2c1_boardinfo[] = {
 	{
 		I2C_BOARD_INFO("tlv320aic3x", 0x1b),
-	},
-	{
-		I2C_BOARD_INFO("tsl2550", 0x39),
-	},
-	{
-		I2C_BOARD_INFO("tmp275", 0x48),
 	},
 };
 
@@ -2925,11 +2919,6 @@ static struct tps65910_board am335x_tps65910_info = {
 */
 static struct i2c_board_info __initdata am335x_i2c0_boardinfo[] = {
 	{
-		/* Daughter Board EEPROM */
-		I2C_BOARD_INFO("24c256", DAUG_BOARD_I2C_ADDR),
-		.platform_data  = &am335x_daughter_board_eeprom_info,
-	},
-	{
 		/* Baseboard board EEPROM */
 #if EEPROM_24c02
 		I2C_BOARD_INFO("24c02", BASEBOARD_I2C_ADDR),
@@ -2937,19 +2926,6 @@ static struct i2c_board_info __initdata am335x_i2c0_boardinfo[] = {
 		I2C_BOARD_INFO("24c256", BASEBOARD_I2C_ADDR),
 #endif
 		.platform_data  = &am335x_baseboard_eeprom_info,
-	},
-	{
-		I2C_BOARD_INFO("cpld_reg", 0x35),
-	},
-	{
-		I2C_BOARD_INFO("tlc59108", 0x40),
-	},
-	{
-		I2C_BOARD_INFO("tps65910", TPS65910_I2C_ID1),
-		.platform_data  = &am335x_tps65910_info,
-	},
-	{
-		I2C_BOARD_INFO("tlv320aic3x", 0x1b),
 	},
 };
 
