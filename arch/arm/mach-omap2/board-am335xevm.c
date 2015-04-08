@@ -731,6 +731,13 @@ static struct pinmux_config d_can_ia_pin_mux[] = {
 	{NULL, 0},
 };
 
+/*aria d_can */
+static struct pinmux_config d_can_aria_pin_mux[] = {
+        {"uart1_rxd.d_can1_tx", OMAP_MUX_MODE2 | AM33XX_PULL_ENBL},
+        {"uart1_txd.d_can1_rx", OMAP_MUX_MODE2 | AM33XX_PIN_INPUT_PULLUP},
+        {NULL, 0},
+};
+
 /* Module pin mux for uart2 */
 static struct pinmux_config uart2_pin_mux[] = {
 	{"spi0_sclk.uart2_rxd", OMAP_MUX_MODE1 | AM33XX_SLEWCTRL_SLOW |
@@ -2097,6 +2104,7 @@ out:
 
 static void d_can_init(int evm_id, int profile)
 {
+#if 0
 	switch (evm_id) {
 	case IND_AUT_MTR_EVM:
 		if ((profile == PROFILE_0) || (profile == PROFILE_1)) {
@@ -2114,8 +2122,13 @@ static void d_can_init(int evm_id, int profile)
 		}
 		break;
 	default:
+#endif
+		setup_pin_mux(d_can_aria_pin_mux);
+		am33xx_d_can_init(1);
+#if 0
 		break;
 	}
+#endif
 }
 
 static void mmc0_init(int evm_id, int profile)
@@ -2571,12 +2584,13 @@ static struct evm_dev_cfg aria_cfg[] = {
 	{lcdc_init,	DEV_ON_BASEBOARD, PROFILE_NONE },
 	{aria_xga_gpio_init, DEV_ON_BASEBOARD, PROFILE_ALL},
 	{tps65217_init, DEV_ON_BASEBOARD, PROFILE_NONE},
-	//{mcasp1_init, DEV_ON_BASEBOARD, PROFILE_NONE}, //we dont need sound
+	//{mcasp1_init, DEV_ON_BASEBOARD, PROFILE_NONE}, //we dont need sound.
 	{aria_mii1_init, DEV_ON_BASEBOARD, PROFILE_NONE},
 	{mmc1_emmc_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{mmc0_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{i2c2_init,	DEV_ON_BASEBOARD, PROFILE_ALL},
-	{uart1_init, 	DEV_ON_BASEBOARD, PROFILE_ALL},
+	//{uart1_init, 	DEV_ON_BASEBOARD, PROFILE_ALL}, //use d_can instead.
+	{d_can_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{uart4_init,     DEV_ON_BASEBOARD, PROFILE_ALL},
 	{usb0_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{usb1_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
