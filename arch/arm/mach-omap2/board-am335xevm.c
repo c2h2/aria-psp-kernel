@@ -2124,7 +2124,9 @@ static void d_can_init(int evm_id, int profile)
 	default:
 #endif
 		setup_pin_mux(d_can_aria_pin_mux);
+		//setup_pin_mux(d_can_gp_pin_mux);
 		am33xx_d_can_init(1);
+		//am33xx_d_can_init(0);
 #if 0
 		break;
 	}
