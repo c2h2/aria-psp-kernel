@@ -291,19 +291,34 @@ static struct da8xx_panel known_lcd_panels[] = {
 		.invert_pxl_clk = 0,
 	},
 	 /* TM097TDH02_V2.0 */
-        [4] = {
-                .name = "TM097TDH02",
-                .width = 1024,
-                .height = 768,
-                .hfp = 50,
-                .hbp = 50,
-                .hsw = 25,
-                .vfp = 8,
-                .vbp = 8,
-                .vsw = 5,
-                .pxl_clk = 52000000,
-                .invert_pxl_clk = 0,
-        },
+    [4] = {
+        .name = "TM097TDH02",
+        .width = 1024,
+        .height = 768,
+        .hfp = 50,
+        .hbp = 50,
+        .hsw = 25,
+        .vfp = 8,
+        .vbp = 8,
+        .vsw = 5,
+        .pxl_clk = 52000000,
+        .invert_pxl_clk = 0,
+    },
+    /* TM104SDH01 */
+    [5] = {
+        .name = "TM104SDH01",
+        .width = 800,
+        .height = 600,
+        .hfp = 128,
+        .hbp = 128,
+        .hsw = 25,
+        .vfp = 14,
+        .vbp = 14,
+        .vsw = 5,
+        .pxl_clk = 52000000,
+        .invert_pxl_clk = 0,
+    },
+    
 
 };
 
