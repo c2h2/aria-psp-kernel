@@ -553,6 +553,7 @@ static struct pinmux_config rgmii1_pin_mux[] = {
 	{"mii1_rxd0.rgmii1_rd0", OMAP_MUX_MODE2 | AM33XX_PIN_INPUT_PULLDOWN},
 	{"mdio_data.mdio_data", OMAP_MUX_MODE0 | AM33XX_PIN_INPUT_PULLUP},
 	{"mdio_clk.mdio_clk", OMAP_MUX_MODE0 | AM33XX_PIN_OUTPUT_PULLUP},
+	{},
 	{NULL, 0},
 };
 
@@ -612,6 +613,7 @@ static struct pinmux_config aria_mii1_pin_mux[] = {
 	{"mii1_rxd0.mii1_rxd0", OMAP_MUX_MODE0 | AM33XX_PIN_INPUT_PULLDOWN},
 	{"mdio_data.mdio_data", OMAP_MUX_MODE0 | AM33XX_PIN_INPUT_PULLUP},
 	{"mdio_clk.mdio_clk", OMAP_MUX_MODE0 | AM33XX_PIN_OUTPUT_PULLUP},
+        {"ecap0_in_pwm0_out.gpio0_7", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT_PULLUP},
 	{NULL, 0},
 };
 
@@ -764,7 +766,7 @@ static struct pinmux_config aria_gpio_led_mux[] = {
 
 
 static struct pinmux_config gpio_ddr_vtt_enb_pin_mux[] = {
-	{"ecap0_in_pwm0_out.gpio0_7", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+	{"ecap0_in_pwm0_out.pio0_7", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{NULL, 0},
 };
 
@@ -2608,94 +2610,9 @@ static void am335x_evm_setup(struct memory_accessor *mem_acc, void *context)
 	int ret;
 	char tmp[10];
 
-	/* 1st get the MAC address from EEPROM */
-	ret = mem_acc->read(mem_acc, (char *)&am335x_mac_addr,
-		EEPROM_MAC_ADDRESS_OFFSET, sizeof(am335x_mac_addr));
-
-	if (ret != sizeof(am335x_mac_addr)) {
-		pr_warning("AM335X: EVM Config read fail: %d\n", ret);
-		return;
-	}
-
-	/* Fillup global mac id */
-	am33xx_cpsw_macidfillup(&am335x_mac_addr[0][0],
-				&am335x_mac_addr[1][0]);
-
-	/* get board specific data */
-	ret = mem_acc->read(mem_acc, (char *)&config, 0, sizeof(config));
-	if (ret != sizeof(config)) {
-		pr_err("AM335X EVM config read fail, read %d bytes\n", ret);
-		pr_err("This likely means that there either is no/or a failed EEPROM\n");
-		goto out;
-	}
-
-	if (config.header != AM335X_EEPROM_HEADER) {
-		pr_err("AM335X: wrong header 0x%x, expected 0x%x\n", config.header, AM335X_EEPROM_HEADER);
-		setup_aria();
-        //goto out;
-	}else{
-
-    	if (strncmp("A335", config.name, 4)) {
-	    	pr_err("Assuming Aria Board.",
-		    	config.name);
-		setup_aria();
-		    goto _skip;
-	    }
-
-    	snprintf(tmp, sizeof(config.name) + 1, "%s", config.name);
-	    pr_info("Board name: %s\n", tmp);
-    	snprintf(tmp, sizeof(config.version) + 1, "%s", config.version);
-    	pr_info("Board version: %s\n", tmp);
-
-	    if (!strncmp("A335BONE", config.name, 8)) {
-	    	daughter_brd_detected = false;
-	    	if(!strncmp("00A1", config.version, 4) ||
-	    	   !strncmp("00A2", config.version, 4))
-	    		setup_beaglebone_old();
-	    	else
-		    	setup_beaglebone();
-    	} else if (!strncmp("A335BNLT", config.name, 8)) {
-	    	setup_beagleboneblack();
-    	} else if (!strncmp("A335X_SK", config.name, 8)) {
-	    	daughter_brd_detected = false;
-		    setup_starterkit();
-    	} else {
-	    	/* only 6 characters of options string used for now */
-    		snprintf(tmp, 7, "%s", config.opt);
-	    	pr_info("SKU: %s\n", tmp);
-
-		    if (!strncmp("SKU#01", config.opt, 6))
-			    setup_general_purpose_evm();
-		    else if (!strncmp("SKU#02", config.opt, 6))
-			    setup_ind_auto_motor_ctrl_evm();
-		    else
-			    goto out;
-	    }
-
-	    am335x_opp_update();
-
-    	/*
-	     * For now, Beaglebone Black uses PG 2.0 that are speed binned and operate
-    	 * up to 1GHz. So re-enable Turbo and Nitro modes,
-    	 */
-    	if (!strncmp("A335BNLT", config.name, 8)) {
-    		struct device *mpu_dev;
-
-    		mpu_dev = omap_device_get_by_hwmod_name("mpu");
-    		opp_enable(mpu_dev,
-    			    AM33XX_ES2_0_OPPTURBO_FREQ);
-    		opp_enable(mpu_dev,
-    			    AM33XX_ES2_0_OPPNITRO_FREQ);
-    	}
-    }
-
-_skip:
-	/* SmartReflex also requires board information. */
-    //TODO temp fix
-	am33xx_sr_init();
-
+	setup_aria();
 	return;
-
+	//am335x_opp_update();
 out:
 	/*
 	 * If the EEPROM hasn't been programed or an incorrect header
@@ -2802,30 +2719,6 @@ static struct tps65910_board am335x_tps65910_info = {
 */
 static struct i2c_board_info __initdata am335x_i2c0_boardinfo[] = {
 	{
-		/* Daughter Board EEPROM */
-		I2C_BOARD_INFO("24c256", DAUG_BOARD_I2C_ADDR),
-		.platform_data  = &am335x_daughter_board_eeprom_info,
-	},
-	{
-		/* Baseboard board EEPROM */
-#if EEPROM_24c02
-		I2C_BOARD_INFO("24c02", BASEBOARD_I2C_ADDR),
-#else
-		I2C_BOARD_INFO("24c256", BASEBOARD_I2C_ADDR),
-#endif
-		.platform_data  = &am335x_baseboard_eeprom_info,
-	},
-	{
-		I2C_BOARD_INFO("cpld_reg", 0x35),
-	},
-	{
-		I2C_BOARD_INFO("tlc59108", 0x40),
-	},
-	{
-		I2C_BOARD_INFO("tps65910", TPS65910_I2C_ID1),
-		.platform_data  = &am335x_tps65910_info,
-	},
-	{
 		I2C_BOARD_INFO("tlv320aic3x", 0x1b),
 	},
 };
@@ -2880,10 +2773,13 @@ static void __init am335x_evm_i2c_init(void)
 	/* Initially assume General Purpose EVM Config */
 	am335x_evm_id = GEN_PURP_EVM;
 
-	evm_init_cpld();
+	//evm_init_cpld();
 
 	omap_register_i2c_bus(1, 100, am335x_i2c0_boardinfo,
 				ARRAY_SIZE(am335x_i2c0_boardinfo));
+
+	//just setup aria board.
+	setup_aria();
 }
 
 void __iomem *am33xx_emif_base;
@@ -2955,7 +2851,7 @@ static void __init am335x_evm_init(void)
 	omap_serial_init();
 	am335x_evm_i2c_init();
 	omap_sdrc_init(NULL, NULL);
-	usb_musb_init(&musb_board_data);
+	//usb_musb_init(&musb_board_data);
 	omap_board_config = am335x_evm_config;
 	omap_board_config_size = ARRAY_SIZE(am335x_evm_config);
 	/* Create an alias for icss clock */
