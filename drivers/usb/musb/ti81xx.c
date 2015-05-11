@@ -1143,7 +1143,7 @@ static irqreturn_t ti81xx_interrupt(int irq, void *hci)
 			musb->xceiv->state = OTG_STATE_A_WAIT_VFALL;
 			mod_timer(&musb->otg_workaround,
 						jiffies + POLL_SECONDS * HZ);
-			WARNING("VBUS error workaround (delay coming)\n");
+			/*WARNING("VBUS error workaround (delay coming)\n");*/
 		} else if (is_host_enabled(musb) && drvvbus) {
 			if ((devctl & MUSB_DEVCTL_SESSION) &&
 				!(devctl & MUSB_DEVCTL_BDEVICE) &&
