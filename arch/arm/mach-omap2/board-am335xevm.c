@@ -724,9 +724,9 @@ static struct pinmux_config d_can_ia_pin_mux[] = {
 
 /* Module pin mux for uart2 */
 static struct pinmux_config uart2_pin_mux[] = {
-	{"spi0_sclk.uart2_rxd", OMAP_MUX_MODE1 | AM33XX_SLEWCTRL_SLOW |
+	{"spi0_sclk.gpio0_2", OMAP_MUX_MODE1 | AM33XX_SLEWCTRL_SLOW |
 						AM33XX_PIN_INPUT_PULLUP},
-	{"spi0_d0.uart2_txd", OMAP_MUX_MODE1 | AM33XX_PULL_UP |
+	{"spi0_d0.gpio0_3", OMAP_MUX_MODE1 | AM33XX_PULL_UP |
 						AM33XX_PULL_DISA |
 						AM33XX_SLEWCTRL_SLOW},
 	{NULL, 0},
@@ -875,8 +875,8 @@ static void matrix_keypad_init(int evm_id, int profile)
 
 /* pinmux for keypad device */
 static struct pinmux_config volume_keys_pin_mux[] = {
-	{"spi0_sclk.gpio0_2",  OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
-	{"spi0_d0.gpio0_3",    OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
+	{"spi0_sclk.uart2_rxd",  OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
+	{"spi0_d0.uart2_txd",    OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
 	{NULL, 0},
 };
 
