@@ -2328,7 +2328,9 @@ static struct evm_dev_cfg aria_cfg[] = {
 	//{evm_nand_init, DEV_ON_BASEBOARD, PROFILE_ALL},
 	{mmc1_emmc_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{mmc0_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
-	{spi0_init,     DEV_ON_BASEBOARD, PROFILE_ALL},
+	{uart1_wl12xx_init, DEV_ON_BASEBOARD, PROFILE_ALL},
+	{uart2_init, DEV_ON_BASEBOARD, PROFILE_ALL},
+	//{spi0_init,     DEV_ON_BASEBOARD, PROFILE_ALL},
 	{NULL, 0, 0},
 };
 	
