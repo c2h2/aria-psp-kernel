@@ -740,10 +740,11 @@ static struct pinmux_config uart2_pin_mux[] = {
 
 /* pinmux for gpio based key */
 static struct pinmux_config gpio_keys_pin_mux[] = {
-	{"gpmc_wait0.gpio0_30", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
-	{"gpmc_oen_ren.gpio2_3", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
-	{"gpmc_advn_ale.gpio2_2", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
-	{"gpmc_ben0_cle.gpio2_5", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
+	{"mcasp0_ahclkr.gpio3_17", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
+//	{"gpmc_wait0.gpio0_30", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
+//	{"gpmc_oen_ren.gpio2_3", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
+//	{"gpmc_advn_ale.gpio2_2", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
+//	{"gpmc_ben0_cle.gpio2_5", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
 	{NULL, 0},
 };
 
@@ -1963,25 +1964,9 @@ static void mmc0_no_cd_init(int evm_id, int profile)
 /* Configure GPIOs for GPIO Keys */
 static struct gpio_keys_button am335x_evm_gpio_buttons[] = {
 	{
-		.code                   = BTN_0,
-		.gpio                   = GPIO_TO_PIN(2, 3),
-		.desc                   = "SW1",
-	},
-	{
-		.code                   = BTN_1,
-		.gpio                   = GPIO_TO_PIN(2, 2),
-		.desc                   = "SW2",
-	},
-	{
-		.code                   = BTN_2,
-		.gpio                   = GPIO_TO_PIN(0, 30),
-		.desc                   = "SW3",
-		.wakeup                 = 1,
-	},
-	{
-		.code                   = BTN_3,
-		.gpio                   = GPIO_TO_PIN(2, 5),
-		.desc                   = "SW4",
+		.code                   = KEY_F1,
+		.gpio                   = GPIO_TO_PIN(3, 17),
+		.desc                   = "CALL_KEY_F1",
 	},
 };
 
@@ -2326,6 +2311,7 @@ static struct evm_dev_cfg aria_cfg[] = {
 	{mcasp1_init, DEV_ON_BASEBOARD, PROFILE_NONE},
 	{aria_mii1_init, DEV_ON_BASEBOARD, PROFILE_NONE},
 	//{evm_nand_init, DEV_ON_BASEBOARD, PROFILE_ALL},
+	{gpio_keys_init,  DEV_ON_BASEBOARD, PROFILE_ALL},
 	{mmc1_emmc_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{mmc0_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{spi0_init,     DEV_ON_BASEBOARD, PROFILE_ALL},
