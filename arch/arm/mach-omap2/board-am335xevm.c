@@ -2314,6 +2314,7 @@ static struct evm_dev_cfg aria_cfg[] = {
 	{gpio_keys_init,  DEV_ON_BASEBOARD, PROFILE_ALL},
 	{mmc1_emmc_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{mmc0_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
+	{uart1_wl12xx_init, DEV_ON_BASEBOARD, PROFILE_ALL},
 	{spi0_init,     DEV_ON_BASEBOARD, PROFILE_ALL},
 	{NULL, 0, 0},
 };
