@@ -1123,7 +1123,7 @@ static void lcdc_init(int evm_id, int profile)
 		return;
 	}
 	//lcdc_pdata = &TFC_S9700RTWV35TR_01B_pdata;
-	lcdc_pdata = &SAT079AT50DHY0_A4_pdata;
+	lcdc_pdata = &NHD_480272MF_ATXI_pdata;
 	lcdc_pdata->get_context_loss_count = omap_pm_get_dev_context_loss_count;
 
 	if (am33xx_register_lcdc(lcdc_pdata))
