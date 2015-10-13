@@ -44,6 +44,8 @@
 #include <linux/rtc/rtc-omap.h>
 #include <linux/opp.h>
 
+#include <linux/tca6416_keypad.h>
+
 /* LCD controller is similar to DA850 */
 #include <video/da8xx-fb.h>
 
@@ -836,6 +838,187 @@ static struct platform_device am335x_evm_keyboard = {
 	.dev   = {
 		.platform_data = &am335x_evm_keypad_platform_data,
 	},
+};
+
+/* Keypad Initialization */
+#define KEYPAD_BUTTON(ev_type, ev_code, act_low) \
+{                                                               \
+        .type           = ev_type,                              \
+        .code           = ev_code,                              \
+        .active_low     = act_low,                              \
+}
+
+#define KEYPAD_BUTTON_LOW(event_code) KEYPAD_BUTTON(EV_KEY, event_code, 1)
+
+static struct tca6416_button tca_keys[] = {
+#if 0
+        KEYPAD_BUTTON_LOW(KEY_1),
+        KEYPAD_BUTTON_LOW(KEY_2),
+        KEYPAD_BUTTON_LOW(KEY_3),
+        KEYPAD_BUTTON_LOW(KEY_4),
+        KEYPAD_BUTTON_LOW(KEY_5),
+        KEYPAD_BUTTON_LOW(KEY_6),
+        KEYPAD_BUTTON_LOW(KEY_7),
+        KEYPAD_BUTTON_LOW(KEY_8),
+        KEYPAD_BUTTON_LOW(KEY_9),
+        KEYPAD_BUTTON_LOW(KEY_0),
+        KEYPAD_BUTTON_LOW(KEY_MINUS),
+        KEYPAD_BUTTON_LOW(KEY_EQUAL),
+        KEYPAD_BUTTON_LOW(KEY_BACKSPACE),
+        KEYPAD_BUTTON_LOW(KEY_TAB),
+        KEYPAD_BUTTON_LOW(KEY_Q),
+        KEYPAD_BUTTON_LOW(KEY_W),
+        KEYPAD_BUTTON_LOW(KEY_E),
+        KEYPAD_BUTTON_LOW(KEY_R),
+        KEYPAD_BUTTON_LOW(KEY_T),
+        KEYPAD_BUTTON_LOW(KEY_Y),
+        KEYPAD_BUTTON_LOW(KEY_U),
+        KEYPAD_BUTTON_LOW(KEY_I),
+        KEYPAD_BUTTON_LOW(KEY_O),
+        KEYPAD_BUTTON_LOW(KEY_P),
+        KEYPAD_BUTTON_LOW(KEY_LEFTBRACE),
+        KEYPAD_BUTTON_LOW(KEY_RIGHTBRACE),
+        KEYPAD_BUTTON_LOW(KEY_ENTER),
+        KEYPAD_BUTTON_LOW(KEY_LEFTCTRL),
+        KEYPAD_BUTTON_LOW(KEY_),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+        KEYPAD_BUTTON_LOW(KEY_POWER),
+#else
+    KEYPAD_BUTTON_LOW(1),
+    KEYPAD_BUTTON_LOW(2),
+    KEYPAD_BUTTON_LOW(3),
+    KEYPAD_BUTTON_LOW(4),
+    KEYPAD_BUTTON_LOW(5),
+    KEYPAD_BUTTON_LOW(6),
+    KEYPAD_BUTTON_LOW(7),
+    KEYPAD_BUTTON_LOW(8),
+    KEYPAD_BUTTON_LOW(9),
+    KEYPAD_BUTTON_LOW(10),
+    KEYPAD_BUTTON_LOW(11),
+    KEYPAD_BUTTON_LOW(12),
+    KEYPAD_BUTTON_LOW(13),
+    KEYPAD_BUTTON_LOW(14),
+    KEYPAD_BUTTON_LOW(15),
+    KEYPAD_BUTTON_LOW(16),
+    KEYPAD_BUTTON_LOW(17),
+    KEYPAD_BUTTON_LOW(18),
+    KEYPAD_BUTTON_LOW(19),
+    KEYPAD_BUTTON_LOW(20),
+    KEYPAD_BUTTON_LOW(21),
+    KEYPAD_BUTTON_LOW(22),
+    KEYPAD_BUTTON_LOW(23),
+    KEYPAD_BUTTON_LOW(24),
+    KEYPAD_BUTTON_LOW(25),
+    KEYPAD_BUTTON_LOW(26),
+    KEYPAD_BUTTON_LOW(27),
+    KEYPAD_BUTTON_LOW(28),
+    KEYPAD_BUTTON_LOW(29),
+    KEYPAD_BUTTON_LOW(30),
+    KEYPAD_BUTTON_LOW(31),
+    KEYPAD_BUTTON_LOW(32),
+    KEYPAD_BUTTON_LOW(33),
+    KEYPAD_BUTTON_LOW(34),
+    KEYPAD_BUTTON_LOW(35),
+    KEYPAD_BUTTON_LOW(36),
+    KEYPAD_BUTTON_LOW(37),
+    KEYPAD_BUTTON_LOW(38),
+    KEYPAD_BUTTON_LOW(39),
+    KEYPAD_BUTTON_LOW(40),
+    KEYPAD_BUTTON_LOW(41),
+    KEYPAD_BUTTON_LOW(42),
+    KEYPAD_BUTTON_LOW(43),
+    KEYPAD_BUTTON_LOW(44),
+    KEYPAD_BUTTON_LOW(45),
+    KEYPAD_BUTTON_LOW(46),
+    KEYPAD_BUTTON_LOW(47),
+    KEYPAD_BUTTON_LOW(48),
+    KEYPAD_BUTTON_LOW(49),
+    KEYPAD_BUTTON_LOW(50),
+    KEYPAD_BUTTON_LOW(51),
+    KEYPAD_BUTTON_LOW(52),
+    KEYPAD_BUTTON_LOW(53),
+    KEYPAD_BUTTON_LOW(54),
+    KEYPAD_BUTTON_LOW(55),
+    KEYPAD_BUTTON_LOW(56),
+    KEYPAD_BUTTON_LOW(57),
+    KEYPAD_BUTTON_LOW(58),
+    KEYPAD_BUTTON_LOW(59),
+    KEYPAD_BUTTON_LOW(60),
+    KEYPAD_BUTTON_LOW(61),
+    KEYPAD_BUTTON_LOW(62),
+    KEYPAD_BUTTON_LOW(63),
+    KEYPAD_BUTTON_LOW(64),
+#endif
+};
+
+#if 0
+static struct tca6416_button tca_buttons[] ={
+	{        // Configuration parameters 
+        .code = KEY_1,               // input event code (KEY_*, SW_*) 
+        .active_low = 1,
+        .type = EV_KEY,               // input event type (EV_KEY, EV_SW) 
+	},
+	{        // Configuration parameters 
+        .code = KEY_2,               // input event code (KEY_*, SW_*) 
+        .active_low = 1,
+        .type = EV_KEY,               // input event type (EV_KEY, EV_SW) 
+	},
+};
+#endif
+/*
+static struct tca6416_button xga_gpio_keys[] = {
+         KEYPAD_BUTTON_LOW(KEY_HOME),
+         KEYPAD_BUTTON_LOW(KEY_MENU),
+         KEYPAD_BUTTON_LOW(KEY_BACK),
+         KEYPAD_BUTTON_LOW(KEY_POWER),
+};
+*/
+
+static struct tca6416_keys_platform_data tca6416_info = {
+        .buttons=tca_keys,
+        .nbuttons=ARRAY_SIZE(tca_keys),
+        .rep=1,     /* enable input subsystem auto repeat */
+        .pinmask=0xFFFF,
+        .invert=0,
+        .irq_is_gpio=0,
+        .use_polling=1,        /* use polling if Interrupt is not connected*/
 };
 
 static void matrix_keypad_init(int evm_id, int profile)
@@ -1667,6 +1850,10 @@ static void i2c1_init(int evm_id, int profile)
 }
 
 static struct i2c_board_info am335x_i2c2_boardinfo[] = {
+	{
+		I2C_BOARD_INFO("tca6416-keys", 0x20),
+		.platform_data = &tca6416_info,
+	},
 };
 
 static void i2c2_init(int evm_id, int profile)
@@ -2328,6 +2515,7 @@ static struct evm_dev_cfg aria_cfg[] = {
 	//{evm_nand_init, DEV_ON_BASEBOARD, PROFILE_ALL},
 	{mmc1_emmc_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{mmc0_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
+	{i2c2_init,	DEV_ON_BASEBOARD, PROFILE_ALL},
 	{uart1_wl12xx_init, DEV_ON_BASEBOARD, PROFILE_ALL},
 	{uart2_init, DEV_ON_BASEBOARD, PROFILE_ALL},
 	//{spi0_init,     DEV_ON_BASEBOARD, PROFILE_ALL},

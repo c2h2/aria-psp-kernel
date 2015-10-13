@@ -26,6 +26,9 @@
 #define TCA6416_OUTPUT         1
 #define TCA6416_INVERT         2
 #define TCA6416_DIRECTION      3
+//#define DEBUG_TCA6416          1
+
+#define MATRIX_MAX_COLS 8
 
 static const struct i2c_device_id tca6416_id[] = {
 	{ "tca6416-keys", 16, },
@@ -44,6 +47,9 @@ struct tca6416_keypad_chip {
 	uint16_t reg_direction;
 	uint16_t reg_input;
 
+    uint16_t last_key_col;
+    uint16_t last_key_row;
+
 	struct i2c_client *client;
 	struct input_dev *input;
 	struct delayed_work dwork;
@@ -52,6 +58,7 @@ struct tca6416_keypad_chip {
 	u16 pinmask;
 	bool use_polling;
 	struct tca6416_button buttons[0];
+
 };
 
 static int tca6416_write_reg(struct tca6416_keypad_chip *chip, int reg, u16 val)
@@ -87,38 +94,142 @@ static int tca6416_read_reg(struct tca6416_keypad_chip *chip, int reg, u16 *val)
 	*val = (u16)retval;
 	return 0;
 }
+static int tca6416_get_1_bit(int val)
+{
+    int i;
 
+    for(i=0; i< 16; i++)
+    {
+        if((val & 0x01) != 0)
+        {
+            return i;
+        }
+        else
+            val >>= 1;
+    }
+
+    return 0;
+}
+
+static u16 tca6416_scan_col(struct tca6416_keypad_chip *chip)
+{
+    u16 error,reg_val;
+
+    //set P0 in,P1 out
+    error = tca6416_write_reg(chip, TCA6416_DIRECTION, 0x00ff);
+    if (error)
+        return 0;
+
+    error = tca6416_write_reg(chip,TCA6416_OUTPUT,0x0000);
+	if (error)
+	    return 0;
+    
+    error = tca6416_read_reg(chip,TCA6416_INPUT, &reg_val);
+ 
+	if (error)
+	    return 0;
+
+    return reg_val;
+}
+
+static u16 tca6416_scan_row(struct tca6416_keypad_chip *chip)
+{
+    u16 error,reg_val;
+
+    //set P1 in,P0 out
+    error = tca6416_write_reg(chip, TCA6416_DIRECTION, 0xff00);
+    if (error)
+        return  0;
+
+    error = tca6416_write_reg(chip,TCA6416_OUTPUT,0x0000);
+	if (error)
+	    return 0;
+    
+    error = tca6416_read_reg(chip,TCA6416_INPUT, &reg_val);
+ 
+	if (error)
+	    return 0;
+
+    reg_val >>= 8;
+
+    return reg_val;
+}
+
+
+static uint16_t tca6416_get_val(uint16_t col, uint16_t row)
+{
+    uint16_t val;
+ 
+    val = tca6416_get_1_bit((~col) & 0xff);
+    val = val * 8 + tca6416_get_1_bit((~row) & 0xff);
+    
+    return val;
+}
+
+static void tca6416_set_key_last_press(struct tca6416_keypad_chip *chip)
+{
+    struct tca6416_button *button;
+    uint16_t val;
+    struct input_dev *input = chip->input;
+
+    val = tca6416_get_val(chip->last_key_col, chip->last_key_row);
+    button = &chip->buttons[val];
+    chip->last_key_col = 0xff;
+    chip->last_key_row = 0xff;
+    button->active_low = 0;
+    input_event(input, EV_KEY, button->code, button->active_low);
+    input_sync(input);
+                
+    return;
+}
 static void tca6416_keys_scan(struct tca6416_keypad_chip *chip)
 {
 	struct input_dev *input = chip->input;
-	u16 reg_val, val;
-	int error, i, pin_index;
+	u16 col,row, val;
+    struct tca6416_button *button;   
+ 
+    col = tca6416_scan_col(chip);
+    if(col == 0)
+        return;
 
-	error = tca6416_read_reg(chip, TCA6416_INPUT, &reg_val);
-	if (error)
-		return;
+    if(col == 0xff)
+    {
+        if(chip->last_key_col == col)
+        {
+            return;
+        }
+        else
+        {
+            tca6416_set_key_last_press(chip);
+            return;
+        }
+    }
+    
+    row = tca6416_scan_row(chip);
+    if(row == 0)
+        return;
 
-	reg_val &= chip->pinmask;
+    if(row == 0xff)
+    {
+        tca6416_set_key_last_press(chip);
+        return;   
+    }
+    
+    val =  tca6416_get_val(col, row);
+    button = &chip->buttons[val];
 
-	/* Figure out which lines have changed */
-	val = reg_val ^ chip->reg_input;
-	chip->reg_input = reg_val;
+#ifdef DEBUG_TCA6416
+    printk("val: %d\t",val);
+#endif
+    button->active_low = 1;
+    input_event(input, EV_KEY, button->code, button->active_low);
+    input_sync(input);
+    chip->last_key_row = row;
+    chip->last_key_col = col;
 
-	for (i = 0, pin_index = 0; i < 16; i++) {
-		if (val & (1 << i)) {
-			struct tca6416_button *button = &chip->buttons[pin_index];
-			unsigned int type = button->type ?: EV_KEY;
-			int state = ((reg_val & (1 << i)) ? 1 : 0)
-						^ button->active_low;
-
-			input_event(input, type, button->code, !!state);
-			input_sync(input);
-		}
-
-		if (chip->pinmask & (1 << i))
-			pin_index++;
-	}
+    /* Figure out which lines have changed */
 }
+
 
 /*
  * This is threaded IRQ handler and this can (and will) sleep.
@@ -174,13 +285,9 @@ static int __devinit tca6416_setup_registers(struct tca6416_keypad_chip *chip)
 	if (error)
 		return error;
 
-	error = tca6416_read_reg(chip, TCA6416_DIRECTION, &chip->reg_direction);
-	if (error)
-		return error;
-
-	/* ensure that keypad pins are set to input */
+	/* ensurr that keypad pins are set to input */
 	error = tca6416_write_reg(chip, TCA6416_DIRECTION,
-				  chip->reg_direction | chip->pinmask);
+				  0x00ff);
 	if (error)
 		return error;
 
