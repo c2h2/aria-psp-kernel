@@ -26,7 +26,8 @@
 #define TCA6416_OUTPUT         1
 #define TCA6416_INVERT         2
 #define TCA6416_DIRECTION      3
-//#define DEBUG_TCA6416          1
+
+#define DEBUG_TCA6416          1
 
 #define MATRIX_MAX_COLS 8
 
@@ -129,6 +130,11 @@ static u16 tca6416_scan_col(struct tca6416_keypad_chip *chip)
 	if (error)
 	    return 0;
 
+    if(reg_val>=0x1F)
+    {
+        reg_val = 0xFF;
+    }
+
     return reg_val;
 }
 
@@ -152,6 +158,11 @@ static u16 tca6416_scan_row(struct tca6416_keypad_chip *chip)
 
     reg_val >>= 8;
 
+    if(reg_val>=0xF)
+    {
+        reg_val = 0xFF;
+    }
+
     return reg_val;
 }
 
@@ -172,6 +183,11 @@ static void tca6416_set_key_last_press(struct tca6416_keypad_chip *chip)
     uint16_t val;
     struct input_dev *input = chip->input;
 
+    if(chip->last_key_col==0xFF || chip->last_key_row==0xFF)
+    {
+        return;
+    }
+
     val = tca6416_get_val(chip->last_key_col, chip->last_key_row);
     button = &chip->buttons[val];
     chip->last_key_col = 0xff;
@@ -184,8 +200,8 @@ static void tca6416_set_key_last_press(struct tca6416_keypad_chip *chip)
 }
 static void tca6416_keys_scan(struct tca6416_keypad_chip *chip)
 {
-	struct input_dev *input = chip->input;
-	u16 col,row, val;
+    struct input_dev *input = chip->input;
+    u16 col,row, val;
     struct tca6416_button *button;   
  
     col = tca6416_scan_col(chip);
@@ -219,7 +235,7 @@ static void tca6416_keys_scan(struct tca6416_keypad_chip *chip)
     button = &chip->buttons[val];
 
 #ifdef DEBUG_TCA6416
-    printk("val: %d\t",val);
+    printk("val: %d, col: %d, row: %d\t\n",val, col, row);
 #endif
     button->active_low = 1;
     input_event(input, EV_KEY, button->code, button->active_low);
