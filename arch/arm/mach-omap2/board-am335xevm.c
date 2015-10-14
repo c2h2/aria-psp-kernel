@@ -1190,6 +1190,12 @@ static struct pinmux_config uart1_wl12xx_pin_mux[] = {
 	{NULL, 0},
 };
 
+static struct pinmux_config uart1_pin_mux[] = {
+        {"uart1_rxd.uart1_rxd", OMAP_MUX_MODE0 | AM33XX_PIN_INPUT_PULLUP}, 
+        {"uart1_txd.uart1_txd", OMAP_MUX_MODE0 | AM33XX_PULL_ENBL},
+        {NULL, 0},
+};
+
 static struct pinmux_config wl12xx_pin_mux[] = {
 	{"gpmc_a0.gpio1_16", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{"mcasp0_ahclkr.gpio3_17", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
@@ -1948,6 +1954,11 @@ static void uart1_wl12xx_init(int evm_id, int profile)
 	setup_pin_mux(uart1_wl12xx_pin_mux);
 }
 
+static void uart1_init(int evm_id, int profile)
+{
+        setup_pin_mux(uart1_pin_mux);
+}
+
 static void wl12xx_bluetooth_enable(void)
 {
 	int status = gpio_request(am335xevm_wlan_data.bt_enable_gpio,
@@ -2516,7 +2527,7 @@ static struct evm_dev_cfg aria_cfg[] = {
 	{mmc1_emmc_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{mmc0_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{i2c2_init,	DEV_ON_BASEBOARD, PROFILE_ALL},
-	{uart1_wl12xx_init, DEV_ON_BASEBOARD, PROFILE_ALL},
+	{uart1_init, DEV_ON_BASEBOARD, PROFILE_ALL},
 	{uart2_init, DEV_ON_BASEBOARD, PROFILE_ALL},
 	//{spi0_init,     DEV_ON_BASEBOARD, PROFILE_ALL},
 	{NULL, 0, 0},
