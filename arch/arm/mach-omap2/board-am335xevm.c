@@ -761,8 +761,20 @@ static struct pinmux_config gpio_led_mux[] = {
 /* pinmux for led device */
 static struct pinmux_config aria_gpio_led_mux[] = {
 //	{"mcasp0_ahclkr.gpio3_17", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
-	{"mcasp0_aclkr.gpio3_18", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
 	{"mcasp0_fsr.gpio3_19", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
+	{"mcasp0_aclkr.gpio3_18", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+	{"mcasp0_ahclkx.gpio3_21", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+	{"mcasp0_axr0.gpio3_16", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+	{"mcasp0_aclkx.gpio3_14", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+	{"gpmc_a8.gpio1_24", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+	{"gpmc_a6.gpio1_22", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+	{"gpmc_a5.gpio1_21", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+	{"gpmc_a4.gpio1_20", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+	{"gpmc_a3.gpio1_19", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+	{"gpmc_a2.gpio1_18", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+	{"gpmc_a1.gpio1_17", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+	{"gpmc_a0.gpio1_16", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+	{"gpmc_a9.gpio1_25", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{NULL, 0},
 };
 
@@ -2135,15 +2147,102 @@ static struct gpio_led gpio_leds[] = {
 
 static struct gpio_led aria_gpio_leds[] = {
 	{
-		.name			= "am335x:ARIA:heartbeat",
-		.gpio			= GPIO_TO_PIN(3, 18),	/* LD2 */
-		.default_trigger	= "heartbeat",
-	},
-	{
 		.name			= "am335x:ARIA:mmc0",
 		.gpio			= GPIO_TO_PIN(3, 19),	/* LD1 */
 		.default_trigger	= "mmc0",
 	},
+
+	{
+		.name			= "am335x:ARIA:kbled1",
+		.gpio			= GPIO_TO_PIN(3, 18),
+		.default_trigger	= "kbled1",
+		.active_low		= 1,
+		.default_state		= LEDS_GPIO_DEFSTATE_OFF
+	},
+	{
+		.name			= "am335x:ARIA:kbled4",
+		.gpio			= GPIO_TO_PIN(3, 21),
+		.default_trigger	= "kbled4",
+		.active_low		= 1,
+		.default_state		= LEDS_GPIO_DEFSTATE_OFF
+	},
+	{
+		.name			= "am335x:ARIA:kbled5",
+		.gpio			= GPIO_TO_PIN(3, 16),
+		.default_trigger	= "kbled5",
+		.active_low		= 1,
+		.default_state		= LEDS_GPIO_DEFSTATE_OFF
+	},
+	{
+		.name			= "am335x:ARIA:kbled6",
+		.gpio			= GPIO_TO_PIN(3, 14),
+		.default_trigger	= "kbled6",
+		.active_low		= 1,
+		.default_state		= LEDS_GPIO_DEFSTATE_OFF
+	},
+	{
+		.name			= "am335x:ARIA:kbled7",
+		.gpio			= GPIO_TO_PIN(1, 24),
+		.default_trigger	= "kbled7",
+		.active_low		= 1,
+		.default_state		= LEDS_GPIO_DEFSTATE_OFF
+	},
+	{
+		.name			= "am335x:ARIA:kbled8",
+		.gpio			= GPIO_TO_PIN(1, 22),
+		.default_trigger	= "kbled8",
+		.active_low		= 1,
+		.default_state		= LEDS_GPIO_DEFSTATE_OFF
+	},
+	{
+		.name			= "am335x:ARIA:kbled9",
+		.gpio			= GPIO_TO_PIN(1, 21),
+		.default_trigger	= "kbled9",
+		.active_low		= 1,
+		.default_state		= LEDS_GPIO_DEFSTATE_OFF
+	},
+	{
+		.name			= "am335x:ARIA:kbled10",
+		.gpio			= GPIO_TO_PIN(1, 20),
+		.default_trigger	= "kbled10",
+		.active_low		= 1,
+		.default_state		= LEDS_GPIO_DEFSTATE_OFF
+	},
+	{
+		.name			= "am335x:ARIA:kbled11",
+		.gpio			= GPIO_TO_PIN(1, 19),
+		.default_trigger	= "kbled11",
+		.active_low		= 1,
+		.default_state		= LEDS_GPIO_DEFSTATE_OFF
+	},
+	{
+		.name			= "am335x:ARIA:kbled12",
+		.gpio			= GPIO_TO_PIN(1, 18),
+		.default_trigger	= "kbled12",
+		.active_low		= 1,
+		.default_state		= LEDS_GPIO_DEFSTATE_OFF
+	},
+	{
+		.name			= "am335x:ARIA:kbled13",
+		.gpio			= GPIO_TO_PIN(1, 17),
+		.default_trigger	= "kbled13",
+		.active_low		= 1,
+		.default_state		= LEDS_GPIO_DEFSTATE_OFF
+	},
+	{
+		.name			= "am335x:ARIA:kbled14",
+		.gpio			= GPIO_TO_PIN(1, 16),
+		.default_trigger	= "kbled14",
+		.active_low		= 1,
+		.default_state		= LEDS_GPIO_DEFSTATE_OFF
+	},
+	{
+		.name			= "am335x:ARIA:kbtalk",
+		.gpio			= GPIO_TO_PIN(1, 25),
+		.default_trigger	= "kbtalk",
+		.active_low		= 1,
+		.default_state		= LEDS_GPIO_DEFSTATE_OFF
+	}
 };
 
 static struct gpio_led_platform_data gpio_led_info = {
