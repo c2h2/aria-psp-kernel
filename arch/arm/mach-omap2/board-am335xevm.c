@@ -759,9 +759,8 @@ static struct pinmux_config gpio_led_mux[] = {
 
 /* pinmux for led device */
 static struct pinmux_config aria_gpio_led_mux[] = {
-//	{"mcasp0_ahclkr.gpio3_17", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
-	{"mcasp0_aclkr.gpio3_18", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
-	{"mcasp0_fsr.gpio3_19", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
+	{"mcasp0_aclkr.gpio3_18", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+	{"xdma_event_intr1.gpio0_20", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{NULL, 0},
 };
 
@@ -1003,6 +1002,12 @@ static struct pinmux_config mmc2_wl12xx_pin_mux[] = {
 static struct pinmux_config uart1_wl12xx_pin_mux[] = {
 	{"uart1_ctsn.uart1_ctsn", OMAP_MUX_MODE0 | AM33XX_PIN_OUTPUT},
 	{"uart1_rtsn.uart1_rtsn", OMAP_MUX_MODE0 | AM33XX_PIN_INPUT},
+	{"uart1_rxd.uart1_rxd", OMAP_MUX_MODE0 | AM33XX_PIN_INPUT_PULLUP},
+	{"uart1_txd.uart1_txd", OMAP_MUX_MODE0 | AM33XX_PULL_ENBL},
+	{NULL, 0},
+};
+
+static struct pinmux_config uart1_pin_mux[] = {
 	{"uart1_rxd.uart1_rxd", OMAP_MUX_MODE0 | AM33XX_PIN_INPUT_PULLUP},
 	{"uart1_txd.uart1_txd", OMAP_MUX_MODE0 | AM33XX_PULL_ENBL},
 	{NULL, 0},
@@ -1762,6 +1767,11 @@ static void uart1_wl12xx_init(int evm_id, int profile)
 	setup_pin_mux(uart1_wl12xx_pin_mux);
 }
 
+static void uart1_init(int evm_id, int profile)
+{
+	setup_pin_mux(uart1_pin_mux);
+}
+
 static void wl12xx_bluetooth_enable(void)
 {
 	int status = gpio_request(am335xevm_wlan_data.bt_enable_gpio,
@@ -2016,14 +2026,18 @@ static struct gpio_led gpio_leds[] = {
 
 static struct gpio_led aria_gpio_leds[] = {
 	{
-		.name			= "am335x:ARIA:heartbeat",
-		.gpio			= GPIO_TO_PIN(3, 18),	/* LD2 */
-		.default_trigger	= "heartbeat",
+		.name			= "am335x:ARIA:red",
+		.gpio			= GPIO_TO_PIN(3, 18),	/* LD25 */
+		.default_trigger	= "red",
+		.active_low             = 1,
+                .default_state          = LEDS_GPIO_DEFSTATE_OFF
 	},
 	{
-		.name			= "am335x:ARIA:mmc0",
-		.gpio			= GPIO_TO_PIN(3, 19),	/* LD1 */
-		.default_trigger	= "mmc0",
+		.name			= "am335x:ARIA:green",
+		.gpio			= GPIO_TO_PIN(0, 20),	/* LD26 */
+		.default_trigger	= "green",
+		.active_low             = 1,
+                .default_state          = LEDS_GPIO_DEFSTATE_OFF
 	},
 };
 
@@ -2314,8 +2328,7 @@ static struct evm_dev_cfg aria_cfg[] = {
 	{gpio_keys_init,  DEV_ON_BASEBOARD, PROFILE_ALL},
 	{mmc1_emmc_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{mmc0_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
-	{uart1_wl12xx_init, DEV_ON_BASEBOARD, PROFILE_ALL},
-	{spi0_init,     DEV_ON_BASEBOARD, PROFILE_ALL},
+	{uart1_init, DEV_ON_BASEBOARD, PROFILE_ALL},
 	{NULL, 0, 0},
 };
 	
