@@ -2026,16 +2026,16 @@ static struct gpio_led gpio_leds[] = {
 
 static struct gpio_led aria_gpio_leds[] = {
 	{
-		.name			= "am335x:ARIA:red",
+		.name			= "am335x:ARIA:green",
 		.gpio			= GPIO_TO_PIN(3, 18),	/* LD25 */
-		.default_trigger	= "red",
+		.default_trigger	= "green",
 		.active_low             = 1,
                 .default_state          = LEDS_GPIO_DEFSTATE_OFF
 	},
 	{
-		.name			= "am335x:ARIA:green",
+		.name			= "am335x:ARIA:red",
 		.gpio			= GPIO_TO_PIN(0, 20),	/* LD26 */
-		.default_trigger	= "green",
+		.default_trigger	= "red",
 		.active_low             = 1,
                 .default_state          = LEDS_GPIO_DEFSTATE_OFF
 	},
