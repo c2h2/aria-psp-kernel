@@ -67,7 +67,7 @@
 #include <plat/nand.h>
 
 #include "board-flash.h"
-#include "cpuidle33xx.h"
+//#include "cpuidle33xx.h"
 #include "mux.h"
 #include "devices.h"
 #include "hsmmc.h"
@@ -98,9 +98,9 @@ static const struct display_panel disp_panel = {
 
 /* LCD backlight platform Data */
 #define AM335X_BACKLIGHT_MAX_BRIGHTNESS        100
-#define AM335X_BACKLIGHT_DEFAULT_BRIGHTNESS    70
+#define AM335X_BACKLIGHT_DEFAULT_BRIGHTNESS    85
 //#define AM335X_PWM_PERIOD_NANO_SECONDS        (5000 * 10)
-#define AM335X_PWM_PERIOD_NANO_SECONDS         5000000
+#define AM335X_PWM_PERIOD_NANO_SECONDS         500000
 
 static struct platform_pwm_backlight_data am335x_backlight_data0 = {
 	.pwm_id         = "ecap.0",
@@ -1061,33 +1061,8 @@ static int __init backlight_init(void)
 	int status = 0;
 
 	if (backlight_enable) {
-		int ecap_index = 0;
-
-		switch (am335x_evm_get_id()) {
-		case GEN_PURP_EVM:
-		case GEN_PURP_DDR3_EVM:
-			ecap_index = 0;
-			break;
-		case EVM_SK:
-			/*
-			 * Invert polarity of PWM wave from ECAP to handle
-			 * backlight intensity to pwm brightness
-			 */
-			ecap_index = 2;
-			pwm_pdata[ecap_index].chan_attrib[0].inverse_pol = true;
-			am335x_backlight.dev.platform_data =
-				&am335x_backlight_data2;
-			break;
-        case ARIA_BOARD: 
-            ecap_index = 2;
-            am335x_backlight.dev.platform_data = &am335x_backlight_data2;
-            break;
-		default:
-			pr_err("%s: Error on attempting to enable backlight,"
-				" not supported\n", __func__);
-			return -EINVAL;
-		}
-
+		int ecap_index = 2;
+            	am335x_backlight.dev.platform_data = &am335x_backlight_data2;
 		am33xx_register_ecap(ecap_index, &pwm_pdata[ecap_index]);
 		platform_device_register(&am335x_backlight);
 	}
@@ -2319,16 +2294,19 @@ static struct evm_dev_cfg beagleboneblack_dev_cfg[] = {
 static struct evm_dev_cfg aria_cfg[] = {
 	{am335x_rtc_init, DEV_ON_BASEBOARD, PROFILE_NONE},
 	{enable_ecap2,     DEV_ON_BASEBOARD, PROFILE_ALL},
-	{mfd_tscadc_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
+	//{mfd_tscadc_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{lcdc_init,	DEV_ON_BASEBOARD, PROFILE_NONE },
 	{aria_gpio_led_init,  DEV_ON_BASEBOARD, PROFILE_ALL},
-	{tps65217_init, DEV_ON_BASEBOARD, PROFILE_NONE},
+	//{tps65217_init, DEV_ON_BASEBOARD, PROFILE_NONE},
 	{mcasp1_init, DEV_ON_BASEBOARD, PROFILE_NONE},
 	{aria_mii1_init, DEV_ON_BASEBOARD, PROFILE_NONE},
+	{usb0_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
+	{usb1_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	//{evm_nand_init, DEV_ON_BASEBOARD, PROFILE_ALL},
 	{mmc1_emmc_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{mmc0_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
-	{spi0_init,     DEV_ON_BASEBOARD, PROFILE_ALL},
+	{i2c2_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
+	//{spi0_init,     DEV_ON_BASEBOARD, PROFILE_ALL},
         //{uart2_init,     DEV_ON_BASEBOARD, PROFILE_ALL},
         {uart1_wl12xx_init, DEV_ON_BASEBOARD, PROFILE_ALL},
 	{NULL, 0, 0},
@@ -2811,57 +2789,23 @@ void __iomem *am33xx_get_gpio0_base(void)
 	return am33xx_gpio0_base;
 }
 
-static struct resource am33xx_cpuidle_resources[] = {
-	{
-		.start		= AM33XX_EMIF0_BASE,
-		.end		= AM33XX_EMIF0_BASE + SZ_32K - 1,
-		.flags		= IORESOURCE_MEM,
-	},
-};
-
-/* AM33XX devices support DDR2 power down */
-static struct am33xx_cpuidle_config am33xx_cpuidle_pdata = {
-	.ddr2_pdown	= 1,
-};
-
-static struct platform_device am33xx_cpuidle_device = {
-	.name			= "cpuidle-am33xx",
-	.num_resources		= ARRAY_SIZE(am33xx_cpuidle_resources),
-	.resource		= am33xx_cpuidle_resources,
-	.dev = {
-		.platform_data	= &am33xx_cpuidle_pdata,
-	},
-};
-
-static void __init am33xx_cpuidle_init(void)
-{
-	int ret;
-
-	am33xx_cpuidle_pdata.emif_base = am33xx_get_mem_ctlr();
-
-	ret = platform_device_register(&am33xx_cpuidle_device);
-
-	if (ret)
-		pr_warning("AM33XX cpuidle registration failed\n");
-
-}
 
 static void __init am335x_evm_init(void)
 {
-	am33xx_cpuidle_init();
+	//am33xx_cpuidle_init();
 	am33xx_mux_init(board_mux);
 	omap_serial_init();
 	am335x_evm_i2c_init();
 	omap_sdrc_init(NULL, NULL);
-	//usb_musb_init(&musb_board_data);
+	usb_musb_init(&musb_board_data);
 	omap_board_config = am335x_evm_config;
 	omap_board_config_size = ARRAY_SIZE(am335x_evm_config);
 	/* Create an alias for icss clock */
-	if (clk_add_alias("pruss", NULL, "pruss_uart_gclk", NULL))
-		pr_warn("failed to create an alias: icss_uart_gclk --> pruss\n");
+	//if (clk_add_alias("pruss", NULL, "pruss_uart_gclk", NULL))
+	//	pr_warn("failed to create an alias: icss_uart_gclk --> pruss\n");
 	/* Create an alias for gfx/sgx clock */
-	if (clk_add_alias("sgx_ck", NULL, "gfx_fclk", NULL))
-		pr_warn("failed to create an alias: gfx_fclk --> sgx_ck\n");
+	//if (clk_add_alias("sgx_ck", NULL, "gfx_fclk", NULL))
+	//	pr_warn("failed to create an alias: gfx_fclk --> sgx_ck\n");
 }
 
 static void __init am335x_evm_map_io(void)

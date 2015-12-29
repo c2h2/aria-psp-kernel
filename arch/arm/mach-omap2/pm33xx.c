@@ -696,4 +696,4 @@ static int __init am33xx_pm_init(void)
 
 	return ret;
 }
-late_initcall(am33xx_pm_init);
+//late_initcall(am33xx_pm_init);
