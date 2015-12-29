@@ -1196,8 +1196,8 @@ static struct regulator *_regulator_get(struct device *dev, const char *id,
 	 * substitute in a dummy regulator so consumers can continue.
 	 */
 	if (!has_full_constraints) {
-		pr_warn("%s supply %s not found, using dummy regulator\n",
-			devname, id);
+                //no need to say anything.
+		//pr_warn("%s supply %s not found, using dummy regulator\n", devname, id);
 		rdev = dummy_regulator_rdev;
 		goto found;
 	}

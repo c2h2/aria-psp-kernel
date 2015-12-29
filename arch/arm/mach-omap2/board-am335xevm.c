@@ -2587,25 +2587,9 @@ static void am335x_setup_daughter_board(struct memory_accessor *m, void *c)
 
 static void am335x_evm_setup(struct memory_accessor *mem_acc, void *context)
 {
-	int ret;
-	char tmp[10];
-
 	setup_aria();
 	return;
 	//am335x_opp_update();
-out:
-	/*
-	 * If the EEPROM hasn't been programed or an incorrect header
-	 * or board name are read then the hardware details are unknown.
-	 * Notify the user and call machine_halt to stop the boot process.
-	 */
-	pr_err("The error message above indicates that there is an issue with\n"
-		   "the EEPROM or the EEPROM contents.  After verifying the EEPROM\n"
-		   "contents, if any, refer to the %s function in the\n"
-		   "%s file to modify the board\n"
-		   "initialization code to match the hardware configuration\n",
-		   __func__ , __FILE__);
-	machine_halt();
 }
 
 static struct at24_platform_data am335x_daughter_board_eeprom_info = {
