@@ -1915,6 +1915,9 @@ static struct i2c_board_info am335x_i2c2_boardinfo[] = {
 		I2C_BOARD_INFO("tca6416-keys", 0x20),
 		.platform_data = &tca6416_info,
 	},
+	{
+		I2C_BOARD_INFO("rx8025", 0x32),
+	},
 };
 
 static void i2c2_init(int evm_id, int profile)
