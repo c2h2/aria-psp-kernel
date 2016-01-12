@@ -1,0 +1,295 @@
+CONFIG_DRVEXT_MODULE = n
+CONFIG_POWER_SAVING = y
+CONFIG_USB_AUTOSUSPEND = n
+CONFIG_HW_PWRP_DETECTION = n
+CONFIG_WIFI_TEST = n
+CONFIG_BT_COEXIST = y
+CONFIG_RTL8192CU_REDEFINE_1X1 = n
+CONFIG_INTEL_WIDI = n
+CONFIG_WAPI_SUPPORT = n
+CONFIG_EFUSE_CONFIG_FILE = n
+CONFIG_EXT_CLK = n
+CONFIG_FTP_PROTECT = n
+CONFIG_WOWLAN = n
+
+CONFIG_PLATFORM_I386_PC = n
+CONFIG_PLATFORM_ANDROID_X86 = n
+CONFIG_PLATFORM_ARM_S3C2K4 = n
+CONFIG_PLATFORM_ARM_PXA2XX = n
+CONFIG_PLATFORM_ARM_S3C6K4 = n
+CONFIG_PLATFORM_MIPS_RMI = n
+CONFIG_PLATFORM_RTD2880B = n
+CONFIG_PLATFORM_MIPS_AR9132 = n
+CONFIG_PLATFORM_RTK_DMP = n
+CONFIG_PLATFORM_MIPS_PLM = n
+CONFIG_PLATFORM_MSTAR389 = n
+CONFIG_PLATFORM_MT53XX = n
+CONFIG_PLATFORM_ARM_MX51_241H = n
+CONFIG_PLATFORM_ACTIONS_ATJ227X = n
+CONFIG_PLATFORM_TEGRA3_CARDHU = n
+CONFIG_PLATFORM_TEGRA4_DALMORE = n
+CONFIG_PLATFORM_ARM_TCC8900 = n
+CONFIG_PLATFORM_ARM_TCC8920 = n
+CONFIG_PLATFORM_ARM_RK2818 = n
+CONFIG_PLATFORM_ARM_URBETTER = n
+CONFIG_PLATFORM_ARM_TI_PANDA = n
+CONFIG_PLATFORM_MIPS_JZ4760 = n
+CONFIG_PLATFORM_DMP_PHILIPS = n
+CONFIG_PLATFORM_TI_DM365 = n
+CONFIG_PLATFORM_MSTAR_TITANIA12 = n
+CONFIG_PLATFORM_SZEBOOK = n
+CONFIG_PLATFORM_ARM_SUNxI = n
+CONFIG_PLATFORM_ARM_SUN6I = n
+CONFIG_PLATFORM_ACTIONS_ATM702X = n
+CONFIG_PLATFORM_MN10300 = n
+CONFIG_PLATFORM_ACTIONS_ATV5201 = n
+
+EXTRA_CFLAGS += -Wno-unused-variable
+EXTRA_CFLAGS += -Wno-unused-value
+EXTRA_CFLAGS += -Wno-unused-label
+EXTRA_CFLAGS += -Wno-unused-parameter
+EXTRA_CFLAGS += -Wno-unused-function
+EXTRA_CFLAGS += -Wno-unused
+EXTRA_CFLAGS += -Wno-uninitialized
+
+OUTSRC_FILES := hal/odm_debug.o	\
+		hal/odm_interface.o\
+		hal/odm_HWConfig.o\
+		hal/odm.o
+
+RTL871X = rtl8723a
+
+HAL_COMM_FILES := hal/$(RTL871X)_xmit.o \
+	hal/$(RTL871X)_sreset.o
+
+OUTSRC_FILES += hal/Hal8723UHWImg_CE.o
+
+#hal/HalHWImg8723A_FW.o
+OUTSRC_FILES += hal/HalHWImg8723A_BB.o\
+		hal/HalHWImg8723A_MAC.o\
+		hal/HalHWImg8723A_RF.o\
+		hal/HalDMOutSrc8192C_CE.o\
+		hal/odm_RegConfig8723A.o
+
+clean_more ?=
+clean_more += clean_odm-8192c
+
+PWRSEQ_FILES := hal/HalPwrSeqCmd.o \
+		hal/Hal8723PwrSeq.o
+
+CHIP_FILES += $(HAL_COMM_FILES) $(OUTSRC_FILES) $(PWRSEQ_FILES)
+
+ifeq ($(CONFIG_BT_COEXIST), y)
+CHIP_FILES += hal/rtl8723a_bt-coexist.o
+endif
+
+HCI_NAME = usb
+
+_OS_INTFS_FILES :=	os_dep/osdep_service.o \
+			os_dep/os_intfs.o \
+			os_dep/$(HCI_NAME)_intf.o \
+			os_dep/$(HCI_NAME)_ops_linux.o \
+			os_dep/ioctl_linux.o \
+			os_dep/xmit_linux.o \
+			os_dep/mlme_linux.o \
+			os_dep/recv_linux.o \
+			os_dep/ioctl_cfg80211.o
+
+_HAL_INTFS_FILES :=	hal/hal_intf.o \
+			hal/hal_com.o \
+			hal/$(RTL871X)_hal_init.o \
+			hal/$(RTL871X)_phycfg.o \
+			hal/$(RTL871X)_rf6052.o \
+			hal/$(RTL871X)_dm.o \
+			hal/$(RTL871X)_rxdesc.o \
+			hal/$(RTL871X)_cmd.o \
+			hal/$(HCI_NAME)_halinit.o \
+			hal/rtl8723au_led.o \
+			hal/rtl8723au_xmit.o \
+			hal/rtl8723au_recv.o
+
+_HAL_INTFS_FILES += hal/$(HCI_NAME)_ops_linux.o
+
+_HAL_INTFS_FILES += $(CHIP_FILES)
+
+
+ifeq ($(CONFIG_USB_AUTOSUSPEND), y)
+EXTRA_CFLAGS += -DCONFIG_USB_AUTOSUSPEND
+endif
+
+ifeq ($(CONFIG_POWER_SAVING), y)
+EXTRA_CFLAGS += -DCONFIG_POWER_SAVING
+endif
+
+ifeq ($(CONFIG_HW_PWRP_DETECTION), y)
+EXTRA_CFLAGS += -DCONFIG_HW_PWRP_DETECTION
+endif
+
+ifeq ($(CONFIG_WIFI_TEST), y)
+EXTRA_CFLAGS += -DCONFIG_WIFI_TEST
+endif
+
+ifeq ($(CONFIG_BT_COEXIST), y)
+EXTRA_CFLAGS += -DCONFIG_BT_COEXIST
+endif
+
+ifeq ($(CONFIG_RTL8192CU_REDEFINE_1X1), y)
+EXTRA_CFLAGS += -DRTL8192C_RECONFIG_TO_1T1R
+endif
+
+ifeq ($(CONFIG_INTEL_WIDI), y)
+EXTRA_CFLAGS += -DCONFIG_INTEL_WIDI
+endif
+
+ifeq ($(CONFIG_WAPI_SUPPORT), y)
+EXTRA_CFLAGS += -DCONFIG_WAPI_SUPPORT
+endif
+
+ifeq ($(CONFIG_EFUSE_CONFIG_FILE), y)
+EXTRA_CFLAGS += -DCONFIG_EFUSE_CONFIG_FILE
+endif
+
+ifeq ($(CONFIG_EXT_CLK), y)
+EXTRA_CFLAGS += -DCONFIG_EXT_CLK
+endif
+
+ifeq ($(CONFIG_FTP_PROTECT), y)
+EXTRA_CFLAGS += -DCONFIG_FTP_PROTECT
+endif
+
+ifeq ($(CONFIG_RTL8188E), y)
+ifeq ($(CONFIG_WOWLAN), y)
+EXTRA_CFLAGS += -DCONFIG_WOWLAN
+endif
+endif
+
+ifeq ($(CONFIG_RTL8188E), y)
+ifeq ($(CONFIG_EFUSE_CONFIG_FILE), y)
+EXTRA_CFLAGS += -DCONFIG_RF_GAIN_OFFSET
+endif
+endif
+
+ifeq ($(CONFIG_PLATFORM_TI_AM3517), y)
+EXTRA_CFLAGS += -DCONFIG_PLATFORM_ANDROID -DCONFIG_PLATFORM_SHUTTLE
+endif
+
+ifeq ($(CONFIG_PLATFORM_RTD2880B), y)
+EXTRA_CFLAGS += -DCONFIG_PLATFORM_RTD2880B
+endif
+
+ifeq ($(CONFIG_PLATFORM_MSTAR389), y)
+EXTRA_CFLAGS += -DCONFIG_PLATFORM_MSTAR389
+endif
+
+ifeq ($(CONFIG_PLATFORM_DMP_PHILIPS), y)
+EXTRA_CFLAGS += -DRTK_DMP_PLATFORM
+endif
+
+ifeq ($(CONFIG_PLATFORM_RTK_DMP), y)
+EXTRA_CFLAGS += -DRTK_DMP_PLATFORM
+endif
+
+ifeq ($(CONFIG_PLATFORM_MT53XX), y)
+EXTRA_CFLAGS += -DCONFIG_PLATFORM_MT53XX
+endif
+
+ifeq ($(CONFIG_PLATFORM_ARM_MX51_241H), y)
+EXTRA_CFLAGS += -DCONFIG_WISTRON_PLATFORM
+endif
+
+ifeq ($(CONFIG_PLATFORM_ACTIONS_ATJ227X), y)
+EXTRA_CFLAGS += -DCONFIG_PLATFORM_ACTIONS_ATJ227X
+endif
+
+ifeq ($(CONFIG_PLATFORM_TI_DM365), y)
+EXTRA_CFLAGS += -DCONFIG_PLATFORM_TI_DM365
+endif
+
+ifeq ($(CONFIG_PLATFORM_TEGRA3_CARDHU), y)
+# default setting for Android 4.1, 4.2
+EXTRA_CFLAGS += -DRTW_ENABLE_WIFI_CONTROL_FUNC
+EXTRA_CFLAGS += -DCONFIG_CONCURRENT_MODE
+EXTRA_CFLAGS += -DCONFIG_IOCTL_CFG80211 -DRTW_USE_CFG80211_STA_EVENT
+EXTRA_CFLAGS += -DDCONFIG_P2P_IPS
+endif
+
+ifeq ($(CONFIG_PLATFORM_TEGRA4_DALMORE), y)
+# default setting for Android 4.1, 4.2
+EXTRA_CFLAGS += -DRTW_ENABLE_WIFI_CONTROL_FUNC
+EXTRA_CFLAGS += -DCONFIG_CONCURRENT_MODE
+EXTRA_CFLAGS += -DCONFIG_IOCTL_CFG80211 -DRTW_USE_CFG80211_STA_EVENT
+EXTRA_CFLAGS += -DDCONFIG_P2P_IPS
+endif
+
+ifeq ($(CONFIG_PLATFORM_ARM_RK2818), y)
+EXTRA_CFLAGS += -DCONFIG_PLATFORM_ANDROID -DCONFIG_PLATFORM_ROCKCHIPS -DCONFIG_MINIMAL_MEMORY_USAGE
+endif
+
+ifeq ($(CONFIG_PLATFORM_MIPS_JZ4760), y)
+EXTRA_CFLAGS += -DCONFIG_MINIMAL_MEMORY_USAGE
+endif
+
+#Add setting for MN10300
+ifeq ($(CONFIG_PLATFORM_MN10300), y)
+EXTRA_CFLAGS += -DCONFIG_PLATFORM_MN10300
+endif
+
+
+ifeq ($(CONFIG_PLATFORM_ARM_SUNxI), y)
+EXTRA_CFLAGS += -DCONFIG_PLATFORM_ARM_SUNxI
+endif
+
+ifeq ($(CONFIG_PLATFORM_ARM_SUN6I), y)
+EXTRA_CFLAGS += -DCONFIG_PLATFORM_ARM_SUN6I
+EXTRA_CFLAGS += -DCONFIG_USE_USB_BUFFER_ALLOC_TX
+# default setting for Android 4.1, 4.2
+EXTRA_CFLAGS += -DCONFIG_CONCURRENT_MODE
+EXTRA_CFLAGS += -DCONFIG_IOCTL_CFG80211 -DRTW_USE_CFG80211_STA_EVENT
+EXTRA_CFLAGS += -DDCONFIG_P2P_IPS
+endif
+
+ifeq ($(CONFIG_PLATFORM_ACTIONS_ATV5201), y)
+EXTRA_CFLAGS += -DCONFIG_PLATFORM_ACTIONS_ATV5201
+endif
+
+rtk_core :=	core/rtw_cmd.o \
+		core/rtw_security.o \
+		core/rtw_debug.o \
+		core/rtw_io.o \
+		core/rtw_ioctl_set.o \
+		core/rtw_ieee80211.o \
+		core/rtw_mlme.o \
+		core/rtw_mlme_ext.o \
+		core/rtw_wlan_util.o \
+		core/rtw_pwrctrl.o \
+		core/rtw_rf.o \
+		core/rtw_recv.o \
+		core/rtw_sta_mgt.o \
+		core/rtw_ap.o \
+		core/rtw_xmit.o	\
+		core/rtw_p2p.o \
+		core/rtw_tdls.o \
+		core/rtw_br_ext.o \
+		core/rtw_iol.o \
+		core/rtw_led.o \
+		core/rtw_sreset.o
+
+r8723au-y += $(rtk_core)
+
+r8723au-$(CONFIG_INTEL_WIDI) += core/rtw_intel_widi.o
+
+r8723au-$(CONFIG_WAPI_SUPPORT) += core/rtw_wapi.o	\
+	core/rtw_wapi_sms4.o
+
+r8723au-y += core/rtw_efuse.o
+
+r8723au-y += $(_HAL_INTFS_FILES)
+
+r8723au-y += $(_OS_INTFS_FILES)
+
+obj-$(CONFIG_R8723AU) := r8723au.o
+
+ccflags-y += $(call cc-option,-Wtype-limits,)
+ccflags-y += -D__CHECK_ENDIAN__ -I$(src)/include
+
+
