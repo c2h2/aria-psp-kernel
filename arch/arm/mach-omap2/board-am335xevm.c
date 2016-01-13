@@ -764,6 +764,28 @@ static struct pinmux_config aria_gpio_led_mux[] = {
 	{NULL, 0},
 };
 
+/* pinmux for gpio asclepius  */
+static struct pinmux_config asclepius_gpio_mux[] = {
+	{"uart1_ctsn.gpio0_12", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+	{"gpmc_a0.gpio1_16", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+	{"gpmc_a1.gpio1_17", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
+	{"gpmc_a2.gpio1_18", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+	{"gpmc_a3.gpio1_19", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
+	{"gpmc_a4.gpio1_20", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+	{"gpmc_a5.gpio1_21", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
+	{"gpmc_a6.gpio1_22", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
+	{"gpmc_a7.gpio1_23", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
+	{"gpmc_a8.gpio1_24", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+	{"gpmc_a9.gpio1_25", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+	{"gpmc_a10.gpio1_26", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+	{"gpmc_a11.gpio1_27", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+	{"gpmc_clk.gpio2_1", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
+	{"mcasp0_aclkx.gpio3_14", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
+	{"mcasp0_axr0.gpio3_16", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
+	{"mcasp0_aclkr.gpio3_18", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+	{"mcasp0_fsr.gpio3_19", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+	{NULL, 0},
+};
 
 static struct pinmux_config gpio_ddr_vtt_enb_pin_mux[] = {
 	{"ecap0_in_pwm0_out.pio0_7", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
@@ -2068,6 +2090,12 @@ static void aria_gpio_led_init(int evm_id, int profile)
 }
 
 
+static void asclepius_gpio_init(int evm_id, int profile)
+{
+        setup_pin_mux(asclepius_gpio_mux);
+}
+
+
 /* setup spi0 */
 static void spi0_init(int evm_id, int profile)
 {
@@ -2299,7 +2327,8 @@ static struct evm_dev_cfg aria_cfg[] = {
 	{enable_ecap2,     DEV_ON_BASEBOARD, PROFILE_ALL},
 	//{mfd_tscadc_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{lcdc_init,	DEV_ON_BASEBOARD, PROFILE_NONE },
-	{aria_gpio_led_init,  DEV_ON_BASEBOARD, PROFILE_ALL},
+	//{aria_gpio_led_init,  DEV_ON_BASEBOARD, PROFILE_ALL},
+	{asclepius_gpio_init,  DEV_ON_BASEBOARD, PROFILE_ALL},
 	//{tps65217_init, DEV_ON_BASEBOARD, PROFILE_NONE},
 	{mcasp1_init, DEV_ON_BASEBOARD, PROFILE_NONE},
 	{aria_mii1_init, DEV_ON_BASEBOARD, PROFILE_NONE},
