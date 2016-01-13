@@ -1291,11 +1291,11 @@ static struct spi_board_info am335x_spi0_slave_info[] = {
 
 static struct spi_board_info aria_spi0_info[] = {
 	{
-		.modalias = "spidev",
-		.max_speed_hz = 500000, // 500 KHz
+		.modalias = "ad_dpot",
+		.platform_data = "ad8400",
+		.max_speed_hz = 500000, // 500 kHz
 		.bus_num = 1,
 		.chip_select = 0,
-		.mode = SPI_MODE_1,
 	},
 };
 
