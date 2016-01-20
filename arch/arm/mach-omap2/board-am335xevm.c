@@ -244,7 +244,7 @@ static struct omap2_hsmmc_info am335x_mmc[] __initdata = {
 		.mmc            = 1,
 		.caps           = MMC_CAP_4_BIT_DATA,
 		.gpio_cd        = GPIO_TO_PIN(0, 6),
-		.gpio_wp        = GPIO_TO_PIN(3, 18),
+		.gpio_wp        = -EINVAL,
 		.ocr_mask       = MMC_VDD_32_33 | MMC_VDD_33_34, /* 3V3 */
 	},
 	{
@@ -1887,7 +1887,6 @@ static void mmc0_init(int evm_id, int profile)
 	default:
 		setup_pin_mux(mmc0_common_pin_mux);
 		setup_pin_mux(mmc0_cd_only_pin_mux);
-		setup_pin_mux(mmc0_wp_only_pin_mux);
 		break;
 	}
 
@@ -1954,7 +1953,6 @@ static void tps65217_init(int evm_id, int profile)
 static void mmc0_no_cd_init(int evm_id, int profile)
 {
 	setup_pin_mux(mmc0_common_pin_mux);
-	setup_pin_mux(mmc0_wp_only_pin_mux);
 
 	omap2_hsmmc_init(am335x_mmc);
 	return;
