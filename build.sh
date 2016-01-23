@@ -30,6 +30,7 @@ build_tgt(){
   make -j$CORES uImage modules ARCH=arm | tee -a $LOG_FILE
   make ARCH=arm modules_install INSTALL_MOD_PATH=$DEPLOY/
   make ARCH=arm headers_install INSTALL_MOD_PATH=$DEPLOY/
+  make ARCH=arm firmware_install INSTALL_MOD_PATH=$DEPLOY/
 
   #add kernel headers
 

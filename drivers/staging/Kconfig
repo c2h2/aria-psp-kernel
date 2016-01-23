@@ -134,4 +134,6 @@ source "drivers/staging/media/Kconfig"
 
 source "drivers/staging/rtl8723au/Kconfig"
 
+source "drivers/staging/rtl8723au_bt/Kconfig"
+
 endif # STAGING

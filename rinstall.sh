@@ -17,6 +17,7 @@ rsync -av deploy/uboot/ ${HOST}:/boot/uboot/
 
 echo "Installing kernel modules into ${HOST}"
 rsync -av --delete deploy/lib/modules/ ${HOST}:/lib/modules/
+rsync -av --delete deploy/lib/firmware/ ${HOST}:/lib/firmware/
 
 echo "Rebooting remote host ${HOST}"
 ssh ${HOST} reboot

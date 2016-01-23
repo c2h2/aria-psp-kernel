@@ -58,3 +58,4 @@ obj-$(CONFIG_DRM_PSB)		+= gma500/
 obj-$(CONFIG_INTEL_MEI)		+= mei/
 obj-$(CONFIG_MFD_NVEC)		+= nvec/
 obj-$(CONFIG_R8723AU)		+= rtl8723au/
+obj-$(CONFIG_R8723AU_BT)	+= rtl8723au_bt/

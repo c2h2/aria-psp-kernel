@@ -87,6 +87,7 @@ install_kernel_modules(){
 
   mount $DEV_ROOT $MNT
   rm -rf $MNT/lib/modules/* #clean old kernel modules.
+  rm -rf $MNT/lib/firmware/*
   cp -rv $DEPLOY/lib $MNT
   sync
   check_warning_and_success $? "" "warning sync failed"
