@@ -79,6 +79,8 @@ struct goodix_ts_data {
 
 #define GPIO_TO_PIN(bank, gpio) (32 * (bank) + (gpio))
 
+//#define CONFIG_GOODIX_MULTITOUCH
+
 static const unsigned long goodix_irq_flags[] = {
 	IRQ_TYPE_EDGE_RISING,
 	IRQ_TYPE_EDGE_FALLING,
@@ -244,12 +246,22 @@ static void goodix_ts_report_touch(struct goodix_ts_data *ts, u8 *coor_data)
 	if (ts->swapped_x_y)
 		swap(input_x, input_y);
 
+#ifdef CONFIG_GOODIX_MULTITOUCH
+
 	input_mt_slot(ts->input_dev, id);
 	input_mt_report_slot_state(ts->input_dev, MT_TOOL_FINGER, true);
 	input_report_abs(ts->input_dev, ABS_MT_POSITION_X, input_x);
 	input_report_abs(ts->input_dev, ABS_MT_POSITION_Y, input_y);
 	input_report_abs(ts->input_dev, ABS_MT_TOUCH_MAJOR, input_w);
 	input_report_abs(ts->input_dev, ABS_MT_WIDTH_MAJOR, input_w);
+
+#else
+
+	input_report_abs(ts->input_dev, ABS_X, input_x);
+	input_report_abs(ts->input_dev, ABS_Y, input_y);
+	input_report_abs(ts->input_dev, ABS_PRESSURE, 200);
+
+#endif
 }
 
 /**
@@ -270,11 +282,27 @@ static void goodix_process_events(struct goodix_ts_data *ts)
 	if (touch_num < 0)
 		return;
 
+#ifdef CONFIG_GOODIX_MULTITOUCH
 	for (i = 0; i < touch_num; i++)
 		goodix_ts_report_touch(ts,
 				&point_data[1 + GOODIX_CONTACT_SIZE * i]);
-
 	input_mt_sync(ts->input_dev);
+
+#else
+
+	if(touch_num>0)
+	{
+		goodix_ts_report_touch(ts, &point_data[1]);
+		input_report_key(ts->input_dev, BTN_TOUCH, 1);
+	}
+	else
+	{
+		input_report_abs(ts->input_dev, ABS_PRESSURE, 0);
+		input_report_key(ts->input_dev, BTN_TOUCH, 0);
+	}
+
+#endif
+
 	input_sync(ts->input_dev);
 }
 
@@ -618,6 +646,8 @@ static int goodix_request_input_dev(struct goodix_ts_data *ts)
 		return -ENOMEM;
 	}
 
+#ifdef CONFIG_GOODIX_MULTITOUCH
+
 	set_bit(ABS_MT_TOUCH_MAJOR, ts->input_dev->absbit);
 	set_bit(ABS_MT_POSITION_X, ts->input_dev->absbit);
 	set_bit(ABS_MT_POSITION_Y, ts->input_dev->absbit);
@@ -630,6 +660,17 @@ static int goodix_request_input_dev(struct goodix_ts_data *ts)
 	input_set_abs_params(ts->input_dev, ABS_MT_WIDTH_MAJOR, 0, 255, 0, 0);
 	input_set_abs_params(ts->input_dev, ABS_MT_TOUCH_MAJOR, 0, 255, 0, 0);
 
+#else
+	set_bit(ABS_X, ts->input_dev->absbit);
+	set_bit(ABS_Y, ts->input_dev->absbit);
+	set_bit(ABS_PRESSURE, ts->input_dev->absbit);
+
+	input_set_abs_params(ts->input_dev, ABS_X, 0, ts->abs_x_max, 0, 0);
+	input_set_abs_params(ts->input_dev, ABS_Y, 0, ts->abs_y_max, 0, 0);
+	input_set_abs_params(ts->input_dev, ABS_PRESSURE, 0, 255, 0 , 0);
+
+#endif
+
 	set_bit(ABS_X, ts->input_dev->absbit);
 	set_bit(ABS_Y, ts->input_dev->absbit);
 	set_bit(BTN_TOUCH, ts->input_dev->keybit);
@@ -638,7 +679,9 @@ static int goodix_request_input_dev(struct goodix_ts_data *ts)
 	set_bit(EV_ABS, ts->input_dev->evbit);
 	set_bit(EV_KEY, ts->input_dev->evbit);
 
+#ifdef CONFIG_GOODIX_MULTITOUCH
 	input_mt_init_slots(ts->input_dev, ts->max_touch_num);
+#endif
 
 	ts->input_dev->name = "Goodix Capacitive TouchScreen";
 	ts->input_dev->phys = "input/ts";
