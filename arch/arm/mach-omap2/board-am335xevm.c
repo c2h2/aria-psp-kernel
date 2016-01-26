@@ -167,11 +167,11 @@ static struct tsc_data am335x_touchscreen_data  = {
 };
 
 static struct adc_data am335x_adc_data = {
-	.adc_channels = 4,
+	.adc_channels = 8,
 };
 
 static struct mfd_tscadc_board tscadc = {
-	.tsc_init = &am335x_touchscreen_data,
+	//.tsc_init = &am335x_touchscreen_data,
 	.adc_init = &am335x_adc_data,
 };
 
@@ -1043,6 +1043,12 @@ static struct pinmux_config wl12xx_pin_mux_sk[] = {
 	{NULL, 0},
 };
 
+static struct pinmux_config cap_touch_pin_mux[] = {
+	{"mcasp0_ahclkx.gpio3_21", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT }, /* interrupt */
+	{"mcasp0_axr1.gpio3_20", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT }, /* RESET maybe choose something */
+ 	{NULL, 0 },
+};
+
 static bool backlight_enable;
 
 static void enable_ecap0(int evm_id, int profile)
@@ -1667,11 +1673,15 @@ static struct i2c_board_info am335x_i2c2_boardinfo[] = {
         {
                 I2C_BOARD_INFO("rx8025", 0x32),
         },
+	{
+		I2C_BOARD_INFO("GDIX1001:00", 0x5D),
+	},
 };
 
 static void i2c2_init(int evm_id, int profile)
 {
 	setup_pin_mux(i2c2_pin_mux);
+	//setup_pin_mux(cap_touch_pin_mux);
 	omap_register_i2c_bus(3, 100, am335x_i2c2_boardinfo,
 			ARRAY_SIZE(am335x_i2c2_boardinfo));
 	return;
