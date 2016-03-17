@@ -1,0 +1,11 @@
+config R8188EU
+	tristate "Realtek RTL8188EU Wireless LAN NIC driver"
+	depends on USB && WLAN && RFKILL
+	select WIRELESS_EXT
+	select WEXT_PRIV
+	select CFG80211
+	default n
+	---help---
+	This option adds the Realtek RTL8188EU USB device. If
+          built as a module, it will be called r8188eu.
+

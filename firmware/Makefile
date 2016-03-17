@@ -143,6 +143,7 @@ fw-shipped-$(CONFIG_VIDEO_CPIA2) += cpia2/stv0672_vp4.bin
 fw-shipped-$(CONFIG_YAM) += yam/1200.bin yam/9600.bin
 
 fw-shipped-$(CONFIG_R8723AU_BT) += rtk_bt/rtk8723a.bin rtk_bt/rtl8723a_config.bin
+fw-shipped-$(CONFIG_R8188EU) += rtlwifi/rtl8188eufw.bin
 
 fw-shipped-all := $(fw-shipped-y) $(fw-shipped-m) $(fw-shipped-)
 
