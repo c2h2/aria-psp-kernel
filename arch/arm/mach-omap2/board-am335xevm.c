@@ -1892,13 +1892,7 @@ static void lis331dlh_init(int evm_id, int profile)
 
 static struct i2c_board_info am335x_i2c1_boardinfo[] = {
 	{
-		I2C_BOARD_INFO("tlv320aic3x", 0x1b),
-	},
-	{
-		I2C_BOARD_INFO("tsl2550", 0x39),
-	},
-	{
-		I2C_BOARD_INFO("tmp275", 0x48),
+		I2C_BOARD_INFO("rx8025", 0x32),
 	},
 };
 
@@ -1914,9 +1908,6 @@ static struct i2c_board_info am335x_i2c2_boardinfo[] = {
 	{
 		I2C_BOARD_INFO("tca6416-keys", 0x20),
 		.platform_data = &tca6416_info,
-	},
-	{
-		I2C_BOARD_INFO("rx8025", 0x32),
 	},
 };
 
@@ -2602,6 +2593,7 @@ static struct evm_dev_cfg aria_cfg[] = {
 	{mmc1_emmc_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{mmc0_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{i2c2_init,	DEV_ON_BASEBOARD, PROFILE_ALL},
+	{i2c1_init,	DEV_ON_BASEBOARD, PROFILE_ALL},
 	//{uart1_init, 	DEV_ON_BASEBOARD, PROFILE_ALL}, //use d_can instead.
 	{d_can_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{uart4_init,     DEV_ON_BASEBOARD, PROFILE_ALL},
