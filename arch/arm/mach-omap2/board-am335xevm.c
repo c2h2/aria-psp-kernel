@@ -2877,9 +2877,12 @@ static void am335x_setup_daughter_board(struct memory_accessor *m, void *c)
 
 static void am335x_evm_setup(struct memory_accessor *mem_acc, void *context)
 {
+
+
+/* c2h2 disable eeprom detection, able to buot without eeprom installed*/
+#if 0
 	int ret;
 	char tmp[10];
-
 	/* 1st get the MAC address from EEPROM */
 	ret = mem_acc->read(mem_acc, (char *)&am335x_mac_addr,
 		EEPROM_MAC_ADDRESS_OFFSET, sizeof(am335x_mac_addr));
@@ -2890,6 +2893,7 @@ static void am335x_evm_setup(struct memory_accessor *mem_acc, void *context)
 	}
 
 	/* Fillup global mac id */
+
 	am33xx_cpsw_macidfillup(&am335x_mac_addr[0][0],
 				&am335x_mac_addr[1][0]);
 
@@ -2960,7 +2964,6 @@ static void am335x_evm_setup(struct memory_accessor *mem_acc, void *context)
     			    AM33XX_ES2_0_OPPNITRO_FREQ);
     	}
     }
-
 _skip:
 	/* SmartReflex also requires board information. */
     //TODO temp fix
@@ -2981,6 +2984,8 @@ out:
 		   "initialization code to match the hardware configuration\n",
 		   __func__ , __FILE__);
 	machine_halt();
+#endif
+	setup_aria();
 }
 
 static struct at24_platform_data am335x_daughter_board_eeprom_info = {
