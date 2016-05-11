@@ -1681,7 +1681,7 @@ static struct i2c_board_info am335x_i2c2_boardinfo[] = {
 static void i2c2_init(int evm_id, int profile)
 {
 	setup_pin_mux(i2c2_pin_mux);
-	//setup_pin_mux(cap_touch_pin_mux);
+	setup_pin_mux(cap_touch_pin_mux);
 	omap_register_i2c_bus(3, 100, am335x_i2c2_boardinfo,
 			ARRAY_SIZE(am335x_i2c2_boardinfo));
 	return;
