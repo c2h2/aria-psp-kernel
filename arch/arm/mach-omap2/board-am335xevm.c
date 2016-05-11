@@ -1044,8 +1044,8 @@ static struct pinmux_config wl12xx_pin_mux_sk[] = {
 };
 
 static struct pinmux_config cap_touch_pin_mux[] = {
-	{"mcasp0_ahclkx.gpio3_21", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT }, /* interrupt */
-	{"mcasp0_axr1.gpio3_20", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT }, /* RESET maybe choose something */
+	{"mcasp0_ahclkx.gpio3_21", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP }, /* interrupt */
+	{"mcasp0_axr1.gpio3_20", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT_PULLUP }, /* RESET maybe choose something */
  	{NULL, 0 },
 };
 
