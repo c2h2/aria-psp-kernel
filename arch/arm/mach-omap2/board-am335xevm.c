@@ -768,22 +768,23 @@ static struct pinmux_config aria_gpio_led_mux[] = {
 static struct pinmux_config asclepius_gpio_mux[] = {
 	{"uart1_ctsn.gpio0_12", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{"gpmc_a0.gpio1_16", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
-	{"gpmc_a1.gpio1_17", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
+	{"gpmc_a1.gpio1_17", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
 	{"gpmc_a2.gpio1_18", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
-	{"gpmc_a3.gpio1_19", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
+	{"gpmc_a3.gpio1_19", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
 	{"gpmc_a4.gpio1_20", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
-	{"gpmc_a5.gpio1_21", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
-	{"gpmc_a6.gpio1_22", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
-	{"gpmc_a7.gpio1_23", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
+	{"gpmc_a5.gpio1_21", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
+	{"gpmc_a6.gpio1_22", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
+	{"gpmc_a7.gpio1_23", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
 	{"gpmc_a8.gpio1_24", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{"gpmc_a9.gpio1_25", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{"gpmc_a10.gpio1_26", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{"gpmc_a11.gpio1_27", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
-	{"gpmc_clk.gpio2_1", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
-	{"mcasp0_aclkx.gpio3_14", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
-	{"mcasp0_axr0.gpio3_16", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
+	{"gpmc_clk.gpio2_1", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
+	{"mcasp0_aclkx.gpio3_14", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
+	{"mcasp0_axr0.gpio3_16", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
 	{"mcasp0_aclkr.gpio3_18", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{"mcasp0_fsr.gpio3_19", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+	{"gpmc_csn3.gpio2_0", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{NULL, 0},
 };
 
@@ -1022,10 +1023,22 @@ static struct pinmux_config mmc2_wl12xx_pin_mux[] = {
 };
 
 static struct pinmux_config uart1_wl12xx_pin_mux[] = {
-	//{"uart1_ctsn.uart1_ctsn", OMAP_MUX_MODE0 | AM33XX_PIN_OUTPUT},
-	//{"uart1_rtsn.uart1_rtsn", OMAP_MUX_MODE0 | AM33XX_PIN_INPUT},
+	{"uart1_ctsn.uart1_ctsn", OMAP_MUX_MODE0 | AM33XX_PIN_OUTPUT},
+	{"uart1_rtsn.uart1_rtsn", OMAP_MUX_MODE0 | AM33XX_PIN_INPUT},
 	{"uart1_rxd.uart1_rxd", OMAP_MUX_MODE0 | AM33XX_PIN_INPUT_PULLUP},
 	{"uart1_txd.uart1_txd", OMAP_MUX_MODE0 | AM33XX_PULL_ENBL},
+	{NULL, 0},
+};
+
+static struct pinmux_config uart1_pin_mux[] = {
+	{"uart1_rxd.uart1_rxd", OMAP_MUX_MODE0 | AM33XX_PIN_INPUT_PULLUP},
+	{"uart1_txd.uart1_txd", OMAP_MUX_MODE0 | AM33XX_PULL_ENBL},
+	{NULL, 0},
+};
+
+static struct pinmux_config uart4_pin_mux[] = {
+	{"uart0_ctsn.uart4_rxd", OMAP_MUX_MODE1 | AM33XX_PIN_INPUT_PULLUP},
+	{"uart0_rtsn.uart4_txd", OMAP_MUX_MODE1 | AM33XX_PULL_ENBL},
 	{NULL, 0},
 };
 
@@ -1771,6 +1784,16 @@ static void uart1_wl12xx_init(int evm_id, int profile)
 	setup_pin_mux(uart1_wl12xx_pin_mux);
 }
 
+static void uart1_init(int evm_id, int profile)
+{
+	setup_pin_mux(uart1_pin_mux);
+}
+
+static void uart4_init(int evm_id, int profile)
+{
+	setup_pin_mux(uart4_pin_mux);
+}
+
 static void wl12xx_bluetooth_enable(void)
 {
 	int status = gpio_request(am335xevm_wlan_data.bt_enable_gpio,
@@ -2348,7 +2371,8 @@ static struct evm_dev_cfg aria_cfg[] = {
 	{i2c2_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{spi0_init,     DEV_ON_BASEBOARD, PROFILE_ALL},
         //{uart2_init,     DEV_ON_BASEBOARD, PROFILE_ALL},
-        {uart1_wl12xx_init, DEV_ON_BASEBOARD, PROFILE_ALL},
+        {uart1_init, DEV_ON_BASEBOARD, PROFILE_ALL},
+        {uart4_init, DEV_ON_BASEBOARD, PROFILE_ALL},
 	{NULL, 0, 0},
 };
 	
