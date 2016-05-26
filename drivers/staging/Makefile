@@ -60,3 +60,4 @@ obj-$(CONFIG_MFD_NVEC)		+= nvec/
 obj-$(CONFIG_R8723AU)		+= rtl8723au/
 obj-$(CONFIG_R8723AU_BT)	+= rtl8723au_bt/
 obj-$(CONFIG_RTL8188FU)		+= rtl8188fu/
+obj-$(CONFIG_RTL8188EU)		+= rtl8188eu/

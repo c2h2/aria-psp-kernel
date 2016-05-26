@@ -138,4 +138,6 @@ source "drivers/staging/rtl8723au_bt/Kconfig"
 
 source "drivers/staging/rtl8188fu/Kconfig"
 
+source "drivers/staging/rtl8188eu/Kconfig"
+
 endif # STAGING
