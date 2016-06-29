@@ -1684,7 +1684,7 @@ static void i2c1_init(int evm_id, int profile)
 
 static struct i2c_board_info am335x_i2c2_boardinfo[] = {
         {
-                I2C_BOARD_INFO("rx8025", 0x32),
+                I2C_BOARD_INFO("ds1307", 0x68),
         },
 	{
 		I2C_BOARD_INFO("GDIX1001:00", 0x5D),
