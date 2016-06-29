@@ -100,7 +100,7 @@ static const struct display_panel disp_panel = {
 #define AM335X_BACKLIGHT_MAX_BRIGHTNESS        100
 #define AM335X_BACKLIGHT_DEFAULT_BRIGHTNESS    85
 //#define AM335X_PWM_PERIOD_NANO_SECONDS        (5000 * 10)
-#define AM335X_PWM_PERIOD_NANO_SECONDS         500000
+#define AM335X_PWM_PERIOD_NANO_SECONDS         20000
 
 static struct platform_pwm_backlight_data am335x_backlight_data0 = {
 	.pwm_id         = "ecap.0",
@@ -1683,9 +1683,14 @@ static void i2c1_init(int evm_id, int profile)
 }
 
 static struct i2c_board_info am335x_i2c2_boardinfo[] = {
+#if 0
         {
                 I2C_BOARD_INFO("ds1307", 0x68),
         },
+#endif
+	{
+		I2C_BOARD_INFO("rx8025", 0x32),
+	},
 	{
 		I2C_BOARD_INFO("GDIX1001:00", 0x5D),
 	},
