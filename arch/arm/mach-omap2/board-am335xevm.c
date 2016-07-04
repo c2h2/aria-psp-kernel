@@ -1663,6 +1663,7 @@ static void lis331dlh_init(int evm_id, int profile)
 }
 
 static struct i2c_board_info am335x_i2c1_boardinfo[] = {
+/*
 	{
 		I2C_BOARD_INFO("tlv320aic3x", 0x1b),
 	},
@@ -1672,12 +1673,13 @@ static struct i2c_board_info am335x_i2c1_boardinfo[] = {
 	{
 		I2C_BOARD_INFO("tmp275", 0x48),
 	},
+*/
 };
 
 static void i2c1_init(int evm_id, int profile)
 {
 	setup_pin_mux(i2c1_pin_mux);
-	omap_register_i2c_bus(2, 100, am335x_i2c1_boardinfo,
+	omap_register_i2c_bus(2, 400, am335x_i2c1_boardinfo,
 			ARRAY_SIZE(am335x_i2c1_boardinfo));
 	return;
 }
@@ -1700,7 +1702,7 @@ static void i2c2_init(int evm_id, int profile)
 {
 	setup_pin_mux(i2c2_pin_mux);
 	setup_pin_mux(cap_touch_pin_mux);
-	omap_register_i2c_bus(3, 100, am335x_i2c2_boardinfo,
+	omap_register_i2c_bus(3, 400, am335x_i2c2_boardinfo,
 			ARRAY_SIZE(am335x_i2c2_boardinfo));
 	return;
 }
@@ -2373,9 +2375,9 @@ static struct evm_dev_cfg aria_cfg[] = {
 	//{evm_nand_init, DEV_ON_BASEBOARD, PROFILE_ALL},
 	{mmc1_emmc_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{mmc0_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
-	//{i2c1_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
+	{i2c1_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{i2c2_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
-	{spi0_init,     DEV_ON_BASEBOARD, PROFILE_ALL},
+	//{spi0_init,     DEV_ON_BASEBOARD, PROFILE_ALL},
         //{uart2_init,     DEV_ON_BASEBOARD, PROFILE_ALL},
         {uart1_init, DEV_ON_BASEBOARD, PROFILE_ALL},
         {uart4_init, DEV_ON_BASEBOARD, PROFILE_ALL},
@@ -2809,7 +2811,7 @@ static void __init am335x_evm_i2c_init(void)
 
 	//evm_init_cpld();
 
-	omap_register_i2c_bus(1, 100, am335x_i2c0_boardinfo,
+	omap_register_i2c_bus(1, 400, am335x_i2c0_boardinfo,
 				ARRAY_SIZE(am335x_i2c0_boardinfo));
 
 	//just setup aria board.
