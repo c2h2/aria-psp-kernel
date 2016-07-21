@@ -2358,6 +2358,19 @@ config FB_PRE_INIT_FB
 	  Select this option if display contents should be inherited as set by
 	  the bootloader.
 
+config FB_ST7789
+	tristate "Sitronix ST7789 Framebuffer Support"
+	depends on FB && SPI
+	select FB_CFB_FILLRECT
+	select FB_CFB_COPYAREA
+	select FB_CFB_IMAGEBLIT
+	select FB_SYS_FOPS
+	select FB_DEFERRED_IO
+	help
+          Framebuffer driver for the Sitronix ST7789 SPI LCDs. Currently,
+	  only 3-wire (9-bit) SPI interface mode, and only one panel type
+	  are supported.
+
 config FB_MSM
 	tristate "MSM Framebuffer support"
 	depends on FB && ARCH_MSM

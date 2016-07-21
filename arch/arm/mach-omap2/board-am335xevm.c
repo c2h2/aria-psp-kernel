@@ -1340,6 +1340,16 @@ static struct spi_board_info aria_spi0_info[] = {
 	},
 };
 
+static struct spi_board_info paigo_lcd_spi0_info[] = {
+	{
+		.modalias = "spi:st7789fb",
+		.platform_data = NULL,
+		.max_speed_hz = 3000000,
+		.bus_num = 1,
+		.chip_select = 0,
+	},
+};
+
 static struct spi_board_info am335x_spi1_slave_info[] = {
 	{
 		.modalias      = "m25p80",
@@ -2131,7 +2141,8 @@ static void asclepius_gpio_init(int evm_id, int profile)
 static void spi0_init(int evm_id, int profile)
 {
 	setup_pin_mux(spi0_pin_mux);
-	spi_register_board_info(aria_spi0_info,	ARRAY_SIZE(aria_spi0_info));
+	spi_register_board_info(paigo_lcd_spi0_info,
+		ARRAY_SIZE(paigo_lcd_spi0_info));
 	return;
 }
 
@@ -2370,8 +2381,8 @@ static struct evm_dev_cfg aria_cfg[] = {
 	{mmc0_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	//{i2c1_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{i2c2_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
-	//{spi0_init,     DEV_ON_BASEBOARD, PROFILE_ALL},
-        {uart2_init,     DEV_ON_BASEBOARD, PROFILE_ALL},
+	{spi0_init,     DEV_ON_BASEBOARD, PROFILE_ALL},
+        //{uart2_init,     DEV_ON_BASEBOARD, PROFILE_ALL},
         {uart1_init, DEV_ON_BASEBOARD, PROFILE_ALL},
         {uart4_init, DEV_ON_BASEBOARD, PROFILE_ALL},
 	{NULL, 0, 0},
