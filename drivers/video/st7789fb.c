@@ -35,21 +35,17 @@
 #include <linux/delay.h>
 #include <linux/spi/spi.h>
 
-#define PANEL_ID_UNKNOWN	-1
-#define PANEL_ID_ERROR		-2
 
-static int st7789_panel_id = PANEL_ID_UNKNOWN;
-
-#define VRAM_LEN	(240*320*4)
-#define TXBUF_LEN	(240*320*3*2)	/* SPI transactions require 16 bits */
+#define VRAM_LEN	(240*204*4)
+#define TXBUF_LEN	(240*204*3*2)	/* SPI transactions require 16 bits */
 
 static struct fb_var_screeninfo st7789_var = {
-	.height		= 320,
+	.height		= 204,
 	.width		= 240,
 	.activate	= FB_ACTIVATE_TEST,
 	.vmode		= FB_VMODE_NONINTERLACED,
 	.xres 		= 240,
-	.yres 		= 320,
+	.yres 		= 204,
 	.bits_per_pixel = 24,
 	.red		= {0, 8},
 	.green		= {8, 8},
@@ -163,10 +159,10 @@ static int st7789_check_var(struct fb_var_screeninfo *var,
 	var->transp.msb_right = 0;
 
 	var->xres_virtual = 240;
-	var->yres_virtual = 320;
+	var->yres_virtual = 204;
 	var->vmode = FB_VMODE_NONINTERLACED;
 	var->xres = 240;
-	var->yres = 320;
+	var->yres = 204;
 
 	return 0;
 }
@@ -238,7 +234,7 @@ static void st7789fb_deferred_io(struct fb_info *info,
 	struct st7789_data *dd = info->par;
 	
 	/* Convert framebuffer contents into a SPI transmit buffer */
-	for (i = 0; i < 320*240*3; i++)
+	for (i = 0; i < 204*240*3; i++)
 		dd->txbuf[i] = 0x100 | (vram[i] & 0xfc);
 	
 	st7789_send_cmd(dd, 0x2a);
@@ -255,7 +251,7 @@ static void st7789fb_deferred_io(struct fb_info *info,
 
 	st7789_send_cmd(dd, 0x2c);
 
-	spi_write(dd->spi, (u8 *) dd->txbuf, 320*240*3*2);
+	spi_write(dd->spi, (u8 *) dd->txbuf, 204*240*3*2);
 }
 
 static struct fb_deferred_io st7789fb_defio = {
@@ -263,75 +259,17 @@ static struct fb_deferred_io st7789fb_defio = {
 	.deferred_io	= st7789fb_deferred_io,
 };
 
-static unsigned short st7789_init_11_d5[] = {
-	0xB7, 0x154, 0xBA, 0x100, 0xBB, 0x129, 0xC0, 0x12C, 0xC2, 0x100, 0xC3,
-	0x100, 0xC4, 0x120, 0xC6, 0x10F, 0xD0, 0x1A4, 0x101, 0xD2, 0x14C, 0xDF,
-	0x15A, 0x169, 0x102, 0x100, 0xE0, 0x1F0, 0x106, 0x10B, 0x10A, 0x10A,
-	0x106, 0x133, 0x143, 0x149, 0x137, 0x112, 0x111, 0x12D, 0x132, 0xE1,
-	0x1F0, 0x106, 0x10B, 0x10A, 0x10A, 0x106, 0x133, 0x143, 0x149, 0x137,
-	0x112, 0x111, 0x12D, 0x132, 0xE4, 0x127, 0x100, 0x110, 0xE7, 0x101,
-	0xE8, 0x193, 0xE9, 0x102, 0x102, 0x100, 0xEC, 0x100, 0xFA, 0x15A, 0x169,
-	0x1EE, 0x100, 0xFC, 0x100, 0x100, 0xFE, 0x100, 0x100, 0xB8, 0x12A,
-	0x12B, 0x101, 0x1FF, 0xB1, 0x1C0, 0x104, 0x10A, 0xB2, 0x10C, 0x10C,
-	0x100, 0x133, 0x133, 0xB3, 0x100, 0x10F, 0x10F, 0xB0, 0x111, 0x1F4
-};
-
-static unsigned short st7789_init_50_5a[] = {
-	0xB7, 0x135, 0xBB, 0x139, 0xC0, 0x12C, 0xC2, 0x101, 0xC3, 0x10F, 0xC4,
-	0x120, 0xC6, 0x10F, 0xD0, 0x1A4, 0x1A1, 0xE0, 0x1F0, 0x10C, 0x113,
-	0x10B, 0x10A, 0x126, 0x139, 0x144, 0x14D, 0x108, 0x114, 0x115, 0x12E,
-	0x134, 0xE1, 0x1F0, 0x10C, 0x113, 0x10B, 0x10A, 0x126, 0x139, 0x144,
-	0x14D, 0x108, 0x114, 0x115, 0x12E, 0x134, 0xE9, 0x108, 0x108, 0x104,
-	0xB8, 0x12A, 0x12B, 0x120, 0xB1, 0x1C0, 0x102, 0x114, 0xB0, 0x111, 0x1E4
-};
-
-static unsigned short st7789_init_default[] = {
-	0xB7, 0x120, 0xBB, 0x13D, 0xC0, 0x12C, 0xC2, 0x101, 0xC3, 0x115, 0xC4,
-	0x120, 0xC6, 0x10F, 0xD0, 0x1A4, 0x1A1, 0xE0, 0x1F0, 0x10C, 0x113,
-	0x10B, 0x10A, 0x126, 0x139, 0x144, 0x14D, 0x108, 0x114, 0x115, 0x12E,
-	0x134, 0xE1, 0x1F0, 0x10C, 0x113, 0x10B, 0x10A, 0x126, 0x139, 0x144,
-	0x14D, 0x108, 0x114, 0x115, 0x12E, 0x134, 0xE9, 0x108, 0x108, 0x104,
-	0xB8, 0x12A, 0x12B, 0x120, 0xB1, 0x1C0, 0x102, 0x114, 0xB0, 0x111, 0x1E4
-};
-
 static void init_lcd(struct st7789_data *dd)
 {
 	int i;
 	struct spi_device *spi = dd->spi;
 
-	st7789_send_cmd(dd, 0x01);
-	msleep(20);
 	st7789_send_cmd(dd, 0x11);
 	msleep(120);
 	st7789_send_cmd(dd, 0x36);
 	st7789_send_data(dd, 0x00);
-	st7789_send_cmd(dd, 0x3A);
-	st7789_send_data(dd, 0x66);
 
-	dev_info(&spi->dev, "Initializing LCD panel with ID %02x\n",
-		 st7789_panel_id);
-
-	/* Panel-specific configuration */
-	switch (st7789_panel_id) {
-		case 0x11:
-		case 0xd5:
-			spi_write(spi, (u8 *) st7789_init_11_d5,
-				  sizeof(st7789_init_11_d5));
-			break;
-
-		case 0x50:
-		case 0x5a:
-			spi_write(spi, (u8 *) st7789_init_50_5a,
-				  sizeof(st7789_init_50_5a));
-			break;
-
-		default:
-			dev_info(&spi->dev, "Unknown panel ID %02x; assuming default initialization sequence\n",
-				 st7789_panel_id);
-			spi_write(dd->spi, (u8 *) st7789_init_default,
-				  sizeof(st7789_init_default));
-			break;
-	};
+	dev_info(&spi->dev, "Initializing LCD panel\n");
 
 	st7789_send_cmd(dd, 0x2A);
 	st7789_send_data(dd, 0x00);
@@ -342,56 +280,85 @@ static void init_lcd(struct st7789_data *dd)
 	st7789_send_cmd(dd, 0x2B);
 	st7789_send_data(dd, 0x00);
 	st7789_send_data(dd, 0x00);
+	st7789_send_data(dd, 0x00);
+	st7789_send_data(dd, 0xEF);
+
+	st7789_send_cmd(dd, 0x3A);
+	st7789_send_data(dd, 0x05);
+
+	st7789_send_cmd(dd, 0xB2);
+	st7789_send_data(dd, 0x0C);
+	st7789_send_data(dd, 0x0C);
+	st7789_send_data(dd, 0x0);
+	st7789_send_data(dd, 0x33);
+	st7789_send_data(dd, 0x33);
+
+	st7789_send_cmd(dd, 0xB7);
+	st7789_send_data(dd, 0x35);
+
+	st7789_send_cmd(dd, 0xBB);
+	st7789_send_data(dd, 0x1C);
+
+	st7789_send_cmd(dd, 0xC0);
+	st7789_send_data(dd, 0x2C);
+
+	st7789_send_cmd(dd, 0xC2);
 	st7789_send_data(dd, 0x01);
-	st7789_send_data(dd, 0x3F);
+
+	st7789_send_cmd(dd, 0xC3);
+	st7789_send_data(dd, 0x0E);
+
+	st7789_send_cmd(dd, 0xC4);
+	st7789_send_data(dd, 0x20);
+
+	st7789_send_cmd(dd, 0xC6);
+	st7789_send_data(dd, 0x0F);
+
+	st7789_send_cmd(dd, 0xD0);
+	st7789_send_data(dd, 0xA4);
+	st7789_send_data(dd, 0xA1);
 
 	st7789_send_cmd(dd, 0x21);
-	st7789_send_cmd(dd, 0x29);
 
-	/* Draw something */
-	st7789_send_cmd(dd, 0x36);
-	st7789_send_data(dd, 0);
-	st7789_send_cmd(dd, 0xb1);
-	st7789_send_data(dd, 0);
-	st7789_send_cmd(dd, 0xb0);
-	st7789_send_data(dd, 0);
+	st7789_send_cmd(dd, 0xE0);
+	st7789_send_data(dd, 0xD0);
+	st7789_send_data(dd, 0x06);
+	st7789_send_data(dd, 0x0B);
+	st7789_send_data(dd, 0x0A);
+	st7789_send_data(dd, 0x09);
+	st7789_send_data(dd, 0x06);
+	st7789_send_data(dd, 0x2F);
+	st7789_send_data(dd, 0x44);
+	st7789_send_data(dd, 0x45);
+	st7789_send_data(dd, 0x18);
+	st7789_send_data(dd, 0x14);
+	st7789_send_data(dd, 0x14);
+	st7789_send_data(dd, 0x27);
+	st7789_send_data(dd, 0x2D);
+	
+	st7789_send_cmd(dd, 0xE1);
+	st7789_send_data(dd, 0xD0);
+	st7789_send_data(dd, 0x06);
+	st7789_send_data(dd, 0x0B);
+	st7789_send_data(dd, 0x0A);
+	st7789_send_data(dd, 0x09);
+	st7789_send_data(dd, 0x05);
+	st7789_send_data(dd, 0x2E);
+	st7789_send_data(dd, 0x43);
+	st7789_send_data(dd, 0x45);
+	st7789_send_data(dd, 0x18);
+	st7789_send_data(dd, 0x14);
+	st7789_send_data(dd, 0x14);
+	st7789_send_data(dd, 0x27);
+	st7789_send_data(dd, 0x2D);
 
-	st7789_send_cmd(dd, 0x2a);
-	st7789_send_data(dd, 0);
-	st7789_send_data(dd, 0);
-	st7789_send_data(dd, 0);
-	st7789_send_data(dd, 10);
-
-	st7789_send_cmd(dd, 0x2b);
-	st7789_send_data(dd, 0);
-	st7789_send_data(dd, 0);
-	st7789_send_data(dd, 10 >> 8);
-	st7789_send_data(dd, 10 & 0xff);
-
-	st7789_send_cmd(dd, 0x2c);
-
-	for (i = 0; i < 100; i++) {
-		st7789_send_data(dd, 0xfc);
-		st7789_send_data(dd, 0xcc);
-		st7789_send_data(dd, 0x00);
-	}
+        st7789_send_cmd(dd, 0x29);
 }
 
 static int st7789_probe(struct spi_device *spi)
 {
 	struct st7789_data *drvdata;
 	int ret;
-
-	/* 
-	 * The panel ID must be read over I2C, via a separate probe call.
-	 * If the panel ID has not been read yet, defer probe.
-	 */
-	if (st7789_panel_id == PANEL_ID_UNKNOWN)
-		return -EINVAL;
-
-	/* If we could not actually read the panel ID, give up now.	 */
-	if (st7789_panel_id == PANEL_ID_ERROR)
-		return -EINVAL;
 
 	drvdata = devm_kzalloc(&spi->dev, sizeof(*drvdata), GFP_KERNEL);
 	if (!drvdata) {
@@ -409,9 +376,9 @@ static int st7789_probe(struct spi_device *spi)
 	spin_lock_init(&drvdata->lock);
 	spi_set_drvdata(spi, drvdata);
 
-	spi->mode = 3;
+	spi->mode = SPI_MODE_0;
 	spi->bits_per_word = 9;
-	spi->max_speed_hz = 1000000000;
+	spi->max_speed_hz = 3000000;
 	ret = spi_setup(spi);
 
 	if (ret) {
@@ -452,7 +419,8 @@ static int st7789_probe(struct spi_device *spi)
 	return 0;
 }
 
-static void st7789fb_schedule_refresh(struct fb_info *info, const struct fb_fillrect *rect)
+static void st7789fb_schedule_refresh(struct fb_info *info,
+	const struct fb_fillrect *rect)
 {
 	if (!info->fbdefio)
 		return;
@@ -486,75 +454,13 @@ static struct spi_driver st7789_spi_driver = {
 	.remove =	st7789_remove,
 };
 
-
-/*
- * This is relatively heinous.
- *
- * To properly initialize the panel, we need to send some model-specific
- * commands to it. We cannot directly ask the panel for its model ID - 
- * instead, we must ask the associated *touchscreen controller*.
- * 
- * Therefore, we need to have a tiny i2c driver that knows how to retrieve
- * the panel ID from the touchscreen, and to hand it to the panel driver
- * itself.
- * 
- * I really wish it did not need to be this way....
- */
-static int st7789fb_panel_id_probe(struct i2c_client *client,
-				   const struct i2c_device_id *id)
-{
-	unsigned int panel_id;
-
-	/* Let's see whether this adapter can support what we need. */
-	if (!i2c_check_functionality(client->adapter,
-				I2C_FUNC_SMBUS_BYTE_DATA)) {
-		dev_err(&client->dev, "insufficient functionality!\n");
-		return -ENODEV;
-	}
-	
-	panel_id = i2c_smbus_read_byte_data(client, 0xA8);
-
-	if (panel_id < 0) {
-		dev_err(&client->dev, "Could not query panel ID: %d\n", panel_id);
-		st7789_panel_id = PANEL_ID_ERROR;
-		return panel_id;
-	}
-	
-	st7789_panel_id = panel_id;
-	
-	dev_info(&client->dev, "Detected panel ID: %02x\n", panel_id);
-	return 0;
-}
-
-static int st7789fb_panel_id_remove(struct i2c_client *client)
-{
-	/* We don't have anything to clean up */
-	return 0;
-}
-
-static const struct i2c_device_id st7789fb_panel_id_id[] = { /* :) */
-	{"st7789fb_panel_id", 0},
-	{}
-};
-
-static struct i2c_driver st7789fb_panel_id_driver = {
-	.driver   = {
-		   .name = "st7789fb_panel_id",
-	},
-	.probe    = st7789fb_panel_id_probe,
-	.remove   = st7789fb_panel_id_remove,
-	.id_table = st7789fb_panel_id_id,
-};
-
 static int __init st7789fb_init(void)
 {
-	return spi_register_driver(&st7789_spi_driver) &
-		i2c_add_driver(&st7789fb_panel_id_driver);
+	return spi_register_driver(&st7789_spi_driver);
 }
 
 static void __exit st7789fb_exit(void)
 {
-	i2c_del_driver(&st7789fb_panel_id_driver);
 	spi_unregister_driver(&st7789_spi_driver);
 }
 
@@ -565,5 +471,5 @@ MODULE_AUTHOR("evilwombat");
 MODULE_DESCRIPTION("Sitronix ST7789 LCD Controller Driver");
 MODULE_LICENSE("GPL");
 MODULE_ALIAS("spi:st7789fb");
-MODULE_DEVICE_TABLE(i2c, st7789fb_panel_id);
+
 

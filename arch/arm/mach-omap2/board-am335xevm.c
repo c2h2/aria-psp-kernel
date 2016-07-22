@@ -89,6 +89,8 @@
 
 #define EEPROM_24c02 1
 
+static int g_spi_lcd_rst_gpio = GPIO_TO_PIN(3, 20);
+
 static const struct display_panel disp_panel = {
 	WVGA,
 	32,
@@ -100,7 +102,7 @@ static const struct display_panel disp_panel = {
 #define AM335X_BACKLIGHT_MAX_BRIGHTNESS        100
 #define AM335X_BACKLIGHT_DEFAULT_BRIGHTNESS    85
 //#define AM335X_PWM_PERIOD_NANO_SECONDS        (5000 * 10)
-#define AM335X_PWM_PERIOD_NANO_SECONDS         500000
+#define AM335X_PWM_PERIOD_NANO_SECONDS         20000
 
 static struct platform_pwm_backlight_data am335x_backlight_data0 = {
 	.pwm_id         = "ecap.0",
@@ -511,7 +513,7 @@ static struct pinmux_config nand_pin_mux[] = {
 	{NULL, 0},
 };
 
-/* Module pin mux for SPI fash */
+/* Module pin mux for SPI flash */
 static struct pinmux_config spi0_pin_mux[] = {
 	{"spi0_sclk.spi0_sclk", OMAP_MUX_MODE0 | AM33XX_PULL_ENBL
 							| AM33XX_INPUT_EN},
@@ -779,12 +781,14 @@ static struct pinmux_config asclepius_gpio_mux[] = {
 	{"gpmc_a9.gpio1_25", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{"gpmc_a10.gpio1_26", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{"gpmc_a11.gpio1_27", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
-	{"gpmc_clk.gpio2_1", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
+	{"gpmc_clk.gpio2_1", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{"mcasp0_aclkx.gpio3_14", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
 	{"mcasp0_axr0.gpio3_16", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
 	{"mcasp0_aclkr.gpio3_18", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{"mcasp0_fsr.gpio3_19", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{"gpmc_csn3.gpio2_0", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+	{"mcasp0_ahclkr.gpio3_17", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+	{"mcasp0_axr1.gpio3_20", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{NULL, 0},
 };
 
@@ -1342,9 +1346,8 @@ static struct spi_board_info aria_spi0_info[] = {
 
 static struct spi_board_info paigo_lcd_spi0_info[] = {
 	{
-		.modalias = "spi:st7789fb",
-		.platform_data = NULL,
-		.max_speed_hz = 3000000,
+		.modalias = "st7789fb",
+		.max_speed_hz = 7000000,
 		.bus_num = 1,
 		.chip_select = 0,
 	},
@@ -1696,15 +1699,11 @@ static struct i2c_board_info am335x_i2c2_boardinfo[] = {
         {
                 I2C_BOARD_INFO("rx8025", 0x32),
         },
-	{
-		I2C_BOARD_INFO("GDIX1001:00", 0x5D),
-	},
 };
 
 static void i2c2_init(int evm_id, int profile)
 {
 	setup_pin_mux(i2c2_pin_mux);
-	setup_pin_mux(cap_touch_pin_mux);
 	omap_register_i2c_bus(3, 100, am335x_i2c2_boardinfo,
 			ARRAY_SIZE(am335x_i2c2_boardinfo));
 	return;
@@ -2141,6 +2140,12 @@ static void asclepius_gpio_init(int evm_id, int profile)
 static void spi0_init(int evm_id, int profile)
 {
 	setup_pin_mux(spi0_pin_mux);
+
+	gpio_request(g_spi_lcd_rst_gpio, "spi-lcd-rst");
+	gpio_direction_output(g_spi_lcd_rst_gpio, 0);
+	mdelay(20);
+	gpio_direction_output(g_spi_lcd_rst_gpio, 1);
+
 	spi_register_board_info(paigo_lcd_spi0_info,
 		ARRAY_SIZE(paigo_lcd_spi0_info));
 	return;
