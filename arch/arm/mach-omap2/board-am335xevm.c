@@ -89,7 +89,9 @@
 
 #define EEPROM_24c02 1
 
+static int g_spi_lcd_pwr_gpio = GPIO_TO_PIN(3, 18);
 static int g_spi_lcd_rst_gpio = GPIO_TO_PIN(3, 20);
+static int g_spi_lcd_pwm_gpio = GPIO_TO_PIN(3, 17);
 
 static const struct display_panel disp_panel = {
 	WVGA,
@@ -2141,10 +2143,19 @@ static void spi0_init(int evm_id, int profile)
 {
 	setup_pin_mux(spi0_pin_mux);
 
+	gpio_request(g_spi_lcd_pwr_gpio, "spi-lcd-pwr");
+	gpio_direction_output(g_spi_lcd_pwr_gpio, 1);
+
+	gpio_request(g_spi_lcd_pwm_gpio, "spi-lcd-pwm");
+	gpio_direction_output(g_spi_lcd_pwm_gpio, 1);
+
 	gpio_request(g_spi_lcd_rst_gpio, "spi-lcd-rst");
+	gpio_direction_output(g_spi_lcd_rst_gpio, 1);
+	mdelay(10);
 	gpio_direction_output(g_spi_lcd_rst_gpio, 0);
 	mdelay(20);
 	gpio_direction_output(g_spi_lcd_rst_gpio, 1);
+	mdelay(120);
 
 	spi_register_board_info(paigo_lcd_spi0_info,
 		ARRAY_SIZE(paigo_lcd_spi0_info));

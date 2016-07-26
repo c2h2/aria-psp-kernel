@@ -229,130 +229,171 @@ static void st7789_send_data(struct st7789_data *drvdata, unsigned short v)
 static void st7789fb_deferred_io(struct fb_info *info,
 				 struct list_head *pagelist)
 {
-	unsigned int i;
+	unsigned int i, size;
 	unsigned char *vram = info->screen_base;
 	struct st7789_data *dd = info->par;
 	
 	/* Convert framebuffer contents into a SPI transmit buffer */
-	for (i = 0; i < 204*240*3; i++)
-		dd->txbuf[i] = 0x100 | (vram[i] & 0xfc);
-	
+
+	for (i = 0; i < 204*240; i++)
+	{
+		dd->txbuf[i*2] = 0x100 | (vram[i*3] & 0xF8) |
+			((vram[i*3+1] & 0xE0)>>5);
+
+		dd->txbuf[i*2+1] = 0x100 | ((vram[i*3+1] & 0x1C) << 3) |
+			((vram[i*3+2] & 0xFF)>>3);
+	}
+
 	st7789_send_cmd(dd, 0x2a);
 	st7789_send_data(dd, 0);
 	st7789_send_data(dd, 0);
 	st7789_send_data(dd, 0);
-	st7789_send_data(dd, 239);
+	st7789_send_data(dd, 0xEF);
 
 	st7789_send_cmd(dd, 0x2b);
 	st7789_send_data(dd, 0);
 	st7789_send_data(dd, 0);
-	st7789_send_data(dd, 319 >> 8);
-	st7789_send_data(dd, 319 & 0xff);
+	st7789_send_data(dd, 0);
+	st7789_send_data(dd, 0xCB);
 
 	st7789_send_cmd(dd, 0x2c);
 
-	spi_write(dd->spi, (u8 *) dd->txbuf, 204*240*3*2);
+	for(i=0;i<204*240*2*2;i+=16384)
+	{
+		if(204*240*2*2 - i >= 16384)
+		{
+			size = 16384;
+		}
+		else
+		{
+			size = 204*240*2*2 - i;
+		}
+		spi_write(dd->spi, (u8 *) dd->txbuf+ i , size);
+	}
 }
 
 static struct fb_deferred_io st7789fb_defio = {
-	.delay		= HZ / 5,
+	.delay		= HZ / 4,
 	.deferred_io	= st7789fb_deferred_io,
 };
 
 static void init_lcd(struct st7789_data *dd)
 {
-	int i;
+	unsigned int i, size;
 	struct spi_device *spi = dd->spi;
 
 	st7789_send_cmd(dd, 0x11);
 	msleep(120);
-	st7789_send_cmd(dd, 0x36);
-	st7789_send_data(dd, 0x00);
 
 	dev_info(&spi->dev, "Initializing LCD panel\n");
 
-	st7789_send_cmd(dd, 0x2A);
+	st7789_send_cmd(dd, 0x36);
 	st7789_send_data(dd, 0x00);
-	st7789_send_data(dd, 0x00);
-	st7789_send_data(dd, 0x00);
-	st7789_send_data(dd, 0xEF);
-
-	st7789_send_cmd(dd, 0x2B);
-	st7789_send_data(dd, 0x00);
-	st7789_send_data(dd, 0x00);
-	st7789_send_data(dd, 0x00);
-	st7789_send_data(dd, 0xEF);
-
-	st7789_send_cmd(dd, 0x3A);
-	st7789_send_data(dd, 0x05);
-
-	st7789_send_cmd(dd, 0xB2);
-	st7789_send_data(dd, 0x0C);
-	st7789_send_data(dd, 0x0C);
-	st7789_send_data(dd, 0x0);
-	st7789_send_data(dd, 0x33);
-	st7789_send_data(dd, 0x33);
-
-	st7789_send_cmd(dd, 0xB7);
-	st7789_send_data(dd, 0x35);
-
-	st7789_send_cmd(dd, 0xBB);
-	st7789_send_data(dd, 0x1C);
-
-	st7789_send_cmd(dd, 0xC0);
-	st7789_send_data(dd, 0x2C);
-
-	st7789_send_cmd(dd, 0xC2);
-	st7789_send_data(dd, 0x01);
-
-	st7789_send_cmd(dd, 0xC3);
-	st7789_send_data(dd, 0x0E);
-
-	st7789_send_cmd(dd, 0xC4);
-	st7789_send_data(dd, 0x20);
-
-	st7789_send_cmd(dd, 0xC6);
-	st7789_send_data(dd, 0x0F);
-
-	st7789_send_cmd(dd, 0xD0);
-	st7789_send_data(dd, 0xA4);
-	st7789_send_data(dd, 0xA1);
-
+	st7789_send_cmd(dd, 0x3a);
+	st7789_send_data(dd, 0x05); /* RGB565 */
 	st7789_send_cmd(dd, 0x21);
 
-	st7789_send_cmd(dd, 0xE0);
-	st7789_send_data(dd, 0xD0);
-	st7789_send_data(dd, 0x06);
-	st7789_send_data(dd, 0x0B);
-	st7789_send_data(dd, 0x0A);
-	st7789_send_data(dd, 0x09);
-	st7789_send_data(dd, 0x06);
-	st7789_send_data(dd, 0x2F);
-	st7789_send_data(dd, 0x44);
-	st7789_send_data(dd, 0x45);
-	st7789_send_data(dd, 0x18);
-	st7789_send_data(dd, 0x14);
-	st7789_send_data(dd, 0x14);
-	st7789_send_data(dd, 0x27);
-	st7789_send_data(dd, 0x2D);
-	
-	st7789_send_cmd(dd, 0xE1);
-	st7789_send_data(dd, 0xD0);
-	st7789_send_data(dd, 0x06);
-	st7789_send_data(dd, 0x0B);
-	st7789_send_data(dd, 0x0A);
-	st7789_send_data(dd, 0x09);
-	st7789_send_data(dd, 0x05);
-	st7789_send_data(dd, 0x2E);
-	st7789_send_data(dd, 0x43);
-	st7789_send_data(dd, 0x45);
-	st7789_send_data(dd, 0x18);
-	st7789_send_data(dd, 0x14);
-	st7789_send_data(dd, 0x14);
-	st7789_send_data(dd, 0x27);
-	st7789_send_data(dd, 0x2D);
+	st7789_send_cmd(dd, 0x2a);
+	st7789_send_data(dd, 0x00);
+	st7789_send_data(dd, 0x00);
+	st7789_send_data(dd, 0x00);
+	st7789_send_data(dd, 0xef);
+	st7789_send_cmd(dd, 0x2b);
+	st7789_send_data(dd, 0x00);
+	st7789_send_data(dd, 0x00);
+	st7789_send_data(dd, 0x00);
+	st7789_send_data(dd, 0xCB);
 
-        st7789_send_cmd(dd, 0x29);
+	st7789_send_cmd(dd, 0xb2);
+	st7789_send_data(dd, 0x0c);
+	st7789_send_data(dd, 0x0c);
+	st7789_send_data(dd, 0x00);
+	st7789_send_data(dd, 0x33);
+	st7789_send_data(dd, 0x33);
+	st7789_send_cmd(dd, 0xb7);
+	st7789_send_data(dd, 0x35);
+
+	st7789_send_cmd(dd, 0xbb);
+	st7789_send_data(dd, 0x1f);
+	st7789_send_cmd(dd, 0xc0);
+	st7789_send_data(dd, 0x2c);
+	st7789_send_cmd(dd, 0xc2);
+	st7789_send_data(dd, 0x01);
+	st7789_send_cmd(dd, 0xc3);
+	st7789_send_data(dd, 0x12);
+	st7789_send_cmd(dd, 0xc4);
+	st7789_send_data(dd, 0x20);
+	st7789_send_cmd(dd, 0xc6);
+	st7789_send_data(dd, 0x0f);
+	st7789_send_cmd(dd, 0xd0);
+	st7789_send_data(dd, 0xa4);
+	st7789_send_data(dd, 0xa1);
+
+	st7789_send_cmd(dd, 0xe0);
+	st7789_send_data(dd, 0xd0);
+	st7789_send_data(dd, 0x08);
+	st7789_send_data(dd, 0x11);
+	st7789_send_data(dd, 0x08);
+	st7789_send_data(dd, 0x0c);
+	st7789_send_data(dd, 0x15);
+	st7789_send_data(dd, 0x39);
+	st7789_send_data(dd, 0x33);
+	st7789_send_data(dd, 0x50);
+	st7789_send_data(dd, 0x36);
+	st7789_send_data(dd, 0x13);
+	st7789_send_data(dd, 0x14);
+	st7789_send_data(dd, 0x29);
+	st7789_send_data(dd, 0x2d);
+	st7789_send_cmd(dd, 0xe1);
+	st7789_send_data(dd, 0xd0);
+	st7789_send_data(dd, 0x08);
+	st7789_send_data(dd, 0x10);
+	st7789_send_data(dd, 0x08);
+	st7789_send_data(dd, 0x06);
+	st7789_send_data(dd, 0x06);
+	st7789_send_data(dd, 0x39);
+	st7789_send_data(dd, 0x44);
+	st7789_send_data(dd, 0x51);
+	st7789_send_data(dd, 0x0b);
+	st7789_send_data(dd, 0x16);
+	st7789_send_data(dd, 0x14);
+	st7789_send_data(dd, 0x2f);
+	st7789_send_data(dd, 0x31);
+
+	st7789_send_cmd(dd, 0x29);
+
+	for (i = 0; i < 204*240; i++)
+	{
+		dd->txbuf[i*2] = 0x100;
+		dd->txbuf[i*2+1] = 0x100;
+	}
+
+	st7789_send_cmd(dd, 0x2a);
+	st7789_send_data(dd, 0);
+	st7789_send_data(dd, 0);
+	st7789_send_data(dd, 0);
+	st7789_send_data(dd, 0xEF);
+
+	st7789_send_cmd(dd, 0x2b);
+	st7789_send_data(dd, 0);
+	st7789_send_data(dd, 0);
+	st7789_send_data(dd, 0);
+	st7789_send_data(dd, 0xCB);
+
+	st7789_send_cmd(dd, 0x2c);
+
+	for(i=0;i<204*240*2*2;i+=16384)
+	{
+		if(204*240*2*2 - i >= 16384)
+		{
+			size = 16384;
+		}
+		else
+		{
+			size = 204*240*2*2 - i;
+		}
+		spi_write(dd->spi, (u8 *) dd->txbuf+ i , size);
+	}
 }
 
 static int st7789_probe(struct spi_device *spi)
@@ -378,7 +419,7 @@ static int st7789_probe(struct spi_device *spi)
 
 	spi->mode = SPI_MODE_0;
 	spi->bits_per_word = 9;
-	spi->max_speed_hz = 3000000;
+	spi->max_speed_hz = 5000000;
 	ret = spi_setup(spi);
 
 	if (ret) {
