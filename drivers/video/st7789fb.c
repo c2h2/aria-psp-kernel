@@ -273,7 +273,7 @@ static void st7789fb_deferred_io(struct fb_info *info,
 }
 
 static struct fb_deferred_io st7789fb_defio = {
-	.delay		= HZ / 4,
+	.delay		= HZ / 5,
 	.deferred_io	= st7789fb_deferred_io,
 };
 
@@ -419,7 +419,7 @@ static int st7789_probe(struct spi_device *spi)
 
 	spi->mode = SPI_MODE_0;
 	spi->bits_per_word = 9;
-	spi->max_speed_hz = 5000000;
+	spi->max_speed_hz = 20000000;
 	ret = spi_setup(spi);
 
 	if (ret) {
