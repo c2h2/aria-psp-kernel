@@ -229,7 +229,7 @@ static void st7789_send_data(struct st7789_data *drvdata, unsigned short v)
 static void st7789fb_deferred_io(struct fb_info *info,
 				 struct list_head *pagelist)
 {
-	unsigned int i, size;
+	unsigned int i, size, r;
 	unsigned char *vram = info->screen_base;
 	struct st7789_data *dd = info->par;
 	
@@ -237,11 +237,12 @@ static void st7789fb_deferred_io(struct fb_info *info,
 
 	for (i = 0; i < 204*240; i++)
 	{
-		dd->txbuf[i*2] = 0x100 | (vram[i*3] & 0xF8) |
-			((vram[i*3+1] & 0xE0)>>5);
+		r = 204*240 - 1 - i;
+		dd->txbuf[i*2] = 0x100 | (vram[r*3] & 0xF8) |
+			((vram[r*3+1] & 0xE0)>>5);
 
-		dd->txbuf[i*2+1] = 0x100 | ((vram[i*3+1] & 0x1C) << 3) |
-			((vram[i*3+2] & 0xFF)>>3);
+		dd->txbuf[i*2+1] = 0x100 | ((vram[r*3+1] & 0x1C) << 3) |
+			((vram[r*3+2] & 0xFF)>>3);
 	}
 
 	st7789_send_cmd(dd, 0x2a);
@@ -419,7 +420,7 @@ static int st7789_probe(struct spi_device *spi)
 
 	spi->mode = SPI_MODE_0;
 	spi->bits_per_word = 9;
-	spi->max_speed_hz = 20000000;
+	spi->max_speed_hz = 50000000;
 	ret = spi_setup(spi);
 
 	if (ret) {
