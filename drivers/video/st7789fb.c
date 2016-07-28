@@ -274,7 +274,7 @@ static void st7789fb_deferred_io(struct fb_info *info,
 }
 
 static struct fb_deferred_io st7789fb_defio = {
-	.delay		= HZ / 5,
+	.delay		= HZ / 20,
 	.deferred_io	= st7789fb_deferred_io,
 };
 
