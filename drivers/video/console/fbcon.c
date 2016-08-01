@@ -373,6 +373,8 @@ static void fb_flashcursor(struct work_struct *work)
 	struct vc_data *vc = NULL;
 	int c;
 	int mode;
+	//hunter for logon CURSOR
+	return;
 
 	console_lock();
 	if (ops && ops->currcon != -1)
@@ -1287,7 +1289,8 @@ static void fbcon_cursor(struct vc_data *vc, int mode)
 	struct fbcon_ops *ops = info->fbcon_par;
 	int y;
  	int c = scr_readw((u16 *) vc->vc_pos);
-
+	//hunter for logon CURSOR
+	return;
 	if (fbcon_is_inactive(vc, info) || vc->vc_deccm != 1)
 		return;
 
