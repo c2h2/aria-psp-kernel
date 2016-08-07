@@ -72,6 +72,67 @@
 #include "devices.h"
 #include "hsmmc.h"
 
+/*SSC test*/
+#include "cm33xx.h"
+
+
+/* Descriptor for Spread Spectrum Clocking */
+struct ssc_data {
+    const  char* name;          /* Name of the clock */
+    unsigned int percent;       /* SSC modulation strength in % */
+    unsigned int clksel;        /* Offset to CLKSEL register */
+    unsigned int deltamstep;    /* Offset to DELTAMSTEP register */
+    unsigned int modfreqdiv;    /* Offset to DELTAMSTEP register */
+    unsigned int clkmode;       /* Offset to CLKMODE register */
+};
+
+/* Descriptor for all AM335x clocks */
+static const struct ssc_data mpu_dpll_data = {
+        .name       = "MPU",
+        .percent    = 2,
+        .clksel     = 0x2C,
+        .deltamstep = 0x24,
+        .modfreqdiv = 0x28,
+        .clkmode    = 0x88,
+};
+
+static const struct ssc_data ddr_dpll_data = {
+        .name       = "DDR",
+        .percent    = 2,
+        .clksel     = 0x40,
+        .deltamstep = 0x38,
+        .modfreqdiv = 0x3C,
+        .clkmode    = 0x94,
+};
+
+static const struct ssc_data lcd_dpll_data = {
+        .name       = "LCD",
+        .percent    = 5,
+        .clksel     = 0x54,
+        .deltamstep = 0x4C,
+        .modfreqdiv = 0x50,
+        .clkmode    = 0x98,
+};
+
+static const struct ssc_data core_dpll_data = {
+        .name       = "COR",
+        .percent    = 2,
+        .clksel     = 0x68,
+        .deltamstep = 0x60,
+        .modfreqdiv = 0x64,
+        .clkmode    = 0x90,
+};
+
+static const struct ssc_data per_dpll_data = {
+        .name       = "PER",
+        .percent    = 2,    // watch for V24 jitter!
+        .clksel     = 0x9C,
+        .deltamstep = 0x74,
+        .modfreqdiv = 0x78,
+        .clkmode    = 0x8C,
+};
+
+
 /* Convert GPIO signal to GPIO pin number */
 #define GPIO_TO_PIN(bank, gpio) (32 * (bank) + (gpio))
 
@@ -2236,6 +2297,90 @@ static void am335x_rtc_init(int evm_id, int profile)
 			dev_name, oh->name);
 }
 
+
+
+/* Function for setup SSC */
+static void spread_spectrum_setup(const struct ssc_data* dpll_data)
+{
+    void __iomem* clock_base;
+    struct clk* clock;
+    unsigned int f;
+    unsigned int fm;
+    unsigned int m;
+    unsigned int n;
+    unsigned int ModFreqDivider;
+    unsigned int Exponent;
+    unsigned int Mantissa;
+    unsigned int delta_m_step;
+
+    clock_base = ioremap(AM33XX_CM_BASE + AM33XX_CM_WKUP_MOD, 0x1000);
+    if (!clock_base) {
+        printk(KERN_ERR "ioremap spread spectrum clocks failed\n");
+        return;
+    }
+
+    /* Read PLL dividers m and n */
+    m = readl(clock_base + dpll_data->clksel);
+    n = m & 0x7F;
+    m = (m >> 8) & 0x3FF;
+    // printk(KERN_ERR "%s PLL m = %d, n = %d\n", dpll_data->name, m, n);
+
+    /* Calculate Fref */
+    clock = clk_get(NULL, "sys_clkin_ck");
+    f = clk_get_rate(clock);
+    f = f/(1+n);
+    // printk(KERN_ERR "%s PLL reference clock is %dHz\n", dpll_data->name, f);
+
+    /* Calculate max. Bandwidth (Modulation Frequency) of PLL */
+    fm = f / 70;
+    // printk(KERN_ERR "%s PLL Bandwidth is %d\n", dpll_data->name, fm);
+
+    /* Calculate ModFreqDivider */
+    ModFreqDivider = f/(4 * fm);
+    // printk(KERN_ERR "%s PLL ModFreqDivider is %d\n", dpll_data->name, ModFreqDivider);
+
+    /* Calculate Mantissa/Exponent */
+    Exponent = 0;
+    Mantissa = ModFreqDivider;
+    while ((Mantissa > 127) && (Exponent < 7)) {
+        Exponent++;
+        Mantissa /= 2;
+    }
+    if (Mantissa > 127)
+        Mantissa = 127;
+    // printk(KERN_ERR "%s PLL Mantissa = %d, Exponent = %d\n", dpll_data->name, Mantissa, Exponent);
+    ModFreqDivider = Mantissa << Exponent;
+    // printk(KERN_ERR "%s PLL revised ModFreqDivider is %d\n", dpll_data->name, ModFreqDivider);
+
+    /* Calculate Modulation steps */
+    delta_m_step = (m * dpll_data->percent) << 18;
+    delta_m_step /= 100;
+    delta_m_step /= ModFreqDivider;
+    if (delta_m_step > 0xFFFFF)
+        delta_m_step = 0xFFFFF;
+    // printk(KERN_ERR "%s PLL Delta_M_Int = %d, Delta_M_Frac = %d\n", dpll_data->name, delta_m_step >> 18, delta_m_step & 0x3FFFF);
+
+    /* Setup Spread Spectrum */
+    writel(delta_m_step, clock_base + dpll_data->deltamstep);
+    writel((Exponent << 8) | Mantissa, clock_base + dpll_data->modfreqdiv);
+    m = readl(clock_base + dpll_data->clkmode);
+    m &= ~0xF000;   // clear all SSC flags
+    m |=  0x1000;   // enable SSC
+    writel(m, clock_base + dpll_data->clkmode);
+    printk(KERN_INFO "%s PLL Spread Spectrum enabled with %d percent\n", dpll_data->name, dpll_data->percent);
+
+    iounmap(clock_base);
+}
+
+static void make_spread_spectrum(void)
+{
+    spread_spectrum_setup(&mpu_dpll_data);
+    spread_spectrum_setup(&ddr_dpll_data);
+    spread_spectrum_setup(&lcd_dpll_data);
+    spread_spectrum_setup(&core_dpll_data);
+    spread_spectrum_setup(&per_dpll_data);
+}
+
 /* Enable clkout2 */
 static struct pinmux_config clkout2_pin_mux[] = {
 	{"xdma_event_intr1.clkout2", OMAP_MUX_MODE3 | AM33XX_PIN_OUTPUT},
@@ -2612,6 +2757,8 @@ static void setup_aria(void){
 	//regulator_has_full_constraints();  //this may cause net or audio fail, plz invstigate.
 
     am33xx_cpsw_init(AM33XX_CPSW_MODE_MII, NULL, NULL);
+
+	make_spread_spectrum();
 }
 
 
