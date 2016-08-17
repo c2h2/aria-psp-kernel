@@ -776,12 +776,16 @@ static void goodix_reset_timeout_poll(unsigned long ldata)
 	struct goodix_ts_data *ts = (struct goodix_ts_data *)ldata;
 	int error;
 
+	printk("Touchscreen idle timeout!\n");
 	if (ts->gpiod_int && ts->gpiod_rst) {
 		/* reset the controller */
 
 		disable_irq(ts->ct_irq_num);
 		error = goodix_reset(ts);
 		enable_irq(ts->ct_irq_num);
+
+		mod_timer(&ts->timer, jiffies + msecs_to_jiffies(
+			GOODIX_RESET_TIME_POLL));
 
 		if (error) {
 			dev_err(&ts->client->dev, "Controller reset failed.\n");
