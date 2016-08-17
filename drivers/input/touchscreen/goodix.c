@@ -50,6 +50,8 @@ struct goodix_ts_data {
 	struct completion firmware_loading_complete;
 	unsigned long irq_flags;
 	int ct_irq_num;
+	struct timer_list timer;
+	spinlock_t lock;
 };
 
 #define GOODIX_GPIO_INT_NAME		"irq"
@@ -78,6 +80,8 @@ struct goodix_ts_data {
 #define TRIGGER_LOC		6
 
 #define GPIO_TO_PIN(bank, gpio) (32 * (bank) + (gpio))
+
+#define GOODIX_RESET_TIME_POLL 600000
 
 //#define CONFIG_GOODIX_MULTITOUCH
 
@@ -237,6 +241,7 @@ static void goodix_ts_report_touch(struct goodix_ts_data *ts, u8 *coor_data)
 	int input_x = get_unaligned_le16(&coor_data[1]);
 	int input_y = get_unaligned_le16(&coor_data[3]);
 	int input_w = get_unaligned_le16(&coor_data[5]);
+	int flags;
 
 	/* Inversions have to happen before axis swapping */
 	if (ts->inverted_x)
@@ -262,6 +267,11 @@ static void goodix_ts_report_touch(struct goodix_ts_data *ts, u8 *coor_data)
 	input_report_abs(ts->input_dev, ABS_PRESSURE, 200);
 
 #endif
+
+	spin_lock_irqsave(&ts->lock, flags);
+	mod_timer(&ts->timer, jiffies + msecs_to_jiffies(
+		GOODIX_RESET_TIME_POLL));
+	spin_lock_irqsave(&ts->lock, flags);
 }
 
 /**
@@ -761,6 +771,29 @@ err_release_cfg:
 	complete_all(&ts->firmware_loading_complete);
 }
 
+static void goodix_reset_timeout_poll(unsigned long ldata)
+{
+	struct goodix_ts_data *ts = (struct goodix_ts_data *)ldata;
+	int error;
+
+	if (ts->gpiod_int && ts->gpiod_rst) {
+		/* reset the controller */
+
+		disable_irq(ts->ct_irq_num);
+		error = goodix_reset(ts);
+		enable_irq(ts->ct_irq_num);
+
+		if (error) {
+			dev_err(&ts->client->dev, "Controller reset failed.\n");
+			return;
+		}
+		else
+		{
+			printk("Touchscreen idle reset.\n");
+		}
+	}
+}
+
 static int goodix_ts_probe(struct i2c_client *client,
 			   const struct i2c_device_id *id)
 {
@@ -807,6 +840,9 @@ static int goodix_ts_probe(struct i2c_client *client,
 		return error;
 	}
 
+	spin_lock_init(&ts->lock);
+	setup_timer(&ts->timer, goodix_reset_timeout_poll, (unsigned long)ts);
+
 	ts->cfg_len = goodix_get_cfg_len(ts->id);
 
 	if (ts->gpiod_int && ts->gpiod_rst) {
@@ -832,6 +868,9 @@ static int goodix_ts_probe(struct i2c_client *client,
 		if (error)
 			return error;
 	}
+	
+	mod_timer(&ts->timer, jiffies + msecs_to_jiffies(
+		GOODIX_RESET_TIME_POLL));
 
 	return 0;
 }
@@ -839,6 +878,8 @@ static int goodix_ts_probe(struct i2c_client *client,
 static int goodix_ts_remove(struct i2c_client *client)
 {
 	struct goodix_ts_data *ts = i2c_get_clientdata(client);
+
+	del_timer_sync(&ts->timer);
 
 	if (ts->gpiod_int && ts->gpiod_rst)
 		wait_for_completion(&ts->firmware_loading_complete);
