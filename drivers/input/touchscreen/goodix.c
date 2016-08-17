@@ -50,7 +50,7 @@ struct goodix_ts_data {
 	struct completion firmware_loading_complete;
 	unsigned long irq_flags;
 	int ct_irq_num;
-	struct timer_list timer;
+	struct delayed_work work;
 	spinlock_t lock;
 };
 
@@ -237,11 +237,15 @@ static int goodix_ts_read_input_report(struct goodix_ts_data *ts, u8 *data)
 
 static void goodix_ts_report_touch(struct goodix_ts_data *ts, u8 *coor_data)
 {
-	int id = coor_data[0] & 0x0F;
 	int input_x = get_unaligned_le16(&coor_data[1]);
 	int input_y = get_unaligned_le16(&coor_data[3]);
+
+#ifdef CONFIG_GOODIX_MULTITOUCH
+	int id = coor_data[0] & 0x0F;
 	int input_w = get_unaligned_le16(&coor_data[5]);
-	int flags;
+#endif
+
+	unsigned long flags;
 
 	/* Inversions have to happen before axis swapping */
 	if (ts->inverted_x)
@@ -269,8 +273,9 @@ static void goodix_ts_report_touch(struct goodix_ts_data *ts, u8 *coor_data)
 #endif
 
 	spin_lock_irqsave(&ts->lock, flags);
-	mod_timer(&ts->timer, jiffies + msecs_to_jiffies(
-		GOODIX_RESET_TIME_POLL));
+	cancel_delayed_work_sync(&ts->work);
+	schedule_delayed_work(&ts->work, round_jiffies_relative(
+		msecs_to_jiffies(GOODIX_RESET_TIME_POLL)));
 	spin_lock_irqsave(&ts->lock, flags);
 }
 
@@ -286,7 +291,10 @@ static void goodix_process_events(struct goodix_ts_data *ts)
 {
 	u8  point_data[1 + GOODIX_CONTACT_SIZE * GOODIX_MAX_CONTACTS];
 	int touch_num;
+
+#ifdef CONFIG_GOODIX_MULTITOUCH
 	int i;
+#endif
 
 	touch_num = goodix_ts_read_input_report(ts, point_data);
 	if (touch_num < 0)
@@ -771,9 +779,10 @@ err_release_cfg:
 	complete_all(&ts->firmware_loading_complete);
 }
 
-static void goodix_reset_timeout_poll(unsigned long ldata)
+static void goodix_reset_delayed_work(struct work_struct *work)
 {
-	struct goodix_ts_data *ts = (struct goodix_ts_data *)ldata;
+	struct goodix_ts_data *ts = container_of(work,
+		struct goodix_ts_data, work.work);
 	int error;
 
 	printk("Touchscreen idle timeout!\n");
@@ -784,18 +793,17 @@ static void goodix_reset_timeout_poll(unsigned long ldata)
 		error = goodix_reset(ts);
 		enable_irq(ts->ct_irq_num);
 
-		mod_timer(&ts->timer, jiffies + msecs_to_jiffies(
-			GOODIX_RESET_TIME_POLL));
-
 		if (error) {
 			dev_err(&ts->client->dev, "Controller reset failed.\n");
-			return;
 		}
 		else
 		{
 			printk("Touchscreen idle reset.\n");
 		}
 	}
+
+	schedule_delayed_work(&ts->work, round_jiffies_relative(
+		msecs_to_jiffies(GOODIX_RESET_TIME_POLL)));
 }
 
 static int goodix_ts_probe(struct i2c_client *client,
@@ -845,7 +853,7 @@ static int goodix_ts_probe(struct i2c_client *client,
 	}
 
 	spin_lock_init(&ts->lock);
-	setup_timer(&ts->timer, goodix_reset_timeout_poll, (unsigned long)ts);
+	INIT_DELAYED_WORK(&ts->work, goodix_reset_delayed_work);
 
 	ts->cfg_len = goodix_get_cfg_len(ts->id);
 
@@ -873,8 +881,8 @@ static int goodix_ts_probe(struct i2c_client *client,
 			return error;
 	}
 	
-	mod_timer(&ts->timer, jiffies + msecs_to_jiffies(
-		GOODIX_RESET_TIME_POLL));
+	schedule_delayed_work(&ts->work, round_jiffies_relative(
+		msecs_to_jiffies(GOODIX_RESET_TIME_POLL)));
 
 	return 0;
 }
@@ -883,7 +891,7 @@ static int goodix_ts_remove(struct i2c_client *client)
 {
 	struct goodix_ts_data *ts = i2c_get_clientdata(client);
 
-	del_timer_sync(&ts->timer);
+	cancel_delayed_work_sync(&ts->work);
 
 	if (ts->gpiod_int && ts->gpiod_rst)
 		wait_for_completion(&ts->firmware_loading_complete);
