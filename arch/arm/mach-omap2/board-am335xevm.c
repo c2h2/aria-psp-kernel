@@ -163,6 +163,9 @@ static const struct display_panel disp_panel = {
 //#define AM335X_PWM_PERIOD_NANO_SECONDS        (5000 * 10)
 #define AM335X_PWM_PERIOD_NANO_SECONDS         20000
 
+static int lcd_reset_gpiod = GPIO_TO_PIN(1, 16);
+static int mipi_reset_gpiod = GPIO_TO_PIN(1, 18);
+
 static struct platform_pwm_backlight_data am335x_backlight_data0 = {
 	.pwm_id         = "ecap.0",
 	.ch             = -1,
@@ -214,6 +217,12 @@ struct da8xx_lcdc_platform_data  NHD_480272MF_ATXI_pdata = {
 	.manu_name              = "NHD",
 	.controller_data        = &lcd_cfg,
 	.type                   = "NHD-4.3-ATXI#-T-1",
+};
+
+struct da8xx_lcdc_platform_data WXGA_pdata = {
+	.manu_name              = "WXGA",
+	.controller_data        = &lcd_cfg,
+	.type                   = "WXGA",
 };
 
 #include "common.h"
@@ -549,6 +558,8 @@ static struct pinmux_config lcdc_pin_mux[] = {
 	{"lcd_hsync.lcd_hsync",		OMAP_MUX_MODE0 | AM33XX_PIN_OUTPUT},
 	{"lcd_pclk.lcd_pclk",		OMAP_MUX_MODE0 | AM33XX_PIN_OUTPUT},
 	{"lcd_ac_bias_en.lcd_ac_bias_en", OMAP_MUX_MODE0 | AM33XX_PIN_OUTPUT},
+	{"gpmc_a2.gpio1_18", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+	{"gpmc_a0.gpio1_16", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{NULL, 0},
 };
 
@@ -828,9 +839,7 @@ static struct pinmux_config aria_gpio_led_mux[] = {
 /* pinmux for gpio asclepius  */
 static struct pinmux_config asclepius_gpio_mux[] = {
 	{"uart1_ctsn.gpio0_12", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
-	{"gpmc_a0.gpio1_16", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{"gpmc_a1.gpio1_17", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
-	{"gpmc_a2.gpio1_18", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{"gpmc_a3.gpio1_19", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
 	{"gpmc_a4.gpio1_20", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{"gpmc_a5.gpio1_21", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
@@ -1192,6 +1201,8 @@ out:
 static void lcdc_init(int evm_id, int profile)
 {
 	struct da8xx_lcdc_platform_data *lcdc_pdata;
+	int status1, status2;
+
 	setup_pin_mux(lcdc_pin_mux);
 
 	if (conf_disp_pll(300000000)) {
@@ -1200,11 +1211,48 @@ static void lcdc_init(int evm_id, int profile)
 		return;
 	}
 	//lcdc_pdata = &TFC_S9700RTWV35TR_01B_pdata;
-	lcdc_pdata = &SAT079AT50DHY0_A4_pdata;
+	lcdc_pdata = &WXGA_pdata;
 	lcdc_pdata->get_context_loss_count = omap_pm_get_dev_context_loss_count;
 
 	if (am33xx_register_lcdc(lcdc_pdata))
 		pr_info("Failed to register LCDC device\n");
+
+	status1 = gpio_request(lcd_reset_gpiod, "lcd-reset-gpio");
+	if(status1<0)
+	{
+		pr_err("Failed to request gpio for lcd-reset-gpio");
+	}
+	status2 = gpio_request(mipi_reset_gpiod, "mipi-reset-gpio");
+	if(status2<0)
+	{
+		pr_err("Failed to request gpio for mipi-reset-gpio");
+	}
+	if(status1>=0)
+	{
+		gpio_direction_output(lcd_reset_gpiod, 1);
+	}
+	if(status2>=0)
+	{
+		gpio_direction_output(mipi_reset_gpiod, 1);
+	}
+	mdelay(20);
+	if(status1>=0)
+	{
+		gpio_direction_output(lcd_reset_gpiod, 0);
+	}
+	if(status2>=0)
+	{
+		gpio_direction_output(mipi_reset_gpiod, 0);
+	}
+	mdelay(20);
+	if(status1>=0)
+	{
+		gpio_direction_output(lcd_reset_gpiod, 1);
+	}
+	if(status2>=0)
+	{
+		gpio_direction_output(mipi_reset_gpiod, 1);
+	}
 
 	return;
 }
@@ -1753,9 +1801,6 @@ static struct i2c_board_info am335x_i2c2_boardinfo[] = {
 #endif
 	{
 		I2C_BOARD_INFO("rx8025", 0x32),
-	},
-	{
-		I2C_BOARD_INFO("GDIX1001:00", 0x5D),
 	},
 };
 
@@ -2520,7 +2565,7 @@ static struct evm_dev_cfg aria_cfg[] = {
 	//{evm_nand_init, DEV_ON_BASEBOARD, PROFILE_ALL},
 	{mmc1_emmc_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{mmc0_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
-	{i2c1_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
+	//{i2c1_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{i2c2_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	//{spi0_init,     DEV_ON_BASEBOARD, PROFILE_ALL},
         //{uart2_init,     DEV_ON_BASEBOARD, PROFILE_ALL},

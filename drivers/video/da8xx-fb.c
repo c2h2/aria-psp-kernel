@@ -304,6 +304,19 @@ static struct da8xx_panel known_lcd_panels[] = {
                 .pxl_clk = 30000000,
                 .invert_pxl_clk = 0,
         },
+        [5] = {
+                .name = "WXGA",
+                .width = 1280,
+                .height = 800,
+                .hfp = 40,
+                .hbp = 40,
+                .hsw = 80,
+                .vfp = 10,
+                .vbp = 3,
+                .vsw = 10,
+                .pxl_clk = 71098471,
+                .invert_pxl_clk = 0,
+        },
 };
 
 static inline bool is_raster_enabled(void)
