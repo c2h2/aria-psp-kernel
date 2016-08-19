@@ -558,8 +558,6 @@ static struct pinmux_config lcdc_pin_mux[] = {
 	{"lcd_hsync.lcd_hsync",		OMAP_MUX_MODE0 | AM33XX_PIN_OUTPUT},
 	{"lcd_pclk.lcd_pclk",		OMAP_MUX_MODE0 | AM33XX_PIN_OUTPUT},
 	{"lcd_ac_bias_en.lcd_ac_bias_en", OMAP_MUX_MODE0 | AM33XX_PIN_OUTPUT},
-	{"gpmc_a2.gpio1_18", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
-	{"gpmc_a0.gpio1_16", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{NULL, 0},
 };
 
@@ -1216,43 +1214,6 @@ static void lcdc_init(int evm_id, int profile)
 
 	if (am33xx_register_lcdc(lcdc_pdata))
 		pr_info("Failed to register LCDC device\n");
-
-	status1 = gpio_request(lcd_reset_gpiod, "lcd-reset-gpio");
-	if(status1<0)
-	{
-		pr_err("Failed to request gpio for lcd-reset-gpio");
-	}
-	status2 = gpio_request(mipi_reset_gpiod, "mipi-reset-gpio");
-	if(status2<0)
-	{
-		pr_err("Failed to request gpio for mipi-reset-gpio");
-	}
-	if(status1>=0)
-	{
-		gpio_direction_output(lcd_reset_gpiod, 1);
-	}
-	if(status2>=0)
-	{
-		gpio_direction_output(mipi_reset_gpiod, 1);
-	}
-	mdelay(20);
-	if(status1>=0)
-	{
-		gpio_direction_output(lcd_reset_gpiod, 0);
-	}
-	if(status2>=0)
-	{
-		gpio_direction_output(mipi_reset_gpiod, 0);
-	}
-	mdelay(20);
-	if(status1>=0)
-	{
-		gpio_direction_output(lcd_reset_gpiod, 1);
-	}
-	if(status2>=0)
-	{
-		gpio_direction_output(mipi_reset_gpiod, 1);
-	}
 
 	return;
 }
