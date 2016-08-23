@@ -276,7 +276,7 @@ static void goodix_ts_report_touch(struct goodix_ts_data *ts, u8 *coor_data)
 	cancel_delayed_work_sync(&ts->work);
 	schedule_delayed_work(&ts->work, round_jiffies_relative(
 		msecs_to_jiffies(GOODIX_RESET_TIME_POLL)));
-	spin_lock_irqsave(&ts->lock, flags);
+	spin_unlock_irqsave(&ts->lock, flags);
 }
 
 /**
