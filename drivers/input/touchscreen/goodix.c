@@ -276,7 +276,7 @@ static void goodix_ts_report_touch(struct goodix_ts_data *ts, u8 *coor_data)
 	cancel_delayed_work_sync(&ts->work);
 	schedule_delayed_work(&ts->work, round_jiffies_relative(
 		msecs_to_jiffies(GOODIX_RESET_TIME_POLL)));
-	spin_lock_irqsave(&ts->lock, flags);
+	spin_unlock_irqrestore(&ts->lock, flags);
 }
 
 /**
@@ -1025,4 +1025,5 @@ MODULE_AUTHOR("Benjamin Tissoires <benjamin.tissoires@gmail.com>");
 MODULE_AUTHOR("Bastien Nocera <hadess@hadess.net>");
 MODULE_DESCRIPTION("Goodix touchscreen driver");
 MODULE_LICENSE("GPL v2");
+
 

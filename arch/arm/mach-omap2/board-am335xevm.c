@@ -75,6 +75,8 @@
 /*SSC test*/
 #include "cm33xx.h"
 
+#include "ssd2828.h"
+
 
 /* Descriptor for Spread Spectrum Clocking */
 struct ssc_data {
@@ -163,9 +165,6 @@ static const struct display_panel disp_panel = {
 //#define AM335X_PWM_PERIOD_NANO_SECONDS        (5000 * 10)
 #define AM335X_PWM_PERIOD_NANO_SECONDS         20000
 
-static int lcd_reset_gpiod = GPIO_TO_PIN(1, 16);
-static int mipi_reset_gpiod = GPIO_TO_PIN(1, 18);
-
 static struct platform_pwm_backlight_data am335x_backlight_data0 = {
 	.pwm_id         = "ecap.0",
 	.ch             = -1,
@@ -189,7 +188,7 @@ static struct lcd_ctrl_config lcd_cfg = {
 	.ac_bias		= 255,
 	.ac_bias_intrpt		= 0,
 	.dma_burst_sz		= 16,
-	.bpp			= 32,
+	.bpp			= 24,
 	.fdd			= 0x80,
 	.tft_alt_mode		= 0,
 	.stn_565_mode		= 0,
@@ -837,8 +836,6 @@ static struct pinmux_config aria_gpio_led_mux[] = {
 /* pinmux for gpio asclepius  */
 static struct pinmux_config asclepius_gpio_mux[] = {
 	{"uart1_ctsn.gpio0_12", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
-	{"gpmc_a1.gpio1_17", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
-	{"gpmc_a3.gpio1_19", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
 	{"gpmc_a4.gpio1_20", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{"gpmc_a5.gpio1_21", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
 	{"gpmc_a6.gpio1_22", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
@@ -853,6 +850,17 @@ static struct pinmux_config asclepius_gpio_mux[] = {
 	{"mcasp0_aclkr.gpio3_18", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{"mcasp0_fsr.gpio3_19", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{"gpmc_csn3.gpio2_0", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+	{NULL, 0},
+};
+
+static struct pinmux_config ssd2828_gpio_mux[] = {
+	{"gpmc_a1.gpio1_17", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+	{"gpmc_a3.gpio1_19", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+	{"spi0_cs0.gpio0_5", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+	{"spi0_d0.gpio0_3", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+	{"spi0_d1.gpio0_4", OMAP_MUX_MODE7 | AM33XX_PULL_ENBL |
+		AM33XX_INPUT_EN},
+	{"spi0_sclk.gpio0_2", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{NULL, 0},
 };
 
@@ -1208,7 +1216,7 @@ static void lcdc_init(int evm_id, int profile)
 				"register LCDC\n");
 		return;
 	}
-	//lcdc_pdata = &TFC_S9700RTWV35TR_01B_pdata;
+	//lcdc_pdata = &SAT079AT50DHY0_A4_pdata;
 	lcdc_pdata = &WXGA_pdata;
 	lcdc_pdata->get_context_loss_count = omap_pm_get_dev_context_loss_count;
 
@@ -1763,6 +1771,9 @@ static struct i2c_board_info am335x_i2c2_boardinfo[] = {
 	{
 		I2C_BOARD_INFO("rx8025", 0x32),
 	},
+	{
+		I2C_BOARD_INFO("GDIX1001:00", 0x5D),
+	},
 };
 
 static void i2c2_init(int evm_id, int profile)
@@ -2200,6 +2211,13 @@ static void asclepius_gpio_init(int evm_id, int profile)
         setup_pin_mux(asclepius_gpio_mux);
 }
 
+static void ssd2828_gpio_init(int evm_id, int profile)
+{
+        setup_pin_mux(ssd2828_gpio_mux);
+
+	ssd2828_init();
+}
+
 
 /* setup spi0 */
 static void spi0_init(int evm_id, int profile)
@@ -2517,7 +2535,8 @@ static struct evm_dev_cfg aria_cfg[] = {
 	//{mfd_tscadc_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{lcdc_init,	DEV_ON_BASEBOARD, PROFILE_NONE },
 	//{aria_gpio_led_init,  DEV_ON_BASEBOARD, PROFILE_ALL},
-	{asclepius_gpio_init,  DEV_ON_BASEBOARD, PROFILE_ALL},
+	{asclepius_gpio_init, DEV_ON_BASEBOARD, PROFILE_ALL},
+	{ssd2828_gpio_init, DEV_ON_BASEBOARD, PROFILE_ALL},
 	//{tps65217_init, DEV_ON_BASEBOARD, PROFILE_NONE},
 	{mcasp1_init, DEV_ON_BASEBOARD, PROFILE_NONE},
 	{aria_mii1_init, DEV_ON_BASEBOARD, PROFILE_NONE},
@@ -2764,7 +2783,7 @@ static void setup_aria(void){
 
     am33xx_cpsw_init(AM33XX_CPSW_MODE_MII, NULL, NULL);
 
-	make_spread_spectrum();
+	//make_spread_spectrum();
 }
 
 
