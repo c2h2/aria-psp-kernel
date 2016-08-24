@@ -1012,6 +1012,17 @@ static int fb_check_var(struct fb_var_screeninfo *var,
 		var->blue.length = 8;
 		break;
 	case 32:
+		var->transp.offset = 0;
+		var->transp.length = 0;
+		var->red.offset = 11;
+		var->red.length = 5;
+		var->green.offset = 5;
+		var->green.length = 6;
+		var->blue.offset = 0;
+		var->blue.length = 5;
+		break;
+#if 0
+	case 32:
 		var->transp.offset = 24;
 		var->transp.length = 8;
 		var->red.offset = 16;
@@ -1021,6 +1032,7 @@ static int fb_check_var(struct fb_var_screeninfo *var,
 		var->blue.offset = 0;
 		var->blue.length = 8;
 		break;
+#endif
 	default:
 		err = -EINVAL;
 	}

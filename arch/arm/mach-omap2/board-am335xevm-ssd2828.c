@@ -567,7 +567,7 @@ static void init_lcm_registers(void)
 	Write_register(LCD_YSIZE_TFT);		//Vertical active period
 	
 	Write_com(0x00b6);
-	Write_register(0xc01b);				
+	Write_register(0xC018);				
 	
 	Write_com(0x00de);
 	Write_register(0x0003);
@@ -665,7 +665,7 @@ void ssd2828_init(void)
 
 	Write_com(0x00b5);
 	id=Read_register();
-	LCM_DEBUG("SSD2828 b6 is: 0x%x\n",id);
+	LCM_DEBUG("SSD2828 b5 is: 0x%x\n",id);
 
 	Write_com(0x00b6);
 	id=Read_register();
@@ -690,7 +690,6 @@ void ssd2828_init(void)
 	Write_com(0x00bb);
 	id=Read_register();
 	LCM_DEBUG("SSD2828 bb is: 0x%x\n",id);
-
 
 	Write_com(0x00bc);
 	Write_register(0x0001);
@@ -724,8 +723,9 @@ void ssd2828_init(void)
 	Write_register(0xfa);
 	id=Read_register();
 	LCM_DEBUG("SSD2828 LCD ID3 is: 0x%x\n",id);
-
+#if 0
 	Write_com(0x00ee);
 	Write_register(0x0600);
+#endif
 }
 
