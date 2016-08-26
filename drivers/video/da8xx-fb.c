@@ -308,12 +308,12 @@ static struct da8xx_panel known_lcd_panels[] = {
                 .name = "WXGA",
                 .width = 800,
                 .height = 1280,
-                .hfp = 44,
-                .hbp = 42,
-                .hsw = 2,
-                .vfp = 20,
-                .vbp = 20,
-                .vsw = 2,
+                .hfp = 210,
+                .hbp = 46,
+                .hsw = 10,
+                .vfp = 40,
+                .vbp = 40,
+                .vsw = 4,
                 .pxl_clk = 50000000,
                 .invert_pxl_clk = 0,
         },
@@ -1014,12 +1014,12 @@ static int fb_check_var(struct fb_var_screeninfo *var,
 	case 32:
 		var->transp.offset = 0;
 		var->transp.length = 0;
-		var->red.offset = 11;
-		var->red.length = 5;
-		var->green.offset = 5;
-		var->green.length = 6;
+		var->red.offset = 16;
+		var->red.length = 8;
+		var->green.offset = 8;
+		var->green.length = 8;
 		var->blue.offset = 0;
-		var->blue.length = 5;
+		var->blue.length = 8;
 		break;
 #if 0
 	case 32:
