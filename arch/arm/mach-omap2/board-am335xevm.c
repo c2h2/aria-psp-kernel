@@ -857,8 +857,8 @@ static struct pinmux_config ssd2828_gpio_mux[] = {
 	{"gpmc_a1.gpio1_17", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{"gpmc_a3.gpio1_19", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{"spi0_cs0.gpio0_5", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
-	{"spi0_d0.gpio0_3", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
-	{"spi0_d1.gpio0_4", OMAP_MUX_MODE7 | AM33XX_PULL_ENBL |
+	{"spi0_d1.gpio0_4", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+	{"spi0_d0.gpio0_3", OMAP_MUX_MODE7 | AM33XX_PULL_ENBL |
 		AM33XX_INPUT_EN},
 	{"spi0_sclk.gpio0_2", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{NULL, 0},

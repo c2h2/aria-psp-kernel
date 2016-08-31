@@ -23,10 +23,10 @@
 #define SET_LSCK_LOW   gpio_direction_output(GPIO_TO_PIN(0, 2), 0)
 #define SET_LSCK_HIGH  gpio_direction_output(GPIO_TO_PIN(0, 2), 1)
 
-#define SET_LSDA_LOW   gpio_direction_output(GPIO_TO_PIN(0, 3), 0)
-#define SET_LSDA_HIGH  gpio_direction_output(GPIO_TO_PIN(0, 3), 1)
+#define SET_LSDA_LOW   gpio_direction_output(GPIO_TO_PIN(0, 4), 0)
+#define SET_LSDA_HIGH  gpio_direction_output(GPIO_TO_PIN(0, 4), 1)
 
-#define GET_HX_SDI     gpio_get_value(GPIO_TO_PIN(0, 4))
+#define GET_HX_SDI     gpio_get_value(GPIO_TO_PIN(0, 3))
 
 
 #define HX_WR_COM       (0x70)
