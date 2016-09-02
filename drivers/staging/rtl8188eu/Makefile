@@ -93,15 +93,6 @@ ifeq ($(CONFIG_WOWLAN), y)
 EXTRA_CFLAGS += -DCONFIG_WOWLAN
 endif
 
-SUBARCH := $(shell uname -m | sed -e s/i.86/i386/ | sed -e s/ppc/powerpc/ | sed -e s/armv.l/arm/)
-
-ARCH ?= $(SUBARCH)
-CROSS_COMPILE ?=
-KVER  := $(shell uname -r)
-KSRC ?= /lib/modules/$(KVER)/build
-MODDESTDIR := /lib/modules/$(KVER)/kernel/drivers/net/wireless
-INSTALL_PREFIX :=
-
 ifneq ($(KERNELRELEASE),)
 
 rtk_core :=				\
