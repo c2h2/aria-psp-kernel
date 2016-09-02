@@ -27,6 +27,14 @@ config LOGO_LINUX_CLUT224
 	bool "Standard 224-color Linux logo"
 	default y
 
+config LOGO_ASCLEPIUS_50
+	bool "Asclepius 5 inch splash screen"
+	default y
+
+config LOGO_ASCLEPIUS_70
+	bool "Asclepius 7 inch splash screen"
+	default y
+
 config LOGO_BLACKFIN_VGA16
 	bool "16-colour Blackfin Processor Linux logo"
 	depends on BLACKFIN

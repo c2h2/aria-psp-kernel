@@ -1189,6 +1189,9 @@ out:
 	return ret;
 }
 
+static uint lcd_screen_size = 7;
+core_param(lcd_screen_size, lcd_screen_size, uint, 0444);
+
 static void lcdc_init(int evm_id, int profile)
 {
 	struct da8xx_lcdc_platform_data *lcdc_pdata;
@@ -1200,7 +1203,14 @@ static void lcdc_init(int evm_id, int profile)
 		return;
 	}
 	//lcdc_pdata = &TFC_S9700RTWV35TR_01B_pdata;
-	lcdc_pdata = &SAT079AT50DHY0_A4_pdata;
+	if(lcd_screen_size==5)
+	{
+		lcdc_pdata = &NHD_480272MF_ATXI_pdata;
+	}
+	else
+	{
+		lcdc_pdata = &SAT079AT50DHY0_A4_pdata;
+	}
 	lcdc_pdata->get_context_loss_count = omap_pm_get_dev_context_loss_count;
 
 	if (am33xx_register_lcdc(lcdc_pdata))
