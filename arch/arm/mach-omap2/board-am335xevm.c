@@ -1203,7 +1203,7 @@ static void lcdc_init(int evm_id, int profile)
 		return;
 	}
 	//lcdc_pdata = &TFC_S9700RTWV35TR_01B_pdata;
-	if(lcd_screen_size==5)
+	if(lcd_screen_size==4)
 	{
 		lcdc_pdata = &NHD_480272MF_ATXI_pdata;
 	}

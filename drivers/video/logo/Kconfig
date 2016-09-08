@@ -27,8 +27,8 @@ config LOGO_LINUX_CLUT224
 	bool "Standard 224-color Linux logo"
 	default y
 
-config LOGO_ASCLEPIUS_50
-	bool "Asclepius 5 inch splash screen"
+config LOGO_ASCLEPIUS_43
+	bool "Asclepius 4.3 inch splash screen"
 	default y
 
 config LOGO_ASCLEPIUS_70
