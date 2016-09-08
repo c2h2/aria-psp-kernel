@@ -2384,11 +2384,15 @@ static void spread_spectrum_setup(const struct ssc_data* dpll_data)
 
 static void make_spread_spectrum(void)
 {
+#if 0
     spread_spectrum_setup(&mpu_dpll_data);
     spread_spectrum_setup(&ddr_dpll_data);
+#endif
     spread_spectrum_setup(&lcd_dpll_data);
+#if 0
     spread_spectrum_setup(&core_dpll_data);
     spread_spectrum_setup(&per_dpll_data);
+#endif
 }
 
 /* Enable clkout2 */
