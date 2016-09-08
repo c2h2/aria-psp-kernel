@@ -106,6 +106,10 @@ const struct linux_logo * __init_refok fb_find_logo(int depth)
 #ifdef CONFIG_LOGO_ASCLEPIUS_70
 		logo = &logo_asclepius70_clut224;
 #endif
+#ifdef CONFIG_LOGO_ASCLEPIUS_50
+		if (splash_size==5)
+			logo = &logo_asclepius50_clut224;
+#endif
 #ifdef CONFIG_LOGO_ASCLEPIUS_43
 		if (splash_size==4)
 			logo = &logo_asclepius43_clut224;
