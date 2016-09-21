@@ -789,7 +789,7 @@ static struct pinmux_config asclepius_gpio_mux[] = {
 	{"mcasp0_aclkr.gpio3_18", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{"mcasp0_fsr.gpio3_19", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{"gpmc_csn3.gpio2_0", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
-	{"mcasp0_ahclkr.gpio3_17", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+	//{"mcasp0_ahclkr.gpio3_17", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{"mcasp0_axr1.gpio3_20", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{NULL, 0},
 };
@@ -2146,8 +2146,10 @@ static void spi0_init(int evm_id, int profile)
 	gpio_request(g_spi_lcd_pwr_gpio, "spi-lcd-pwr");
 	gpio_direction_output(g_spi_lcd_pwr_gpio, 1);
 
+/*
 	gpio_request(g_spi_lcd_pwm_gpio, "spi-lcd-pwm");
 	gpio_direction_output(g_spi_lcd_pwm_gpio, 1);
+*/
 
 	gpio_request(g_spi_lcd_rst_gpio, "spi-lcd-rst");
 	gpio_direction_output(g_spi_lcd_rst_gpio, 1);
