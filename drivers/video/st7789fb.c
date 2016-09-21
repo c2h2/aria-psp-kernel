@@ -35,9 +35,12 @@
 #include <linux/delay.h>
 #include <linux/spi/spi.h>
 
-
 #define VRAM_LEN	(240*204*4)
 #define TXBUF_LEN	(240*204*3*2)	/* SPI transactions require 16 bits */
+
+static bool invert_color = false;
+module_param(invert_color, bool, 0);
+MODULE_PARM_DESC(invert_color, "Invert screen color.");
 
 static struct fb_var_screeninfo st7789_var = {
 	.height		= 204,
@@ -235,14 +238,31 @@ static void st7789fb_deferred_io(struct fb_info *info,
 	
 	/* Convert framebuffer contents into a SPI transmit buffer */
 
-	for (i = 0; i < 204*240; i++)
+	if(invert_color)
 	{
-		r = 204*240 - 1 - i;
-		dd->txbuf[i*2] = 0x100 | (vram[r*3] & 0xF8) |
-			((vram[r*3+1] & 0xE0)>>5);
+		for (i = 0; i < 204*240; i++)
+		{
+			r = 204*240 - 1 - i;
+			dd->txbuf[i*2] = 0x100 | (~vram[r*3] & 0xF8) |
+				((~vram[r*3+1] & 0xE0)>>5);
 
-		dd->txbuf[i*2+1] = 0x100 | ((vram[r*3+1] & 0x1C) << 3) |
-			((vram[r*3+2] & 0xFF)>>3);
+			dd->txbuf[i*2+1] = 0x100 | 
+				((~vram[r*3+1] & 0x1C) << 3) |
+				((~vram[r*3+2] & 0xFF)>>3);
+		}
+	}
+	else
+	{
+		for (i = 0; i < 204*240; i++)
+		{
+			r = 204*240 - 1 - i;
+			dd->txbuf[i*2] = 0x100 | (vram[r*3] & 0xF8) |
+				((vram[r*3+1] & 0xE0)>>5);
+
+			dd->txbuf[i*2+1] = 0x100 | 
+				((vram[r*3+1] & 0x1C) << 3) |
+				((vram[r*3+2] & 0xFF)>>3);
+		}
 	}
 
 	st7789_send_cmd(dd, 0x2a);
