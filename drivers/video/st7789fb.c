@@ -485,11 +485,22 @@ static void init_lcd(struct st7789_data *dd)
 	st7789_send_data(dd, 0);
 	st7789_send_data(dd, 0xEF);
 
-	st7789_send_cmd(dd, 0x2b);
-	st7789_send_data(dd, 0);
-	st7789_send_data(dd, 0);
-	st7789_send_data(dd, 0);
-	st7789_send_data(dd, 0xCB);
+	if(invert_color)
+	{
+		st7789_send_cmd(dd, 0x2b);
+		st7789_send_data(dd, 0);
+		st7789_send_data(dd, 0x2);
+		st7789_send_data(dd, 0);
+		st7789_send_data(dd, 0xCD);
+	}
+	else
+	{
+		st7789_send_cmd(dd, 0x2b);
+		st7789_send_data(dd, 0);
+		st7789_send_data(dd, 0);
+		st7789_send_data(dd, 0);
+		st7789_send_data(dd, 0xCB);
+	}
 
 	st7789_send_cmd(dd, 0x2c);
 
