@@ -315,6 +315,9 @@ static void init_lcd(struct st7789_data *dd)
 	
 		st7789_send_cmd(dd, 0x3A);
 		st7789_send_data(dd,0x55);
+
+		st7789_send_cmd(dd, 0x55);
+		st7789_send_data(dd,0x90);
 	
 		st7789_send_cmd(dd, 0xb2);
 		st7789_send_data(dd,0x46);//7f  20131022
