@@ -238,31 +238,15 @@ static void st7789fb_deferred_io(struct fb_info *info,
 	
 	/* Convert framebuffer contents into a SPI transmit buffer */
 
-	if(invert_color)
+	for (i = 0; i < 204*240; i++)
 	{
-		for (i = 0; i < 204*240; i++)
-		{
-			r = 204*240 - 1 - i;
-			dd->txbuf[i*2] = 0x100 | (~vram[r*3] & 0xF8) |
-				((~vram[r*3+1] & 0xE0)>>5);
+		r = 204*240 - 1 - i;
+		dd->txbuf[i*2] = 0x100 | (vram[r*3] & 0xF8) |
+			((vram[r*3+1] & 0xE0)>>5);
 
-			dd->txbuf[i*2+1] = 0x100 | 
-				((~vram[r*3+1] & 0x1C) << 3) |
-				((~vram[r*3+2] & 0xFF)>>3);
-		}
-	}
-	else
-	{
-		for (i = 0; i < 204*240; i++)
-		{
-			r = 204*240 - 1 - i;
-			dd->txbuf[i*2] = 0x100 | (vram[r*3] & 0xF8) |
-				((vram[r*3+1] & 0xE0)>>5);
-
-			dd->txbuf[i*2+1] = 0x100 | 
-				((vram[r*3+1] & 0x1C) << 3) |
-				((vram[r*3+2] & 0xFF)>>3);
-		}
+		dd->txbuf[i*2+1] = 0x100 | 
+			((vram[r*3+1] & 0x1C) << 3) |
+			((vram[r*3+2] & 0xFF)>>3);
 	}
 
 	st7789_send_cmd(dd, 0x2a);
@@ -302,86 +286,189 @@ static void init_lcd(struct st7789_data *dd)
 {
 	unsigned int i, size;
 	struct spi_device *spi = dd->spi;
-
+	
 	st7789_send_cmd(dd, 0x11);
 	msleep(120);
-
+	
 	dev_info(&spi->dev, "Initializing LCD panel\n");
+	if(invert_color)
+	{
+		st7789_send_cmd(dd, 0x36);
+		st7789_send_data(dd,0x00);
+	
+		st7789_send_cmd(dd, 0x35);
+		st7789_send_data(dd,0x00);//40
 
-	st7789_send_cmd(dd, 0x36);
-	st7789_send_data(dd, 0x00);
-	st7789_send_cmd(dd, 0x3a);
-	st7789_send_data(dd, 0x05); /* RGB565 */
-	st7789_send_cmd(dd, 0x21);
+		//st7789_send_cmd(dd, 0x39);//idle on
 
-	st7789_send_cmd(dd, 0x2a);
-	st7789_send_data(dd, 0x00);
-	st7789_send_data(dd, 0x00);
-	st7789_send_data(dd, 0x00);
-	st7789_send_data(dd, 0xef);
-	st7789_send_cmd(dd, 0x2b);
-	st7789_send_data(dd, 0x00);
-	st7789_send_data(dd, 0x00);
-	st7789_send_data(dd, 0x00);
-	st7789_send_data(dd, 0xCB);
-
-	st7789_send_cmd(dd, 0xb2);
-	st7789_send_data(dd, 0x0c);
-	st7789_send_data(dd, 0x0c);
-	st7789_send_data(dd, 0x00);
-	st7789_send_data(dd, 0x33);
-	st7789_send_data(dd, 0x33);
-	st7789_send_cmd(dd, 0xb7);
-	st7789_send_data(dd, 0x35);
-
-	st7789_send_cmd(dd, 0xbb);
-	st7789_send_data(dd, 0x1f);
-	st7789_send_cmd(dd, 0xc0);
-	st7789_send_data(dd, 0x2c);
-	st7789_send_cmd(dd, 0xc2);
-	st7789_send_data(dd, 0x01);
-	st7789_send_cmd(dd, 0xc3);
-	st7789_send_data(dd, 0x12);
-	st7789_send_cmd(dd, 0xc4);
-	st7789_send_data(dd, 0x20);
-	st7789_send_cmd(dd, 0xc6);
-	st7789_send_data(dd, 0x0f);
-	st7789_send_cmd(dd, 0xd0);
-	st7789_send_data(dd, 0xa4);
-	st7789_send_data(dd, 0xa1);
-
-	st7789_send_cmd(dd, 0xe0);
-	st7789_send_data(dd, 0xd0);
-	st7789_send_data(dd, 0x08);
-	st7789_send_data(dd, 0x11);
-	st7789_send_data(dd, 0x08);
-	st7789_send_data(dd, 0x0c);
-	st7789_send_data(dd, 0x15);
-	st7789_send_data(dd, 0x39);
-	st7789_send_data(dd, 0x33);
-	st7789_send_data(dd, 0x50);
-	st7789_send_data(dd, 0x36);
-	st7789_send_data(dd, 0x13);
-	st7789_send_data(dd, 0x14);
-	st7789_send_data(dd, 0x29);
-	st7789_send_data(dd, 0x2d);
-	st7789_send_cmd(dd, 0xe1);
-	st7789_send_data(dd, 0xd0);
-	st7789_send_data(dd, 0x08);
-	st7789_send_data(dd, 0x10);
-	st7789_send_data(dd, 0x08);
-	st7789_send_data(dd, 0x06);
-	st7789_send_data(dd, 0x06);
-	st7789_send_data(dd, 0x39);
-	st7789_send_data(dd, 0x44);
-	st7789_send_data(dd, 0x51);
-	st7789_send_data(dd, 0x0b);
-	st7789_send_data(dd, 0x16);
-	st7789_send_data(dd, 0x14);
-	st7789_send_data(dd, 0x2f);
-	st7789_send_data(dd, 0x31);
-
-	st7789_send_cmd(dd, 0x29);
+		st7789_send_cmd(dd, 0x2a);
+		st7789_send_data(dd,0x00);
+		st7789_send_data(dd,0x00);
+		st7789_send_data(dd,0x00);
+		st7789_send_data(dd,0xef);
+	
+		st7789_send_cmd(dd, 0x2b);
+		st7789_send_data(dd,0x00);
+		st7789_send_data(dd,0x00);
+		st7789_send_data(dd,0x00);
+		st7789_send_data(dd,0xef);
+	
+		st7789_send_cmd(dd, 0x3A);
+		st7789_send_data(dd,0x55);
+	
+		st7789_send_cmd(dd, 0xb2);
+		st7789_send_data(dd,0x46);//7f  20131022
+		st7789_send_data(dd,0x4a);//7f
+		st7789_send_data(dd,0x01);//01
+		st7789_send_data(dd,0xde);//de
+		st7789_send_data(dd,0x33);//33
+	
+		st7789_send_cmd(dd, 0xb3);
+		st7789_send_data(dd,0x10);
+		st7789_send_data(dd,0x05);
+		st7789_send_data(dd,0x0f);
+	
+		st7789_send_cmd(dd, 0xb4);
+		st7789_send_data(dd,0x0b);
+	
+		st7789_send_cmd(dd, 0xb7);
+		st7789_send_data(dd,0x35);
+	
+		st7789_send_cmd(dd, 0xbb);
+		st7789_send_data(dd,0x28);
+	
+		st7789_send_cmd(dd, 0xbc);
+		st7789_send_data(dd,0xec);
+	
+		st7789_send_cmd(dd, 0xc0);
+		st7789_send_data(dd,0x2c);
+	
+		st7789_send_cmd(dd, 0xc2);
+		st7789_send_data(dd,0x01);
+	
+		st7789_send_cmd(dd, 0xc3);
+		st7789_send_data(dd,0x1e);
+	
+		st7789_send_cmd(dd, 0xc4);
+		st7789_send_data(dd,0x20);
+	
+		st7789_send_cmd(dd, 0xc6);
+		st7789_send_data(dd,0x0c);//14 20131022 07
+	
+		st7789_send_cmd(dd, 0xd0);
+		st7789_send_data(dd,0xa4);
+		st7789_send_data(dd,0xa1);
+	
+		st7789_send_cmd(dd, 0xe0);
+		st7789_send_data(dd,0xd0);
+		st7789_send_data(dd,0x00);
+		st7789_send_data(dd,0x00);
+		st7789_send_data(dd,0x08);
+		st7789_send_data(dd,0x07);
+		st7789_send_data(dd,0x05);
+		st7789_send_data(dd,0x29);
+		st7789_send_data(dd,0x54);
+		st7789_send_data(dd,0x41);
+		st7789_send_data(dd,0x3c);
+		st7789_send_data(dd,0x17);
+		st7789_send_data(dd,0x15);
+		st7789_send_data(dd,0x1a);
+		st7789_send_data(dd,0x20);
+	
+		st7789_send_cmd(dd, 0xe1);
+		st7789_send_data(dd,0xd0);
+		st7789_send_data(dd,0x00);
+		st7789_send_data(dd,0x00);
+		st7789_send_data(dd,0x08);
+		st7789_send_data(dd,0x07);
+		st7789_send_data(dd,0x04);
+		st7789_send_data(dd,0x29);
+		st7789_send_data(dd,0x44);
+		st7789_send_data(dd,0x42);
+		st7789_send_data(dd,0x3b);
+		st7789_send_data(dd,0x16);
+		st7789_send_data(dd,0x15);
+		st7789_send_data(dd,0x1b);
+		st7789_send_data(dd,0x1f);
+	}
+	else
+	{
+		st7789_send_cmd(dd, 0x36);     
+		st7789_send_data(dd, 0x00);  
+		st7789_send_cmd(dd, 0x3a);   
+		st7789_send_data(dd, 0x05); 
+		st7789_send_cmd(dd, 0x21);   
+		                       
+		st7789_send_cmd(dd, 0x2a);   
+		st7789_send_data(dd, 0x00);  
+		st7789_send_data(dd, 0x00);  
+		st7789_send_data(dd, 0x00);  
+		st7789_send_data(dd, 0xef);  
+		st7789_send_cmd(dd, 0x2b);   
+		st7789_send_data(dd, 0x00);  
+		st7789_send_data(dd, 0x00);  
+		st7789_send_data(dd, 0x00);  
+		st7789_send_data(dd, 0xCB);  
+		                       
+		st7789_send_cmd(dd, 0xb2);   
+		st7789_send_data(dd, 0x0c);  
+		st7789_send_data(dd, 0x0c);  
+		st7789_send_data(dd, 0x00);  
+		st7789_send_data(dd, 0x33);  
+		st7789_send_data(dd, 0x33);  
+		st7789_send_cmd(dd, 0xb7);   
+		st7789_send_data(dd, 0x35);  
+		                       
+		st7789_send_cmd(dd, 0xbb);   
+		st7789_send_data(dd, 0x1f);  
+		st7789_send_cmd(dd, 0xc0);   
+		st7789_send_data(dd, 0x2c);  
+		st7789_send_cmd(dd, 0xc2);   
+		st7789_send_data(dd, 0x01);  
+		st7789_send_cmd(dd, 0xc3);   
+		st7789_send_data(dd, 0x12);  
+		st7789_send_cmd(dd, 0xc4);   
+		st7789_send_data(dd, 0x20);  
+		st7789_send_cmd(dd, 0xc6);   
+		st7789_send_data(dd, 0x0f);  
+		st7789_send_cmd(dd, 0xd0);   
+		st7789_send_data(dd, 0xa4);  
+		st7789_send_data(dd, 0xa1);  
+		                       
+		st7789_send_cmd(dd, 0xe0);   
+		st7789_send_data(dd, 0xd0);  
+		st7789_send_data(dd, 0x08);  
+		st7789_send_data(dd, 0x11);  
+		st7789_send_data(dd, 0x08);  
+		st7789_send_data(dd, 0x0c);  
+		st7789_send_data(dd, 0x15);  
+		st7789_send_data(dd, 0x39);  
+		st7789_send_data(dd, 0x33);  
+		st7789_send_data(dd, 0x50);  
+		st7789_send_data(dd, 0x36);  
+		st7789_send_data(dd, 0x13);  
+		st7789_send_data(dd, 0x14);  
+		st7789_send_data(dd, 0x29);  
+		st7789_send_data(dd, 0x2d);  
+		st7789_send_cmd(dd, 0xe1);   
+		st7789_send_data(dd, 0xd0);  
+		st7789_send_data(dd, 0x08);  
+		st7789_send_data(dd, 0x10);  
+		st7789_send_data(dd, 0x08);  
+		st7789_send_data(dd, 0x06);  
+		st7789_send_data(dd, 0x06);  
+		st7789_send_data(dd, 0x39);  
+		st7789_send_data(dd, 0x44);  
+		st7789_send_data(dd, 0x51);  
+		st7789_send_data(dd, 0x0b);  
+		st7789_send_data(dd, 0x16);  
+		st7789_send_data(dd, 0x14);  
+		st7789_send_data(dd, 0x2f);  
+		st7789_send_data(dd, 0x31);  
+}	
+	//Delayms(120);
+	st7789_send_cmd(dd, 0x29);   //Display ON 
+	//Delayms(120);  
 
 	for (i = 0; i < 204*240; i++)
 	{
