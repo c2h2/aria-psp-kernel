@@ -105,7 +105,7 @@ int rtw_rfkfree_enable = 2; /* disable kfree */
 int rtw_rfkfree_enable = 0; /* Default Enalbe kfree by efuse config */
 #endif
 #ifdef CONFIG_80211N_HT
-int rtw_ht_enable = 1;
+int rtw_ht_enable = 0;
 // 0: 20 MHz, 1: 40 MHz, 2: 80 MHz, 3: 160MHz, 4: 80+80MHz
 // 2.4G use bit 0 ~ 3, 5G use bit 4 ~ 7
 // 0x21 means enable 2.4G 40MHz & 5G 80MHz
@@ -131,7 +131,7 @@ int rtw_bfee_rf_number = 0; /*BeamformeeCapRfNum  Rf path number, 0 for auto, ot
 #endif //CONFIG_80211N_HT
 
 #ifdef CONFIG_80211AC_VHT
-int rtw_vht_enable = 1; //0:disable, 1:enable, 2:force auto enable
+int rtw_vht_enable = 0; //0:disable, 1:enable, 2:force auto enable
 int rtw_ampdu_factor = 7;
 int rtw_vht_rate_sel = 0;
 #endif //CONFIG_80211AC_VHT
