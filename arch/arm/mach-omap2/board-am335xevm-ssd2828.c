@@ -34,14 +34,14 @@
 #define HX_RD_REGISTER  (0x73)
 
 //8" show config
-#define LCD_XSIZE_TFT	(800)
+#define LCD_XSIZE_TFT	(800) 
 #define LCD_YSIZE_TFT	(1280)
-#define LCD_VBPD	(40)
-#define LCD_VFPD	(40)
-#define LCD_VSPW	(4)
-#define LCD_HBPD	(210)
-#define LCD_HFPD	(46)
-#define LCD_HSPW	(10)
+#define LCD_VBPD	(20)
+#define LCD_VFPD	(20)
+#define LCD_VSPW	(2)
+#define LCD_HBPD	(42)
+#define LCD_HFPD	(44)
+#define LCD_HSPW	(2)
 
 // ---------------------------------------------------------------------------
 //  Local Functions
