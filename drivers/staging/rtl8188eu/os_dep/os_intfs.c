@@ -86,7 +86,7 @@ static int rtw_uapsd_acbe_en;
 static int rtw_uapsd_acvi_en;
 static int rtw_uapsd_acvo_en;
 
-int rtw_ht_enable = 1;
+int rtw_ht_enable = 0;
 int rtw_cbw40_enable = 3; /*  0 :disable, bit(0): enable 2.4g, bit(1): enable 5g */
 int rtw_ampdu_enable = 1;/* for enable tx_ampdu */
 static int rtw_rx_stbc = 1;/*  0: disable, bit(0):enable 2.4g, bit(1):enable 5g, default is set to enable 2.4GHZ for IOT issue with bufflao's AP at 5GHZ */
