@@ -766,7 +766,6 @@ static struct pinmux_config aria_gpio_led_mux[] = {
 
 /* pinmux for gpio asclepius  */
 static struct pinmux_config asclepius_gpio_mux[] = {
-	{"uart1_ctsn.gpio0_12", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{"gpmc_a0.gpio1_16", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{"gpmc_a1.gpio1_17", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
 	{"gpmc_a2.gpio1_18", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
@@ -785,6 +784,24 @@ static struct pinmux_config asclepius_gpio_mux[] = {
 	{"mcasp0_aclkr.gpio3_18", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{"mcasp0_fsr.gpio3_19", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{"gpmc_csn3.gpio2_0", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+	{NULL, 0},
+};
+
+/* pinmux for gpio asclepius  */
+static struct pinmux_config slot_gpio_mux[] = {
+	/*{"gpmc_a0.gpio1_16", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+	{"gpmc_a1.gpio1_17", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
+	{"gpmc_a2.gpio1_18", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+	{"gpmc_a3.gpio1_19", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
+	{"gpmc_a4.gpio1_20", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+	{"gpmc_a5.gpio1_21", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
+	{"gpmc_a6.gpio1_22", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
+	{"gpmc_a7.gpio1_23", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},*/
+	{"gpmc_a8.gpio1_24", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
+	{"gpmc_a9.gpio1_25", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
+	{"gpmc_a10.gpio1_26", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
+	{"gpmc_a11.gpio1_27", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
+	{"gpmc_clk.gpio2_1", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
 	{NULL, 0},
 };
 
@@ -1664,13 +1681,7 @@ static void lis331dlh_init(int evm_id, int profile)
 
 static struct i2c_board_info am335x_i2c1_boardinfo[] = {
 	{
-		I2C_BOARD_INFO("tlv320aic3x", 0x1b),
-	},
-	{
-		I2C_BOARD_INFO("tsl2550", 0x39),
-	},
-	{
-		I2C_BOARD_INFO("tmp275", 0x48),
+		I2C_BOARD_INFO("rx8025", 0x32),
 	},
 };
 
@@ -1683,10 +1694,7 @@ static void i2c1_init(int evm_id, int profile)
 }
 
 static struct i2c_board_info am335x_i2c2_boardinfo[] = {
-        {
-                I2C_BOARD_INFO("rx8025", 0x32),
-        },
-	{
+{
 		I2C_BOARD_INFO("GDIX1001:00", 0x5D),
 	},
 };
@@ -2126,6 +2134,10 @@ static void asclepius_gpio_init(int evm_id, int profile)
         setup_pin_mux(asclepius_gpio_mux);
 }
 
+static void slot_gpio_init(int evm_id, int profile)
+{
+        setup_pin_mux(slot_gpio_mux);
+}
 
 /* setup spi0 */
 static void spi0_init(int evm_id, int profile)
@@ -2359,7 +2371,7 @@ static struct evm_dev_cfg aria_cfg[] = {
 	//{mfd_tscadc_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{lcdc_init,	DEV_ON_BASEBOARD, PROFILE_NONE },
 	//{aria_gpio_led_init,  DEV_ON_BASEBOARD, PROFILE_ALL},
-	{asclepius_gpio_init,  DEV_ON_BASEBOARD, PROFILE_ALL},
+	{slot_gpio_init,  DEV_ON_BASEBOARD, PROFILE_ALL},
 	//{tps65217_init, DEV_ON_BASEBOARD, PROFILE_NONE},
 	{mcasp1_init, DEV_ON_BASEBOARD, PROFILE_NONE},
 	{aria_mii1_init, DEV_ON_BASEBOARD, PROFILE_NONE},
@@ -2368,7 +2380,7 @@ static struct evm_dev_cfg aria_cfg[] = {
 	//{evm_nand_init, DEV_ON_BASEBOARD, PROFILE_ALL},
 	{mmc1_emmc_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{mmc0_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
-	//{i2c1_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
+	{i2c1_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{i2c2_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	//{spi0_init,     DEV_ON_BASEBOARD, PROFILE_ALL},
         {uart2_init,     DEV_ON_BASEBOARD, PROFILE_ALL},
