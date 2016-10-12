@@ -253,9 +253,9 @@ static void st7789fb_deferred_io(struct fb_info *info,
 	for (i = 0; i < 204*240; i++)
 	{
 		r = 204*240 - 1 - i;
-		dd->txbuf[i*2] = 0x100 | vram[r*2];
+		dd->txbuf[i*2] = 0x100 | vram[r*2+1];
 
-		dd->txbuf[i*2+1] = 0x100 | vram[r*2+1];
+		dd->txbuf[i*2+1] = 0x100 | vram[r*2];
 	}	
 
 	st7789_send_cmd(dd, 0x2a);
