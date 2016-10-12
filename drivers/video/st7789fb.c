@@ -50,9 +50,9 @@ static struct fb_var_screeninfo st7789_var = {
 	.xres 		= 240,
 	.yres 		= 204,
 	.bits_per_pixel = 16,
-	.red		= {0, 5},
+	.red		= {11, 5},
 	.green		= {5, 6},
-	.blue		= {11, 5},
+	.blue		= {0, 5},
 	.transp		= {0, 0},
 };
 
@@ -145,7 +145,7 @@ static int st7789_check_var(struct fb_var_screeninfo *var,
 			    struct fb_info *info)
 {
 	var->bits_per_pixel = 16;
-	var->red.offset = 0;
+	var->red.offset = 11;
 	var->red.length = 5;
 	var->red.msb_right = 0;
 
@@ -153,7 +153,7 @@ static int st7789_check_var(struct fb_var_screeninfo *var,
 	var->green.length = 6;
 	var->green.msb_right = 0;
 
-	var->blue.offset = 11;
+	var->blue.offset = 0;
 	var->blue.length = 5;
 	var->blue.msb_right = 0;
 
@@ -253,9 +253,9 @@ static void st7789fb_deferred_io(struct fb_info *info,
 	for (i = 0; i < 204*240; i++)
 	{
 		r = 204*240 - 1 - i;
-		dd->txbuf[i*2] = 0x100 | vram[r*2+1];
+		dd->txbuf[i*2] = 0x100 | vram[r*2];
 
-		dd->txbuf[i*2+1] = 0x100 | vram[r*2];
+		dd->txbuf[i*2+1] = 0x100 | vram[r*2+1];
 	}	
 
 	st7789_send_cmd(dd, 0x2a);
