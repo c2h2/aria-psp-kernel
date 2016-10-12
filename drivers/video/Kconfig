@@ -2358,6 +2358,14 @@ config FB_PRE_INIT_FB
 	  Select this option if display contents should be inherited as set by
 	  the bootloader.
 
+config FB_ILI9806E
+	tristate "ILI9806E MIPI Support"
+	depends on FB && SPI
+	help
+          Framebuffer driver for the ili9806e SPI MIPI converter. Currently,
+	  only 3-wire (9-bit) SPI interface mode, and only one panel type
+	  are supported.
+
 config FB_MSM
 	tristate "MSM Framebuffer support"
 	depends on FB && ARCH_MSM

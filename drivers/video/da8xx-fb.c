@@ -304,6 +304,20 @@ static struct da8xx_panel known_lcd_panels[] = {
                 .pxl_clk = 30000000,
                 .invert_pxl_clk = 0,
         },
+	/* ILI9806E-480x800 */
+	[5] = {
+                .name = "ILI9806E-480x800",
+                .width = 480,
+                .height = 800,
+                .hfp = 20,
+                .hbp = 20,
+                .hsw = 10,
+                .vfp = 12,
+                .vbp = 12,
+                .vsw = 4,
+                .pxl_clk = 30000000,
+                .invert_pxl_clk = 0,
+	},
 };
 
 static inline bool is_raster_enabled(void)

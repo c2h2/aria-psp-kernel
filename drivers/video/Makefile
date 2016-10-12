@@ -164,3 +164,5 @@ obj-$(CONFIG_FB_VIRTUAL)          += vfb.o
 
 #video output switch sysfs driver
 obj-$(CONFIG_VIDEO_OUTPUT_CONTROL) += output.o
+
+obj-$(CONFIG_FB_ILI9806E)	  += ili9806e.o

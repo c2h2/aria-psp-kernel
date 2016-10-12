@@ -532,7 +532,7 @@ static struct pinmux_config spi1_pin_mux[] = {
 		| AM33XX_PULL_UP | AM33XX_INPUT_EN},
 	{"mcasp0_axr0.spi1_d1", OMAP_MUX_MODE3 | AM33XX_PULL_ENBL
 		| AM33XX_INPUT_EN},
-	{"mcasp0_ahclkr.spi1_cs0", OMAP_MUX_MODE3 | AM33XX_PULL_ENBL
+	{"uart1_ctsn.spi1_cs0", OMAP_MUX_MODE4 | AM33XX_PULL_ENBL
 		| AM33XX_PULL_UP | AM33XX_INPUT_EN},
 	{NULL, 0},
 };
@@ -779,8 +779,6 @@ static struct pinmux_config asclepius_gpio_mux[] = {
 	{"gpmc_a10.gpio1_26", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{"gpmc_a11.gpio1_27", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{"gpmc_clk.gpio2_1", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
-	{"mcasp0_aclkx.gpio3_14", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
-	{"mcasp0_axr0.gpio3_16", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
 	{"mcasp0_aclkr.gpio3_18", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{"mcasp0_fsr.gpio3_19", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{"gpmc_csn3.gpio2_0", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
@@ -1365,6 +1363,15 @@ static struct spi_board_info am335x_spi1_slave_info[] = {
 		.max_speed_hz  = 12000000,
 		.bus_num       = 2,
 		.chip_select   = 0,
+	},
+};
+
+static struct spi_board_info ili9806e_lcd_spi1_info[] = {
+	{
+		.modalias = "ili9806e",
+		.max_speed_hz = 1000000,
+		.bus_num = 1,
+		.chip_select = 0,
 	},
 };
 
@@ -2151,8 +2158,8 @@ static void spi0_init(int evm_id, int profile)
 static void spi1_init(int evm_id, int profile)
 {
 	setup_pin_mux(spi1_pin_mux);
-	spi_register_board_info(am335x_spi1_slave_info,
-			ARRAY_SIZE(am335x_spi1_slave_info));
+	spi_register_board_info(ili9806e_lcd_spi1_info,
+			ARRAY_SIZE(ili9806e_lcd_spi1_info));
 	return;
 }
 
@@ -2381,8 +2388,8 @@ static struct evm_dev_cfg aria_cfg[] = {
 	{mmc1_emmc_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{mmc0_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{i2c1_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
-	{i2c2_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
-	//{spi0_init,     DEV_ON_BASEBOARD, PROFILE_ALL},
+	//{i2c2_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
+	{spi1_init,     DEV_ON_BASEBOARD, PROFILE_ALL},
         {uart2_init,     DEV_ON_BASEBOARD, PROFILE_ALL},
         {uart1_init, DEV_ON_BASEBOARD, PROFILE_ALL},
         {uart4_init, DEV_ON_BASEBOARD, PROFILE_ALL},
