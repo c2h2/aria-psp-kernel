@@ -35,8 +35,8 @@
 #include <linux/delay.h>
 #include <linux/spi/spi.h>
 
-#define VRAM_LEN	(240*204*4)
-#define TXBUF_LEN	(240*204*3*2)	/* SPI transactions require 16 bits */
+#define VRAM_LEN	(240*320*2)
+#define TXBUF_LEN	(240*320*3*2)	/* SPI transactions require 16 bits */
 
 static bool invert_color = false;
 module_param(invert_color, bool, 0);
@@ -49,10 +49,10 @@ static struct fb_var_screeninfo st7789_var = {
 	.vmode		= FB_VMODE_NONINTERLACED,
 	.xres 		= 240,
 	.yres 		= 204,
-	.bits_per_pixel = 24,
-	.red		= {0, 8},
-	.green		= {8, 8},
-	.blue		= {16, 8},
+	.bits_per_pixel = 16,
+	.red		= {0, 5},
+	.green		= {5, 6},
+	.blue		= {11, 5},
 	.transp		= {0, 0},
 };
 
@@ -61,7 +61,7 @@ static struct fb_fix_screeninfo st7789_fix = {
 	.type		= FB_TYPE_PACKED_PIXELS,
 	.visual		= FB_VISUAL_TRUECOLOR,
 	.accel		= FB_ACCEL_NONE,
-	.line_length 	= 240*3,
+	.line_length 	= 240*2,
 };
 
 static void st7789fb_schedule_refresh(struct fb_info *info, const struct fb_fillrect *rect);
@@ -144,17 +144,17 @@ static ssize_t st7789_write(struct fb_info *info, const char __user *buf, size_t
 static int st7789_check_var(struct fb_var_screeninfo *var,
 			    struct fb_info *info)
 {
-	var->bits_per_pixel = 24;
+	var->bits_per_pixel = 16;
 	var->red.offset = 0;
-	var->red.length = 8;
+	var->red.length = 5;
 	var->red.msb_right = 0;
 
-	var->green.offset = 8;
-	var->green.length = 8;
+	var->green.offset = 5;
+	var->green.length = 6;
 	var->green.msb_right = 0;
 
-	var->blue.offset = 16;
-	var->blue.length = 8;
+	var->blue.offset = 11;
+	var->blue.length = 5;
 	var->blue.msb_right = 0;
 
 	var->transp.offset = 0;
@@ -238,6 +238,7 @@ static void st7789fb_deferred_io(struct fb_info *info,
 	
 	/* Convert framebuffer contents into a SPI transmit buffer */
 
+#if 0
 	for (i = 0; i < 204*240; i++)
 	{
 		r = 204*240 - 1 - i;
@@ -248,6 +249,14 @@ static void st7789fb_deferred_io(struct fb_info *info,
 			((vram[r*3+1] & 0x1C) << 3) |
 			((vram[r*3+2] & 0xFF)>>3);
 	}
+#endif
+	for (i = 0; i < 204*240; i++)
+	{
+		r = 204*240 - 1 - i;
+		dd->txbuf[i*2] = 0x100 | vram[r*2+1];
+
+		dd->txbuf[i*2+1] = 0x100 | vram[r*2];
+	}	
 
 	st7789_send_cmd(dd, 0x2a);
 	st7789_send_data(dd, 0);
@@ -278,7 +287,7 @@ static void st7789fb_deferred_io(struct fb_info *info,
 }
 
 static struct fb_deferred_io st7789fb_defio = {
-	.delay		= HZ / 20,
+	.delay		= HZ / 30,
 	.deferred_io	= st7789fb_deferred_io,
 };
 
@@ -473,7 +482,7 @@ static void init_lcd(struct st7789_data *dd)
 	st7789_send_cmd(dd, 0x29);   //Display ON 
 	//Delayms(120);  
 
-	for (i = 0; i < 204*240; i++)
+	for (i = 0; i < 240*320; i++)
 	{
 		dd->txbuf[i*2] = 0x100;
 		dd->txbuf[i*2+1] = 0x100;
@@ -485,34 +494,23 @@ static void init_lcd(struct st7789_data *dd)
 	st7789_send_data(dd, 0);
 	st7789_send_data(dd, 0xEF);
 
-	if(invert_color)
-	{
-		st7789_send_cmd(dd, 0x2b);
-		st7789_send_data(dd, 0);
-		st7789_send_data(dd, 0x2);
-		st7789_send_data(dd, 0);
-		st7789_send_data(dd, 0xCD);
-	}
-	else
-	{
-		st7789_send_cmd(dd, 0x2b);
-		st7789_send_data(dd, 0);
-		st7789_send_data(dd, 0);
-		st7789_send_data(dd, 0);
-		st7789_send_data(dd, 0xCB);
-	}
+	st7789_send_cmd(dd, 0x2b);
+	st7789_send_data(dd, 0);
+	st7789_send_data(dd, 0x0);
+	st7789_send_data(dd, 0x1);
+	st7789_send_data(dd, 0x3F);
 
 	st7789_send_cmd(dd, 0x2c);
 
-	for(i=0;i<204*240*2*2;i+=16384)
+	for(i=0;i<240*320*2*2;i+=16384)
 	{
-		if(204*240*2*2 - i >= 16384)
+		if(240*320*2*2 - i >= 16384)
 		{
 			size = 16384;
 		}
 		else
 		{
-			size = 204*240*2*2 - i;
+			size = 240*320*2*2 - i;
 		}
 		spi_write(dd->spi, (u8 *) dd->txbuf+ i , size);
 	}
