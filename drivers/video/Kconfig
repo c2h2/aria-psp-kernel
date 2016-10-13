@@ -2361,9 +2361,9 @@ config FB_PRE_INIT_FB
 config FB_ST7789
 	tristate "Sitronix ST7789 Framebuffer Support"
 	depends on FB && SPI
-	select FB_CFB_FILLRECT
-	select FB_CFB_COPYAREA
-	select FB_CFB_IMAGEBLIT
+	select FB_SYS_FILLRECT
+	select FB_SYS_COPYAREA
+	select FB_SYS_IMAGEBLIT
 	select FB_SYS_FOPS
 	select FB_DEFERRED_IO
 	help

@@ -36,7 +36,9 @@
 #include <linux/spi/spi.h>
 
 #define VRAM_LEN	(240*320*2)
-#define TXBUF_LEN	(240*320*3*2)	/* SPI transactions require 16 bits */
+#define TXBUF_LEN	(240*320*2*2)	/* SPI transactions require 16 bits */
+
+#define SPI_BLOCK_SIZE 32768
 
 static bool invert_color = false;
 module_param(invert_color, bool, 0);
@@ -59,7 +61,7 @@ static struct fb_var_screeninfo st7789_var = {
 static struct fb_fix_screeninfo st7789_fix = {
 	.id		= "st7789",
 	.type		= FB_TYPE_PACKED_PIXELS,
-	.visual		= FB_VISUAL_TRUECOLOR,
+	.visual		= FB_VISUAL_PSEUDOCOLOR,
 	.accel		= FB_ACCEL_NONE,
 	.line_length 	= 240*2,
 };
@@ -118,19 +120,19 @@ static int st7789_blank(int blank_mode, struct fb_info *info)
 
 static void st7789_fillrect(struct fb_info *info, const struct fb_fillrect *rect)
 {
-	cfb_fillrect(info, rect);
+	sys_fillrect(info, rect);
 	st7789fb_schedule_refresh(info, rect);
 }
 
 static void st7789_copyarea(struct fb_info *info, const struct fb_copyarea *area)
 {
-	cfb_copyarea(info, area);
+	sys_copyarea(info, area);
 	st7789fb_schedule_refresh(info, NULL);
 }
 
 static void st7789_imageblit(struct fb_info *info, const struct fb_image *image)
 {
-	cfb_imageblit(info, image);
+	sys_imageblit(info, image);
 	st7789fb_schedule_refresh(info, NULL);
 }
 
@@ -272,17 +274,17 @@ static void st7789fb_deferred_io(struct fb_info *info,
 
 	st7789_send_cmd(dd, 0x2c);
 
-	for(i=0;i<204*240*2*2;i+=16384)
+	for(i=0;i<204*240*2*2;i+=SPI_BLOCK_SIZE)
 	{
-		if(204*240*2*2 - i >= 16384)
+		if(204*240*2*2 - i >= SPI_BLOCK_SIZE)
 		{
-			size = 16384;
+			size = SPI_BLOCK_SIZE;
 		}
 		else
 		{
 			size = 204*240*2*2 - i;
 		}
-		spi_write(dd->spi, (u8 *) dd->txbuf+ i , size);
+		spi_write(dd->spi, (u8 *)dd->txbuf+i, size);
 	}
 }
 
@@ -558,7 +560,7 @@ static int st7789_probe(struct spi_device *spi)
 	st7789_fix.smem_len = VRAM_LEN;
 
 	drvdata->info->par = drvdata;
-	drvdata->info->flags = FBINFO_DEFAULT;
+	drvdata->info->flags = FBINFO_DEFAULT | FBINFO_VIRTFB;
 	drvdata->info->var = st7789_var;
 	drvdata->info->fix = st7789_fix;
 	drvdata->info->fbops = &st7789fb_ops;
