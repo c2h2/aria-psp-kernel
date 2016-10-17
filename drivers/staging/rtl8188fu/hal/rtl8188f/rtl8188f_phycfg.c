@@ -234,7 +234,6 @@ phy_RFSerialRead_8188F(
 	u4Byte						MaskforPhySet = 0;
 	int i = 0;
 
-	_enter_critical_mutex(&(adapter_to_dvobj(Adapter)->rf_read_reg_mutex) , NULL);
 	/* */
 	/* Make sure RF register offset is correct */
 	/* */
@@ -278,7 +277,6 @@ phy_RFSerialRead_8188F(
 
 		/*RT_DISP(FINIT, INIT_RF,("Readback from RF-SI : 0x%x\n", retValue)); */
 	}
-	_exit_critical_mutex(&(adapter_to_dvobj(Adapter)->rf_read_reg_mutex) , NULL);
 	return retValue;
 
 }
@@ -1006,16 +1004,13 @@ PHY_SetTxPowerLevel8188F(
 )
 {
 	PHAL_DATA_TYPE	pHalData = GET_HAL_DATA(Adapter);
-	u8				cur_antenna;
+	PDM_ODM_T		pDM_Odm = &pHalData->odmpriv;
+	pFAT_T			pDM_FatTable = &pDM_Odm->DM_FatTable;
 	u8				RFPath = ODM_RF_PATH_A;
 
-#ifdef CONFIG_ANTENNA_DIVERSITY
-	rtw_hal_get_odm_var(Adapter, HAL_ODM_ANTDIV_SELECT, &cur_antenna, NULL);
-
 	if (pHalData->AntDivCfg)  /* antenna diversity Enable */
-		RFPath = ((cur_antenna == MAIN_ANT) ? ODM_RF_PATH_A : ODM_RF_PATH_B);
+		RFPath = ((pDM_FatTable->RxIdleAnt == MAIN_ANT) ? ODM_RF_PATH_A : ODM_RF_PATH_B);
 	else   /* antenna diversity disable */
-#endif
 		RFPath = pHalData->ant_path;
 
 	RT_TRACE(_module_hal_init_c_, _drv_info_, ("==>PHY_SetTxPowerLevel8188F()\n"));
@@ -1304,8 +1299,7 @@ phy_PostSetBwMode8188F(
 		0x483[3:0]=1/2
 		0x440[22:21]=2'b00
 
-		0xc84[31:28]=0x2 (SDIO)
-		0xc84[31:28]=0x7 (USB)
+		0xc84[31:28]=0x2
 		*/
 		PHY_SetBBReg(Adapter, rFPGA0_RFMOD, BIT0, 0x1);
 		PHY_SetBBReg(Adapter, rFPGA1_RFMOD, BIT0, 0x1);
@@ -1323,12 +1317,7 @@ phy_PostSetBwMode8188F(
 		PHY_SetMacReg(Adapter, REG_DATA_SC_8188F, BIT3 | BIT2 | BIT1 | BIT0, SubChnlNum);	/* txsc_20 */
 		PHY_SetMacReg(Adapter, REG_RRSR_8188F, BIT22 | BIT21, 0x0);							/* RRSR_RSC */
 
-#ifdef CONFIG_SDIO_HCI
 		PHY_SetBBReg(Adapter, rOFDM0_XATxAFE, BIT31 | BIT30 | BIT29 | BIT28, 0x2); /* PDTH_BW40/ACPR */
-#endif /* CONFIG_SDIO_HCI */
-#ifdef CONFIG_USB_HCI
-		PHY_SetBBReg(Adapter, rOFDM0_XATxAFE, BIT31 | BIT30 | BIT29 | BIT28, 0x7); /* PDTH_BW40/ACPR */
-#endif /* CONFIG_USB_HCI */
 
 		if (0)
 			DBG_871X("%s: REG_DATA_SC_8188F(%d) nCur40MhzPrimeSC(%d)\n", __func__, SubChnlNum, pHalData->nCur40MhzPrimeSC);

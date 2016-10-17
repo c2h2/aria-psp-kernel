@@ -438,9 +438,8 @@ s32 rtl8188fu_xmitframe_complete(_adapter *padapter, struct xmit_priv *pxmitpriv
 		pxmitframe->buf_addr = pxmitbuf->pbuf;
 		pxmitbuf->priv_data = pxmitframe;
 
-		/* pxmitframe->agg_num = 1; */ /* alloc xmitframe should assign to 1. */
-		/* pxmitframe->pkt_offset = 1; */ /* first frame of aggregation, reserve offset */
-		pxmitframe->pkt_offset = (PACKET_OFFSET_SZ/8);
+		/*pxmitframe->agg_num = 1; // alloc xmitframe should assign to 1. */
+		pxmitframe->pkt_offset = 1; /* first frame of aggregation, reserve offset */
 
 		if (rtw_xmitframe_coalesce(padapter, pxmitframe->pkt, pxmitframe) == _FALSE) {
 			DBG_871X("%s coalesce 1st xmitframe failed\n", __func__);
@@ -598,8 +597,7 @@ s32 rtl8188fu_xmitframe_complete(_adapter *padapter, struct xmit_priv *pxmitpriv
 
 #ifndef CONFIG_USE_USB_BUFFER_ALLOC_TX
 	/*3 3. update first frame txdesc */
-	if ((PACKET_OFFSET_SZ != 0)
-		&& (pbuf_tail % bulkSize) == 0) {
+	if ((pbuf_tail % bulkSize) == 0) {
 		/* remove pkt_offset */
 		pbuf_tail -= PACKET_OFFSET_SZ;
 		pfirstframe->buf_addr += PACKET_OFFSET_SZ;

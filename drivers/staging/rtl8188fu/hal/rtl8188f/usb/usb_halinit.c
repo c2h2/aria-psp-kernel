@@ -1187,6 +1187,8 @@ u32 rtl8188fu_hal_init(PADAPTER padapter)
 		}
 	}
 
+	rtl8188f_InitializeFirmwareVars(padapter);
+
 	if (pwrctrlpriv->reg_rfoff == _TRUE)
 		pwrctrlpriv->rf_pwrstate = rf_off;
 
@@ -2188,7 +2190,7 @@ InitAdapterVariablesByPROM_8188FU(
 	/*hal_CustomizedBehavior_8188FU(Adapter); */
 
 	Hal_EfuseParseKFreeData_8188F(padapter, hwinfo, pHalData->bautoload_fail_flag);
-	hal_read_mac_hidden_rpt(padapter);
+	Hal_EfuseParseMacHidden_8188F(padapter, hwinfo, pHalData->bautoload_fail_flag);
 
 /*	Adapter->bDongle = (PROMContent[EEPROM_EASY_REPLACEMENT] == 1)? 0: 1; */
 	DBG_8192C("%s(): REPLACEMENT = %x\n", __func__, padapter->bDongle);
@@ -2356,7 +2358,11 @@ GetHalDefVar8188FUsb(
 		*((u8 *)pValue) = (pHalData->AntDivCfg == 0) ? _FALSE : _TRUE;
 #endif
 		break;
-
+	case HAL_DEF_CURRENT_ANTENNA:
+#ifdef CONFIG_ANTENNA_DIVERSITY
+		*((u8 *)pValue) = pHalData->CurAntenna;
+#endif
+		break;
 	case HAL_DEF_DRVINFO_SZ:
 		*((u32 *)pValue) = DRVINFO_SZ;
 		break;

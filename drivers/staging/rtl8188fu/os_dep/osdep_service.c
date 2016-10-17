@@ -830,7 +830,7 @@ inline void _rtw_memmove(void *dst, const void *src, u32 sz)
 #endif
 }
 
-int	_rtw_memcmp(void *dst, const void *src, u32 sz)
+int	_rtw_memcmp(void *dst, void *src, u32 sz)
 {
 
 #if defined (PLATFORM_LINUX)|| defined (PLATFORM_FREEBSD)
@@ -2484,43 +2484,5 @@ struct rtw_cbuf *rtw_cbuf_alloc(u32 size)
 void rtw_cbuf_free(struct rtw_cbuf *cbuf)
 {
 	rtw_mfree((u8*)cbuf, sizeof(*cbuf) + sizeof(void*)*cbuf->size);
-}
-
-/**
-* IsHexDigit -
-*
-* Return	TRUE if chTmp is represent for hex digit
-*		FALSE otherwise.
-*/
-inline BOOLEAN IsHexDigit(char chTmp)
-{
-	if ((chTmp >= '0' && chTmp <= '9') ||
-		(chTmp >= 'a' && chTmp <= 'f') ||
-		(chTmp >= 'A' && chTmp <= 'F'))
-		return _TRUE;
-	else
-		return _FALSE;
-}
-
-/**
-* is_alpha -
-*
-* Return	TRUE if chTmp is represent for alphabet
-*		FALSE otherwise.
-*/
-inline BOOLEAN is_alpha(char chTmp)
-{
-	if ((chTmp >= 'a' && chTmp <= 'z') ||
-		(chTmp >= 'A' && chTmp <= 'Z'))
-		return _TRUE;
-	else
-		return _FALSE;
-}
-
-inline char alpha_to_upper(char c)
-{
-	if ((c >= 'a' && c <= 'z'))
-		c = 'A' + (c - 'a');
-	return c;
 }
 

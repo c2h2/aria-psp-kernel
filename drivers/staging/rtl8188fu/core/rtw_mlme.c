@@ -545,10 +545,17 @@ _func_exit_;
 
 void rtw_generate_random_ibss(u8* pibss)
 {
-	*((u32 *)(&pibss[2])) = rtw_random32();
-	pibss[0] = 0x02; /* in ad-hoc mode local bit must set to 1 */
+	u32	curtime = rtw_get_current_time();
+
+_func_enter_;
+	pibss[0] = 0x02;  //in ad-hoc mode bit1 must set to 1
 	pibss[1] = 0x11;
 	pibss[2] = 0x87;
+	pibss[3] = (u8)(curtime & 0xff) ;//p[0];
+	pibss[4] = (u8)((curtime>>8) & 0xff) ;//p[1];
+	pibss[5] = (u8)((curtime>>16) & 0xff) ;//p[2];
+_func_exit_;
+	return;
 }
 
 u8 *rtw_get_capability_from_ie(u8 *ie)
@@ -1032,7 +1039,8 @@ _func_enter_;
 				goto exit;
 			}
 #ifdef CONFIG_ANTENNA_DIVERSITY
-			rtw_hal_get_odm_var(adapter, HAL_ODM_ANTDIV_SELECT, &(target->PhyInfo.Optimum_antenna), NULL);
+			//target->PhyInfo.Optimum_antenna = pHalData->CurAntenna;//optimum_antenna=>For antenna diversity
+			rtw_hal_get_def_var(adapter, HAL_DEF_CURRENT_ANTENNA, &(target->PhyInfo.Optimum_antenna));
 #endif
 			_rtw_memcpy(&(pnetwork->network), target,  get_WLAN_BSSID_EX_sz(target));
 			//pnetwork->last_scanned = rtw_get_current_time();
@@ -1061,7 +1069,8 @@ _func_enter_;
 			bssid_ex_sz = get_WLAN_BSSID_EX_sz(target);
 			target->Length = bssid_ex_sz;
 #ifdef CONFIG_ANTENNA_DIVERSITY
-			rtw_hal_get_odm_var(adapter, HAL_ODM_ANTDIV_SELECT, &(target->PhyInfo.Optimum_antenna), NULL);
+			//target->PhyInfo.Optimum_antenna = pHalData->CurAntenna;
+			rtw_hal_get_def_var(adapter, HAL_DEF_CURRENT_ANTENNA, &(target->PhyInfo.Optimum_antenna));
 #endif
 			_rtw_memcpy(&(pnetwork->network), target, bssid_ex_sz );
 
@@ -2198,20 +2207,29 @@ _func_enter_;
 					
 			
 			//s3. find ptarget_sta & update ptarget_sta after update cur_network only for station mode 
-			if (check_fwstate(pmlmepriv, WIFI_STATION_STATE) == _TRUE) {
+			if(check_fwstate(pmlmepriv, WIFI_STATION_STATE) == _TRUE)
+			{ 
 				ptarget_sta = rtw_joinbss_update_stainfo(adapter, pnetwork);
-				if (ptarget_sta == NULL) {
-					DBG_871X_LEVEL(_drv_err_, "Can't update stainfo when joinbss_event callback\n");
+				if(ptarget_sta==NULL)
+				{
+					RT_TRACE(_module_rtl871x_mlme_c_,_drv_err_,("Can't update stainfo when joinbss_event callback\n"));
 					_exit_critical_bh(&(pmlmepriv->scanned_queue.lock), &irqL);
 					goto ignore_joinbss_callback;
 				}
 			}
 
 			//s4. indicate connect			
-			if (MLME_IS_STA(adapter) || MLME_IS_ADHOC(adapter)) {
+			if(check_fwstate(pmlmepriv, WIFI_STATION_STATE) == _TRUE)
+			{
 				pmlmepriv->cur_network_scanned = ptarget_wlan;
 				rtw_indicate_connect(adapter);
 			}
+			else
+			{
+				//adhoc mode will rtw_indicate_connect when rtw_stassoc_event_callback
+				RT_TRACE(_module_rtl871x_mlme_c_,_drv_info_,("adhoc mode, fw_state:%x", get_fwstate(pmlmepriv)));
+			}
+
 				
 			//s5. Cancle assoc_timer					
 			_cancel_timer(&pmlmepriv->assoc_timer, &timer_cancelled);
@@ -2302,6 +2320,67 @@ _func_enter_;
 _func_exit_;
 }
 
+#if 0
+//#if (RATE_ADAPTIVE_SUPPORT==1)	//for 88E RA		
+u8 search_max_mac_id(_adapter *padapter)
+{
+	u8 mac_id, aid;
+	struct mlme_priv *pmlmepriv = &(padapter->mlmepriv);
+	struct mlme_ext_priv *pmlmeext = &(padapter->mlmeextpriv);
+	struct mlme_ext_info	*pmlmeinfo = &(pmlmeext->mlmext_info);
+	struct sta_priv *pstapriv = &padapter->stapriv;
+
+#if defined (CONFIG_AP_MODE) && defined (CONFIG_NATIVEAP_MLME)	
+	if(check_fwstate(pmlmepriv, WIFI_AP_STATE)){		
+		
+#if 1
+		_irqL irqL;
+		struct dvobj_priv *pdvobj = adapter_to_dvobj(padapter);
+
+		_enter_critical_bh(&pdvobj->lock, &irqL);
+		for(mac_id=(NUM_STA-1); mac_id>0; mac_id--)
+			if(pdvobj->macid[mac_id] == _TRUE)
+				break;
+		_exit_critical_bh(&pdvobj->lock, &irqL);
+
+#else
+		for (aid = (pstapriv->max_num_sta); aid > 0; aid--)
+		{
+			if (pstapriv->sta_aid[aid-1] != NULL)
+			{
+				psta = pstapriv->sta_aid[aid-1];
+				break;
+			}	
+		}
+/*
+		for (mac_id = (pstapriv->max_num_sta-1); mac_id >= 0; mac_id--)
+		{
+			if (pstapriv->sta_aid[mac_id] != NULL)
+				break;
+		}	
+*/
+		mac_id = aid + 1;
+#endif
+	}
+	else
+#endif
+	{//adhoc  id =  31~2
+		for (mac_id = (NUM_STA-1); mac_id >= IBSS_START_MAC_ID ; mac_id--)
+		{
+			if (pmlmeinfo->FW_sta_info[mac_id].status == 1)
+			{
+				break;
+			}
+		}
+	}
+
+	DBG_871X("max mac_id=%d\n", mac_id);
+
+	return mac_id;
+
+}		
+#endif	
+
 void rtw_sta_media_status_rpt(_adapter *adapter, struct sta_info *sta, bool connected)
 {
 	struct macid_ctl_t *macid_ctl = &adapter->dvobj->macid_ctl;
@@ -2349,8 +2428,7 @@ void rtw_sta_media_status_rpt(_adapter *adapter, struct sta_info *sta, bool conn
 				role = H2C_MSR_ROLE_GC;
 			else
 				role = H2C_MSR_ROLE_STA;
-		} else if (MLME_IS_ADHOC(adapter) || MLME_IS_ADHOC_MASTER(adapter))
-			role = H2C_MSR_ROLE_ADHOC;
+		}
 
 		#ifdef CONFIG_WFD
 		if (role == H2C_MSR_ROLE_GC
@@ -2490,15 +2568,29 @@ _func_enter_;
 	}	
 #endif //defined (CONFIG_AP_MODE) && defined (CONFIG_NATIVEAP_MLME)
 
-	/* for AD-HOC mode */
-	psta = rtw_get_stainfo(&adapter->stapriv, pstassoc->macaddr);
-	if (psta == NULL) {
-		DBG_871X_LEVEL(_drv_err_, FUNC_ADPT_FMT" get no sta_info with "MAC_FMT"\n"
-			, FUNC_ADPT_ARG(adapter), MAC_ARG(pstassoc->macaddr));
-		rtw_warn_on(1);
-		goto exit;
+	//for AD-HOC mode
+	psta = rtw_get_stainfo(&adapter->stapriv, pstassoc->macaddr);	
+	if( psta != NULL)
+	{
+		//the sta have been in sta_info_queue => do nothing 
+		
+		RT_TRACE(_module_rtl871x_mlme_c_,_drv_err_,("Error: rtw_stassoc_event_callback: sta has been in sta_hash_queue \n"));
+		
+		goto exit; //(between drv has received this event before and  fw have not yet to set key to CAM_ENTRY)
 	}
 
+	psta = rtw_alloc_stainfo(&adapter->stapriv, pstassoc->macaddr);	
+	if (psta == NULL) {
+		RT_TRACE(_module_rtl871x_mlme_c_,_drv_err_,("Can't alloc sta_info when rtw_stassoc_event_callback\n"));
+		goto exit;
+	}	
+	
+	//to do : init sta_info variable
+	psta->qos_option = 0;
+	psta->mac_id = (uint)pstassoc->cam_id;
+	//psta->aid = (uint)pstassoc->cam_id;
+	DBG_871X("%s\n",__FUNCTION__);
+	//for ad-hoc mode
 	rtw_hal_set_odm_var(adapter,HAL_ODM_STA_INFO,psta,_TRUE);
 
 	rtw_sta_media_status_rpt(adapter, psta, 1);
@@ -2602,16 +2694,6 @@ _func_enter_;
 
 	if (mac_id >= 0 && mac_id < macid_ctl->num) {
 		rtw_hal_set_FwMediaStatusRpt_single_cmd(adapter, 0, 0, 0, 0, mac_id);
-		/*
-		 * For safety, prevent from keeping macid sleep.
-		 * If we can sure all power mode enter/leave are paired,
-		 * this check can be removed.
-		 * Lucas@20131113
-		 */
-		/* wakeup macid after disconnect. */
-		if (MLME_IS_STA(adapter))
-			rtw_hal_macid_wakeup(adapter, mac_id);
-
 		if (psta)
 			rtw_wfd_st_switch(psta, 0);
 	} else {
@@ -2912,14 +2994,6 @@ void rtw_mlme_reset_auto_scan_int(_adapter *adapter)
 		goto exit;
 	}
 #endif	
-
-#ifdef CONFIG_TDLS
-	if (adapter->tdlsinfo.link_established == _TRUE) {
-		mlme->auto_scan_int_ms = 0;
-		goto exit;
-	}
-#endif
-
 	if(pmlmeinfo->VHT_enable) //disable auto scan when connect to 11AC AP
 	{
 		mlme->auto_scan_int_ms = 0;
@@ -3443,10 +3517,10 @@ candidate_exist:
 	if(_TRUE == bSupportAntDiv)	
 	{
 		u8 CurrentAntenna;
-		rtw_hal_get_odm_var(adapter, HAL_ODM_ANTDIV_SELECT, &(CurrentAntenna), NULL);
+		rtw_hal_get_def_var(adapter, HAL_DEF_CURRENT_ANTENNA, &(CurrentAntenna));			
 		DBG_871X("#### Opt_Ant_(%s) , cur_Ant(%s)\n",
-			(MAIN_ANT == candidate->network.PhyInfo.Optimum_antenna) ? "MAIN_ANT":"AUX_ANT",
-			(MAIN_ANT == CurrentAntenna) ? "MAIN_ANT":"AUX_ANT"
+			(2==candidate->network.PhyInfo.Optimum_antenna)?"A":"B",
+			(2==CurrentAntenna)?"A":"B"
 		);
 	}
 	#endif

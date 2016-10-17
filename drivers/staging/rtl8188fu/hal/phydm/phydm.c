@@ -482,10 +482,7 @@ ODM_DMReset(
 	IN		PDM_ODM_T		pDM_Odm
 	)
 {
-	pDIG_T pDM_DigTable = &pDM_Odm->DM_DigTable;
-	
-	ODM_AntDivReset(pDM_Odm);	
-	phydm_setEDCCAThresholdAPI(pDM_Odm, pDM_DigTable->CurIGValue);
+	ODM_AntDivReset(pDM_Odm);
 }
 
 
@@ -620,9 +617,6 @@ ODM_DMWatchdog(
 			pDIG_T	pDM_DigTable = &pDM_Odm->DM_DigTable;
 			Phydm_Adaptivity(pDM_Odm, pDM_DigTable->CurIGValue);
 		}
-		#if (DM_ODM_SUPPORT_TYPE & (ODM_CE))
-		odm_AntennaDiversity(pDM_Odm); /*enable AntDiv in PS mode, request from SD4 Jeff*/
-		#endif
 		ODM_RT_TRACE(pDM_Odm,ODM_COMP_COMMON, ODM_DBG_LOUD, ("DMWatchdog in power saving mode\n"));
 		return;
 	}

@@ -227,6 +227,10 @@ _func_enter_;
 	if (obj == NULL)
 		goto exit;
 
+	if(obj->cmdsz > MAX_CMDSZ ){
+		DBG_871X("%s failed due to obj->cmdsz(%d) > MAX_CMDSZ(%d) \n",__FUNCTION__, obj->cmdsz,MAX_CMDSZ);
+		goto exit;
+	}
 	//_enter_critical_bh(&queue->lock, &irqL);
 	_enter_critical(&queue->lock, &irqL);	
 
@@ -455,19 +459,7 @@ _func_enter_;
 		pcmdpriv = &(padapter->pbuddy_adapter->cmdpriv);
 #endif	
 
-	res = rtw_cmd_filter(pcmdpriv, cmd_obj);
-	if ((_FAIL == res) || (cmd_obj->cmdsz > MAX_CMDSZ)) {
-		if (cmd_obj->cmdsz > MAX_CMDSZ) {
-			DBG_871X("%s failed due to obj->cmdsz(%d) > MAX_CMDSZ(%d)\n", __func__, cmd_obj->cmdsz, MAX_CMDSZ);
-			rtw_warn_on(1);
-		}
-
-		if (cmd_obj->cmdcode == GEN_CMD_CODE(_Set_Drv_Extra)) {
-			struct drvextra_cmd_parm *extra_parm = (struct drvextra_cmd_parm *)cmd_obj->parmbuf;
-
-			if (extra_parm->pbuf && extra_parm->size > 0)
-				rtw_mfree(extra_parm->pbuf, extra_parm->size);
-		}
+	if( _FAIL == (res=rtw_cmd_filter(pcmdpriv, cmd_obj)) ) {
 		rtw_free_cmd_obj(cmd_obj);
 		goto exit;
 	}
@@ -730,9 +722,6 @@ post_process:
 	rtw_unregister_cmd_alive(padapter);
 #endif
 
-	/* to avoid enqueue cmd after free all cmd_obj  */
-	ATOMIC_SET(&(pcmdpriv->cmdthd_running), _FALSE);
-
 	/* free all cmd_obj resources */
 	do {
 		pcmd = rtw_dequeue_cmd(pcmdpriv);
@@ -753,6 +742,7 @@ post_process:
 	} while (1);
 
 	_rtw_up_sema(&pcmdpriv->terminate_cmdthread_sema);
+	ATOMIC_SET(&(pcmdpriv->cmdthd_running), _FALSE);
 
 _func_exit_;
 
@@ -1556,11 +1546,7 @@ _func_enter_;
 
 #ifdef CONFIG_80211AC_VHT
 	pvhtpriv->vht_option = _FALSE;
-	if (phtpriv->ht_option
-		&& REGSTY_IS_11AC_ENABLE(pregistrypriv)
-		&& hal_chk_proto_cap(padapter, PROTO_CAP_11AC)
-		&& (!pmlmepriv->country_ent || COUNTRY_CHPLAN_EN_11AC(pmlmepriv->country_ent))
-	) {
+	if (phtpriv->ht_option && pregistrypriv->vht_enable) {
 		rtw_restructure_vht_ie(padapter, &pnetwork->network.IEs[0], &psecnetwork->IEs[0], 
 								pnetwork->network.IELength, &psecnetwork->IELength);
 	}
@@ -1996,46 +1982,6 @@ _func_exit_;
 
 	return res;
 }
-
-u8 rtw_addbarsp_cmd(_adapter *padapter, u8 *addr, u16 tid, u8 status, u8 size, u16 start_seq)
-{
-	struct cmd_priv *pcmdpriv = &padapter->cmdpriv;
-	struct cmd_obj *ph2c;
-	struct addBaRsp_parm *paddBaRsp_parm;
-	u8 res = _SUCCESS;
-
-_func_enter_;
-
-	ph2c = (struct cmd_obj *)rtw_zmalloc(sizeof(struct cmd_obj));
-	if (ph2c == NULL) {
-		res = _FAIL;
-		goto exit;
-	}
-
-	paddBaRsp_parm = (struct addBaRsp_parm *)rtw_zmalloc(sizeof(struct addBaRsp_parm));
-
-	if (paddBaRsp_parm == NULL) {
-		rtw_mfree((unsigned char *)ph2c, sizeof(struct cmd_obj));
-		res = _FAIL;
-		goto exit;
-	}
-
-	_rtw_memcpy(paddBaRsp_parm->addr, addr, ETH_ALEN);
-	paddBaRsp_parm->tid = tid;
-	paddBaRsp_parm->status = status;
-	paddBaRsp_parm->size = size;
-	paddBaRsp_parm->start_seq = start_seq;
-
-	init_h2fwcmd_w_parm_no_rsp(ph2c, paddBaRsp_parm, GEN_CMD_CODE(_AddBARsp));
-
-	res = rtw_enqueue_cmd(pcmdpriv, ph2c);
-
-exit:
-
-_func_exit_;
-
-	return res;
-}
 //add for CONFIG_IEEE80211W, none 11w can use it
 u8 rtw_reset_securitypriv_cmd(_adapter*padapter)
 {
@@ -2222,7 +2168,7 @@ _func_exit_;
 	return res;
 }
 
-u8 _rtw_set_chplan_cmd(_adapter *adapter, int flags, u8 chplan, const struct country_chplan *country_ent, u8 swconfig)
+u8 rtw_set_chplan_cmd(_adapter *adapter, int flags, u8 chplan, u8 swconfig)
 {
 	struct cmd_obj *cmdobj;
 	struct	SetChannelPlan_param *parm;
@@ -2239,12 +2185,13 @@ _func_enter_;
 		goto exit;
 	}
 
-	/* if country_entry is provided, replace chplan */
-	if (country_ent)
-		chplan = country_ent->chplan;
-
 	/* check input parameter */
 	if (!rtw_is_channel_plan_valid(chplan)) {
+		res = _FAIL;
+		goto exit;
+	}
+
+	if (rtw_chplan_is_empty(chplan) == _TRUE) {
 		res = _FAIL;
 		goto exit;
 	}
@@ -2255,7 +2202,6 @@ _func_enter_;
 		res = _FAIL;
 		goto exit;
 	}
-	parm->country_ent = country_ent;
 	parm->channel_plan = chplan;
 
 	if (flags & RTW_CMDF_DIRECTLY) {
@@ -2295,34 +2241,6 @@ exit:
 _func_exit_;	
 
 	return res;
-}
-
-inline u8 rtw_set_chplan_cmd(_adapter *adapter, int flags, u8 chplan, u8 swconfig)
-{
-	return _rtw_set_chplan_cmd(adapter, flags, chplan, NULL, swconfig);
-}
-
-inline u8 rtw_set_country_cmd(_adapter *adapter, int flags, const char *country_code, u8 swconfig)
-{
-	const struct country_chplan *ent;
-
-	if (is_alpha(country_code[0]) == _FALSE
-		|| is_alpha(country_code[1]) == _FALSE
-	) {
-		DBG_871X_LEVEL(_drv_always_, "%s input country_code is not alpha2\n", __func__);
-		return _FAIL;
-	}
-
-	ent = rtw_get_chplan_from_country(country_code);
-
-	if (ent == NULL) {
-		DBG_871X_LEVEL(_drv_always_, "%s unsupported country_code:\"%c%c\"\n", __func__, country_code[0], country_code[1]);
-		return _FAIL;
-	}
-
-	DBG_871X_LEVEL(_drv_always_, "%s country_code:\"%c%c\" mapping to chplan:0x%02x\n", __func__, country_code[0], country_code[1], ent->chplan);
-
-	return _rtw_set_chplan_cmd(adapter, flags, RTW_CHPLAN_MAX, ent, swconfig);
 }
 
 u8 rtw_led_blink_cmd(_adapter*padapter, PVOID pLed)
@@ -2400,7 +2318,7 @@ _func_exit_;
 	return res;
 }
 
-u8 rtw_tdls_cmd(_adapter *padapter, const u8 *addr, u8 option)
+u8 rtw_tdls_cmd(_adapter *padapter, u8 *addr, u8 option)
 {
 	struct	cmd_obj*	pcmdobj;
 	struct	TDLSoption_param	*TDLSoption;
@@ -3131,7 +3049,7 @@ _func_exit_;
 #ifdef CONFIG_ANTENNA_DIVERSITY
 void antenna_select_wk_hdl(_adapter *padapter, u8 antenna)
 {
-	rtw_hal_set_odm_var(padapter, HAL_ODM_ANTDIV_SELECT, &antenna, _TRUE);
+	rtw_hal_set_hwreg(padapter, HW_VAR_ANTENNA_DIVERSITY_SELECT, (u8 *)(&antenna));
 }
 
 u8 rtw_antenna_select_cmd(_adapter*padapter, u8 antenna,u8 enqueue)
@@ -3139,20 +3057,12 @@ u8 rtw_antenna_select_cmd(_adapter*padapter, u8 antenna,u8 enqueue)
 	struct cmd_obj		*ph2c;
 	struct drvextra_cmd_parm	*pdrvextra_cmd_parm;	
 	struct cmd_priv	*pcmdpriv = &padapter->cmdpriv;
-	struct dvobj_priv *dvobj = adapter_to_dvobj(padapter);
 	u8 	bSupportAntDiv = _FALSE;
 	u8	res = _SUCCESS;
-	int	i;
 
 _func_enter_;
 	rtw_hal_get_def_var(padapter, HAL_DEF_IS_SUPPORT_ANT_DIV, &(bSupportAntDiv));
-	if (_FALSE == bSupportAntDiv)
-		return _FAIL;
-
-	for (i = 0; i < dvobj->iface_nums; i++) {
-		if (rtw_linked_check(dvobj->padapters[i]))
-			return _FAIL;
-	}
+	if(_FALSE == bSupportAntDiv )	return res;
 
 	if(_TRUE == enqueue)
 	{
@@ -3843,7 +3753,6 @@ u8 rtw_c2h_packet_wk_cmd(PADAPTER padapter, u8 *pbuf, u16 length)
 	struct cmd_obj *ph2c;
 	struct drvextra_cmd_parm *pdrvextra_cmd_parm;
 	struct cmd_priv *pcmdpriv = &padapter->cmdpriv;
-	u8	*extra_cmd_buf;
 	u8	res = _SUCCESS;
 
 	ph2c = (struct cmd_obj*)rtw_zmalloc(sizeof(struct cmd_obj));
@@ -3859,19 +3768,10 @@ u8 rtw_c2h_packet_wk_cmd(PADAPTER padapter, u8 *pbuf, u16 length)
 		goto exit;
 	}
 
-	extra_cmd_buf = rtw_zmalloc(length);
-	if (extra_cmd_buf == NULL) {
-		rtw_mfree((u8 *)ph2c, sizeof(struct cmd_obj));
-		rtw_mfree((u8 *)pdrvextra_cmd_parm, sizeof(struct drvextra_cmd_parm));
-		res = _FAIL;
-		goto exit;
-	}
-
-	_rtw_memcpy(extra_cmd_buf, pbuf, length);
 	pdrvextra_cmd_parm->ec_id = C2H_WK_CID;
 	pdrvextra_cmd_parm->type = 0;
 	pdrvextra_cmd_parm->size = length;
-	pdrvextra_cmd_parm->pbuf = extra_cmd_buf;
+	pdrvextra_cmd_parm->pbuf = pbuf;
 
 	init_h2fwcmd_w_parm_no_rsp(ph2c, pdrvextra_cmd_parm, GEN_CMD_CODE(_Set_Drv_Extra));
 
