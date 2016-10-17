@@ -840,8 +840,8 @@ static struct pinmux_config asclepius_gpio_mux[] = {
 	{"gpmc_a5.gpio1_21", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
 	{"gpmc_a6.gpio1_22", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
 	{"gpmc_a7.gpio1_23", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
-	{"gpmc_a8.gpio1_24", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
-	{"gpmc_a9.gpio1_25", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+	{"gpmc_a8.gpio1_24", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
+	{"gpmc_a9.gpio1_25", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
 	{"gpmc_a10.gpio1_26", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{"gpmc_a11.gpio1_27", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{"gpmc_clk.gpio2_1", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
@@ -849,7 +849,7 @@ static struct pinmux_config asclepius_gpio_mux[] = {
 	{"mcasp0_axr0.gpio3_16", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
 	{"mcasp0_aclkr.gpio3_18", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{"mcasp0_fsr.gpio3_19", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
-	{"gpmc_csn3.gpio2_0", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+	{"gpmc_csn3.gpio2_0", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
 	{NULL, 0},
 };
 
