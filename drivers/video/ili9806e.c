@@ -59,6 +59,7 @@ static void ili9806e_init_lcd(struct ili9806e_data *dd)
 	
 	dev_info(&spi->dev, "Initializing LCD panel\n");
 
+#if 0
 	ili9806e_send_cmd(dd, 0xFF);
 	ili9806e_send_data(dd, 0xFF); 
 	ili9806e_send_data(dd, 0x98); 
@@ -360,6 +361,324 @@ static void ili9806e_init_lcd(struct ili9806e_data *dd)
 	msleep(25);
 
 	ili9806e_send_cmd(dd, 0x2C);
+#endif 
+
+
+	ili9806e_send_cmd(dd, 0xFF);
+	ili9806e_send_data(dd, 0xFF); 
+	ili9806e_send_data(dd, 0x98);
+	ili9806e_send_data(dd, 0x06);
+	ili9806e_send_data(dd, 0x04);
+	ili9806e_send_data(dd, 0x01);
+ 
+	ili9806e_send_cmd(dd, 0x24);
+	ili9806e_send_data(dd, 0x03);
+	ili9806e_send_cmd(dd, 0x22);
+	ili9806e_send_data(dd, 0x00);
+
+	ili9806e_send_cmd(dd, 0x08);
+	ili9806e_send_data(dd, 0x10);
+ 
+	ili9806e_send_cmd(dd, 0x20);
+	ili9806e_send_data(dd, 0x00);
+ 
+	ili9806e_send_cmd(dd, 0x27);
+	ili9806e_send_data(dd, 0x03);
+ 
+	ili9806e_send_cmd(dd, 0x21);
+	ili9806e_send_data(dd, 0x01);
+ 
+	ili9806e_send_cmd(dd, 0x30);
+	ili9806e_send_data(dd, 0x02);
+ 
+	ili9806e_send_cmd(dd, 0x31);
+	ili9806e_send_data(dd, 0x00);
+ 
+ 
+ 
+	ili9806e_send_cmd(dd, 0x60);
+	ili9806e_send_data(dd, 0x07);
+ 
+	ili9806e_send_cmd(dd, 0x61);
+	ili9806e_send_data(dd, 0x06);
+ 
+	ili9806e_send_cmd(dd, 0x62);
+	ili9806e_send_data(dd, 0x06);
+ 
+	ili9806e_send_cmd(dd, 0x63);
+	ili9806e_send_data(dd, 0x04);
+ 
+	ili9806e_send_cmd(dd, 0x40);
+	ili9806e_send_data(dd, 0x18);
+ 
+	ili9806e_send_cmd(dd, 0x41);
+	ili9806e_send_data(dd, 0x33);
+ 
+	ili9806e_send_cmd(dd, 0x42);
+	ili9806e_send_data(dd, 0x11);
+ 
+	ili9806e_send_cmd(dd, 0x43);
+	ili9806e_send_data(dd, 0x09);
+ 
+	ili9806e_send_cmd(dd, 0x44);
+	ili9806e_send_data(dd, 0x0C);
+ 
+	ili9806e_send_cmd(dd, 0x46);
+	ili9806e_send_data(dd, 0x55);
+ 
+	ili9806e_send_cmd(dd, 0x47);
+	ili9806e_send_data(dd, 0x55);
+ 
+	ili9806e_send_cmd(dd, 0x45);
+	ili9806e_send_data(dd, 0x14);
+ 
+	ili9806e_send_cmd(dd, 0x50);
+	ili9806e_send_data(dd, 0x50);
+ 
+	ili9806e_send_cmd(dd, 0x51);
+	ili9806e_send_data(dd, 0x50);
+ 
+	ili9806e_send_cmd(dd, 0x52);
+	ili9806e_send_data(dd, 0x00);
+ 
+	ili9806e_send_cmd(dd, 0x53);
+	ili9806e_send_data(dd, 0x38);
+ 
+ 
+	ili9806e_send_cmd(dd, 0xA0);
+	ili9806e_send_data(dd, 0x00); 
+	ili9806e_send_cmd(dd, 0xA1);
+	ili9806e_send_data(dd, 0x09);
+	ili9806e_send_cmd(dd, 0xA2);
+	ili9806e_send_data(dd, 0x0C);
+	ili9806e_send_cmd(dd, 0xA3);
+	ili9806e_send_data(dd, 0x0F);
+	ili9806e_send_cmd(dd, 0xA4);
+	ili9806e_send_data(dd, 0x06);
+	ili9806e_send_cmd(dd, 0xA5);
+	ili9806e_send_data(dd, 0x09);
+	ili9806e_send_cmd(dd, 0xA6);
+	ili9806e_send_data(dd, 0x07);
+	ili9806e_send_cmd(dd, 0xA7);
+	ili9806e_send_data(dd, 0x16);
+	ili9806e_send_cmd(dd, 0xA8);
+	ili9806e_send_data(dd, 0x06);
+	ili9806e_send_cmd(dd, 0xA9);
+	ili9806e_send_data(dd, 0x09);
+	ili9806e_send_cmd(dd, 0xAA);
+	ili9806e_send_data(dd, 0x11);
+	ili9806e_send_cmd(dd, 0xAB);
+	ili9806e_send_data(dd, 0x06);
+	ili9806e_send_cmd(dd, 0xAC);
+	ili9806e_send_data(dd, 0x0E);
+	ili9806e_send_cmd(dd, 0xAD);
+	ili9806e_send_data(dd, 0x19);
+	ili9806e_send_cmd(dd, 0xAE);
+	ili9806e_send_data(dd, 0x0E);
+	ili9806e_send_cmd(dd, 0xAF);
+	ili9806e_send_data(dd, 0x00);
+ 
+	ili9806e_send_cmd(dd, 0xC0);
+	ili9806e_send_data(dd, 0x00);
+	ili9806e_send_cmd(dd, 0xC1);
+	ili9806e_send_data(dd, 0x09);
+	ili9806e_send_cmd(dd, 0xC2);
+	ili9806e_send_data(dd, 0x0C);
+	ili9806e_send_cmd(dd, 0xC3);
+	ili9806e_send_data(dd, 0x0F);
+	ili9806e_send_cmd(dd, 0xC4);
+	ili9806e_send_data(dd, 0x06);
+	ili9806e_send_cmd(dd, 0xC5);
+	ili9806e_send_data(dd, 0x09);
+	ili9806e_send_cmd(dd, 0xC6);
+	ili9806e_send_data(dd, 0x07);
+	ili9806e_send_cmd(dd, 0xC7);
+	ili9806e_send_data(dd, 0x16);
+	ili9806e_send_cmd(dd, 0xC8);
+	ili9806e_send_data(dd, 0x06);
+	ili9806e_send_cmd(dd, 0xC9);
+	ili9806e_send_data(dd, 0x09);
+	ili9806e_send_cmd(dd, 0xCA);
+	ili9806e_send_data(dd, 0x11);
+	ili9806e_send_cmd(dd, 0xCB);
+	ili9806e_send_data(dd, 0x06);
+	ili9806e_send_cmd(dd, 0xCC);
+	ili9806e_send_data(dd, 0x0E);
+	ili9806e_send_cmd(dd, 0xCD);
+	ili9806e_send_data(dd, 0x19);
+	ili9806e_send_cmd(dd, 0xCE);
+	ili9806e_send_data(dd, 0x0E);
+	ili9806e_send_cmd(dd, 0xCF);
+	ili9806e_send_data(dd, 0x00);
+ 
+ 
+ 
+	ili9806e_send_cmd(dd, 0xFF);
+	ili9806e_send_data(dd, 0xFF);
+	ili9806e_send_data(dd, 0x98);
+	ili9806e_send_data(dd, 0x06);
+	ili9806e_send_data(dd, 0x04);
+	ili9806e_send_data(dd, 0x06);
+ 
+	ili9806e_send_cmd(dd, 0x00);
+	ili9806e_send_data(dd, 0xA0);
+	ili9806e_send_cmd(dd, 0x01);
+	ili9806e_send_data(dd, 0x05);
+	ili9806e_send_cmd(dd, 0x02);
+	ili9806e_send_data(dd, 0x00);
+	ili9806e_send_cmd(dd, 0x03);
+	ili9806e_send_data(dd, 0x00);
+	ili9806e_send_cmd(dd, 0x04);
+	ili9806e_send_data(dd, 0x01);
+	ili9806e_send_cmd(dd, 0x05);
+	ili9806e_send_data(dd, 0x01);
+	ili9806e_send_cmd(dd, 0x06);
+	ili9806e_send_data(dd, 0x88);
+	ili9806e_send_cmd(dd, 0x07);
+	ili9806e_send_data(dd, 0x04);
+	ili9806e_send_cmd(dd, 0x08);
+	ili9806e_send_data(dd, 0x01);
+	ili9806e_send_cmd(dd, 0x09);
+	ili9806e_send_data(dd, 0x90);
+	ili9806e_send_cmd(dd, 0x0A);
+	ili9806e_send_data(dd, 0x04);
+	ili9806e_send_cmd(dd, 0x0B);
+	ili9806e_send_data(dd, 0x01);
+	ili9806e_send_cmd(dd, 0x0C);
+	ili9806e_send_data(dd, 0x01);
+	ili9806e_send_cmd(dd, 0x0D);
+	ili9806e_send_data(dd, 0x01);
+	ili9806e_send_cmd(dd, 0x0E);
+	ili9806e_send_data(dd, 0x00);
+	ili9806e_send_cmd(dd, 0x0F);
+	ili9806e_send_data(dd, 0x00);
+ 
+	ili9806e_send_cmd(dd, 0x10);
+	ili9806e_send_data(dd, 0x55);
+	ili9806e_send_cmd(dd, 0x11);
+	ili9806e_send_data(dd, 0x50);
+	ili9806e_send_cmd(dd, 0x12);
+	ili9806e_send_data(dd, 0x01);
+	ili9806e_send_cmd(dd, 0x13);
+	ili9806e_send_data(dd, 0x85);
+	ili9806e_send_cmd(dd, 0x14);
+	ili9806e_send_data(dd, 0x85);
+	ili9806e_send_cmd(dd, 0x15);
+	ili9806e_send_data(dd, 0xC0);
+	ili9806e_send_cmd(dd, 0x16);
+	ili9806e_send_data(dd, 0x0B);
+	ili9806e_send_cmd(dd, 0x17);
+	ili9806e_send_data(dd, 0x00);
+	ili9806e_send_cmd(dd, 0x18);
+	ili9806e_send_data(dd, 0x00);
+	ili9806e_send_cmd(dd, 0x19);
+	ili9806e_send_data(dd, 0x00);
+	ili9806e_send_cmd(dd, 0x1A);
+	ili9806e_send_data(dd, 0x00);
+	ili9806e_send_cmd(dd, 0x1B);
+	ili9806e_send_data(dd, 0x00);
+	ili9806e_send_cmd(dd, 0x1C);
+	ili9806e_send_data(dd, 0x00);
+	ili9806e_send_cmd(dd, 0x1D);
+	ili9806e_send_data(dd, 0x00);
+ 
+	ili9806e_send_cmd(dd, 0x20);
+	ili9806e_send_data(dd, 0x01);
+	ili9806e_send_cmd(dd, 0x21);
+	ili9806e_send_data(dd, 0x23);
+	ili9806e_send_cmd(dd, 0x22);
+	ili9806e_send_data(dd, 0x45);
+	ili9806e_send_cmd(dd, 0x23);
+	ili9806e_send_data(dd, 0x67);
+	ili9806e_send_cmd(dd, 0x24);
+	ili9806e_send_data(dd, 0x01);
+	ili9806e_send_cmd(dd, 0x25);
+	ili9806e_send_data(dd, 0x23);
+	ili9806e_send_cmd(dd, 0x26);
+	ili9806e_send_data(dd, 0x45);
+	ili9806e_send_cmd(dd, 0x27);
+	ili9806e_send_data(dd, 0x67);
+ 
+	ili9806e_send_cmd(dd, 0x30);
+	ili9806e_send_data(dd, 0x02);
+	ili9806e_send_cmd(dd, 0x31);
+	ili9806e_send_data(dd, 0x22);
+	ili9806e_send_cmd(dd, 0x32);
+	ili9806e_send_data(dd, 0x11);
+	ili9806e_send_cmd(dd, 0x33);
+	ili9806e_send_data(dd, 0xAA);
+	ili9806e_send_cmd(dd, 0x34);
+	ili9806e_send_data(dd, 0xBB);
+	ili9806e_send_cmd(dd, 0x35);
+	ili9806e_send_data(dd, 0x66);
+	ili9806e_send_cmd(dd, 0x36);
+	ili9806e_send_data(dd, 0x00);
+	ili9806e_send_cmd(dd, 0x37);
+	ili9806e_send_data(dd, 0x22);
+	ili9806e_send_cmd(dd, 0x38);
+	ili9806e_send_data(dd, 0x22);
+	ili9806e_send_cmd(dd, 0x39);
+	ili9806e_send_data(dd, 0x22);
+	ili9806e_send_cmd(dd, 0x3A);
+	ili9806e_send_data(dd, 0x22);
+	ili9806e_send_cmd(dd, 0x3B);
+	ili9806e_send_data(dd, 0x22);
+	ili9806e_send_cmd(dd, 0x3C);
+	ili9806e_send_data(dd, 0x22);
+	ili9806e_send_cmd(dd, 0x3D);
+	ili9806e_send_data(dd, 0x22);
+	ili9806e_send_cmd(dd, 0x3E);
+	ili9806e_send_data(dd, 0x22);
+	ili9806e_send_cmd(dd, 0x3F);
+	ili9806e_send_data(dd, 0x22);
+	ili9806e_send_cmd(dd, 0x40);
+	ili9806e_send_data(dd, 0x22);
+	ili9806e_send_cmd(dd, 0x52);
+	ili9806e_send_data(dd, 0x12);
+	ili9806e_send_cmd(dd, 0x53);
+	ili9806e_send_data(dd, 0x12);
+ 
+	ili9806e_send_cmd(dd, 0xFF);
+	ili9806e_send_data(dd, 0xFF);
+	ili9806e_send_data(dd, 0x98);
+	ili9806e_send_data(dd, 0x06);
+	ili9806e_send_data(dd, 0x04);
+	ili9806e_send_data(dd, 0x07);
+ 
+	ili9806e_send_cmd(dd, 0x17);
+	ili9806e_send_data(dd, 0x32);
+ 
+	ili9806e_send_cmd(dd, 0x02);
+	ili9806e_send_data(dd, 0x17);
+ 
+	ili9806e_send_cmd(dd, 0x18);
+	ili9806e_send_data(dd, 0x1D);
+ 
+	ili9806e_send_cmd(dd, 0xE1);
+	ili9806e_send_data(dd, 0x79);
+ 
+	ili9806e_send_cmd(dd, 0xFF);
+	ili9806e_send_data(dd, 0xFF);
+	ili9806e_send_data(dd, 0x98);
+	ili9806e_send_data(dd, 0x06);
+	ili9806e_send_data(dd, 0x04);
+	ili9806e_send_data(dd, 0x00);
+
+	ili9806e_send_cmd(dd, 0x36);
+	ili9806e_send_data(dd, 0x00);
+ 
+	ili9806e_send_cmd(dd, 0x3A);
+	ili9806e_send_data(dd, 0x50);
+ 
+	ili9806e_send_cmd(dd, 0x11);
+
+	mdelay(120);
+
+	ili9806e_send_cmd(dd, 0x29);
+
+	mdelay(100);
+
+	ili9806e_send_cmd(dd, 0x2C);
 }
 
 static int ili9806e_probe(struct spi_device *spi)
@@ -379,7 +698,7 @@ static int ili9806e_probe(struct spi_device *spi)
 
 	spi->mode = SPI_MODE_0;
 	spi->bits_per_word = 9;
-	spi->max_speed_hz = 100000;
+	spi->max_speed_hz = 1000000;
 	ret = spi_setup(spi);
 
 	if (ret) {

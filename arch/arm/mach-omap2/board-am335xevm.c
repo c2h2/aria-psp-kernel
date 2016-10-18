@@ -89,6 +89,8 @@
 
 #define EEPROM_24c02 1
 
+static int ili9806e_reset_gpio = GPIO_TO_PIN(1, 16);
+
 static const struct display_panel disp_panel = {
 	WVGA,
 	32,
@@ -153,6 +155,12 @@ struct da8xx_lcdc_platform_data  NHD_480272MF_ATXI_pdata = {
 	.manu_name              = "NHD",
 	.controller_data        = &lcd_cfg,
 	.type                   = "NHD-4.3-ATXI#-T-1",
+};
+
+struct da8xx_lcdc_platform_data ILI9806E_LCD_pdata = {
+	.manu_name		= "ILI",
+	.controller_data	= &lcd_cfg,
+	.type			= "ILI9806E-480x800",
 };
 
 #include "common.h"
@@ -531,9 +539,9 @@ static struct pinmux_config spi1_pin_mux[] = {
 	{"mcasp0_fsx.spi1_d0", OMAP_MUX_MODE3 | AM33XX_PULL_ENBL
 		| AM33XX_PULL_UP | AM33XX_INPUT_EN},
 	{"mcasp0_axr0.spi1_d1", OMAP_MUX_MODE3 | AM33XX_PULL_ENBL
-		| AM33XX_INPUT_EN},
-	{"uart1_ctsn.spi1_cs0", OMAP_MUX_MODE4 | AM33XX_PULL_ENBL
-		| AM33XX_PULL_UP | AM33XX_INPUT_EN},
+		| AM33XX_PIN_OUTPUT_PULLUP},
+	{"uart1_ctsn.spi1_cs0", OMAP_MUX_MODE4 | AM33XX_PIN_OUTPUT_PULLUP},
+	{"gpmc_a0.gpio1_16", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{NULL, 0},
 };
 
@@ -787,7 +795,7 @@ static struct pinmux_config asclepius_gpio_mux[] = {
 
 /* pinmux for gpio asclepius  */
 static struct pinmux_config slot_gpio_mux[] = {
-	/*{"gpmc_a0.gpio1_16", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+	/*
 	{"gpmc_a1.gpio1_17", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
 	{"gpmc_a2.gpio1_18", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{"gpmc_a3.gpio1_19", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
@@ -1154,7 +1162,7 @@ static void lcdc_init(int evm_id, int profile)
 		return;
 	}
 	//lcdc_pdata = &TFC_S9700RTWV35TR_01B_pdata;
-	lcdc_pdata = &NHD_480272MF_ATXI_pdata;
+	lcdc_pdata = &ILI9806E_LCD_pdata;
 	lcdc_pdata->get_context_loss_count = omap_pm_get_dev_context_loss_count;
 
 	if (am33xx_register_lcdc(lcdc_pdata))
@@ -1370,7 +1378,7 @@ static struct spi_board_info ili9806e_lcd_spi1_info[] = {
 	{
 		.modalias = "ili9806e",
 		.max_speed_hz = 1000000,
-		.bus_num = 1,
+		.bus_num = 2,
 		.chip_select = 0,
 	},
 };
@@ -2158,8 +2166,17 @@ static void spi0_init(int evm_id, int profile)
 static void spi1_init(int evm_id, int profile)
 {
 	setup_pin_mux(spi1_pin_mux);
+
+	gpio_request(ili9806e_reset_gpio, "ili9806e-rst");
+	gpio_direction_output(ili9806e_reset_gpio, 1);
+	mdelay(10);
+	gpio_direction_output(ili9806e_reset_gpio, 0);
+	mdelay(100);
+	gpio_direction_output(ili9806e_reset_gpio, 1);
+	mdelay(100);
+
 	spi_register_board_info(ili9806e_lcd_spi1_info,
-			ARRAY_SIZE(ili9806e_lcd_spi1_info));
+		ARRAY_SIZE(ili9806e_lcd_spi1_info));
 	return;
 }
 

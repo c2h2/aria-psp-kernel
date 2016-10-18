@@ -680,8 +680,15 @@ static int omap2_mcspi_setup_transfer(struct spi_device *spi,
 	/* standard 4-wire master mode:  SCK, MOSI/out, MISO/in, nCS
 	 * REVISIT: this controller could support SPI_3WIRE mode.
 	 */
+
+#if 0
 	l &= ~(OMAP2_MCSPI_CHCONF_DPE0);
 	l |= (OMAP2_MCSPI_CHCONF_IS|OMAP2_MCSPI_CHCONF_DPE1);
+
+#endif
+	l &= ~OMAP2_MCSPI_CHCONF_IS;
+	l &= ~OMAP2_MCSPI_CHCONF_DPE1;
+	l |= OMAP2_MCSPI_CHCONF_DPE0;
 
 	/* wordlength */
 	l &= ~OMAP2_MCSPI_CHCONF_WL_MASK;

@@ -309,14 +309,14 @@ static struct da8xx_panel known_lcd_panels[] = {
                 .name = "ILI9806E-480x800",
                 .width = 480,
                 .height = 800,
-                .hfp = 20,
-                .hbp = 20,
-                .hsw = 10,
-                .vfp = 12,
-                .vbp = 12,
-                .vsw = 4,
-                .pxl_clk = 30000000,
-                .invert_pxl_clk = 0,
+                .hfp = 50,
+                .hbp = 50,
+                .hsw = 50,
+                .vfp = 50,
+                .vbp = 50,
+                .vsw = 50,
+                .pxl_clk = 35910000,
+                .invert_pxl_clk = 1,
 	},
 };
 
@@ -1013,14 +1013,14 @@ static int fb_check_var(struct fb_var_screeninfo *var,
 		var->blue.length = 8;
 		break;
 	case 32:
-		var->transp.offset = 24;
-		var->transp.length = 8;
 		var->red.offset = 16;
-		var->red.length = 8;
+		var->red.length = 5;
 		var->green.offset = 8;
-		var->green.length = 8;
+		var->green.length = 6;
 		var->blue.offset = 0;
-		var->blue.length = 8;
+		var->blue.length = 5;
+		var->transp.offset = 0;
+		var->transp.length = 0;
 		break;
 	default:
 		err = -EINVAL;
