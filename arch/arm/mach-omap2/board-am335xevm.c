@@ -1698,26 +1698,26 @@ static struct i2c_board_info am335x_i2c1_boardinfo[] = {
 	{
 		I2C_BOARD_INFO("rx8025", 0x32),
 	},
+	{
+		I2C_BOARD_INFO("GDIX1001:00", 0x5D),
+	},
 };
 
 static void i2c1_init(int evm_id, int profile)
 {
 	setup_pin_mux(i2c1_pin_mux);
+	setup_pin_mux(cap_touch_pin_mux);
 	omap_register_i2c_bus(2, 100, am335x_i2c1_boardinfo,
 			ARRAY_SIZE(am335x_i2c1_boardinfo));
 	return;
 }
 
 static struct i2c_board_info am335x_i2c2_boardinfo[] = {
-{
-		I2C_BOARD_INFO("GDIX1001:00", 0x5D),
-	},
 };
 
 static void i2c2_init(int evm_id, int profile)
 {
 	setup_pin_mux(i2c2_pin_mux);
-	setup_pin_mux(cap_touch_pin_mux);
 	omap_register_i2c_bus(3, 100, am335x_i2c2_boardinfo,
 			ARRAY_SIZE(am335x_i2c2_boardinfo));
 	return;
