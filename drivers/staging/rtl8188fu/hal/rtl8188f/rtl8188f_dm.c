@@ -239,6 +239,7 @@ static void Init_ODM_ComInfo_8188f(PADAPTER	Adapter)
 	Init_ODM_ComInfo(Adapter);
 
 	ODM_CmnInfoInit(pDM_Odm, ODM_CMNINFO_PACKAGE_TYPE, pHalData->PackageType);
+	ODM_CmnInfoInit(pDM_Odm, ODM_CMNINFO_IC_TYPE, ODM_RTL8188F);
 
 	fab_ver = ODM_TSMC;
 	cut_ver = GET_CVID_CUT_VERSION(pHalData->VersionID);
@@ -253,6 +254,8 @@ static void Init_ODM_ComInfo_8188f(PADAPTER	Adapter)
 	SupportAbility =	ODM_RF_CALIBRATION		|
 						ODM_RF_TX_PWR_TRACK	/*| */
 						;
+	/*if(pHalData->AntDivCfg) */
+	/*	pdmpriv->InitODMFlag |= ODM_BB_ANT_DIV; */
 #endif
 
 	ODM_CmnInfoUpdate(pDM_Odm, ODM_CMNINFO_ABILITY, SupportAbility);
@@ -324,7 +327,8 @@ rtl8188f_InitHalDm(
 
 	Update_ODM_ComInfo_8188f(Adapter);
 
-	ODM_DMInit(pDM_Odm);
+	if (Adapter->registrypriv.mp_mode == 0)
+		ODM_DMInit(pDM_Odm);
 
 }
 

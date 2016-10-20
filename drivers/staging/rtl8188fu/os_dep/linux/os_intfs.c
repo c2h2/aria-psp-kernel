@@ -150,14 +150,7 @@ int rtw_wifi_spec = 0;
 
 int rtw_special_rf_path = 0; //0: 2T2R ,1: only turn on path A 1T1R
 
-char rtw_country_unspecified[] = {0xFF, 0xFF, 0x00};
-char *rtw_country_code = rtw_country_unspecified;
-module_param(rtw_country_code, charp, 0644);
-MODULE_PARM_DESC(rtw_country_code, "The default country code (in alpha2)");
-
 int rtw_channel_plan = RTW_CHPLAN_MAX;
-module_param(rtw_channel_plan, int, 0644);
-MODULE_PARM_DESC(rtw_channel_plan, "The default chplan ID when rtw_alpha2 is not specified or valid");
 
 /*if concurrent softap + p2p(GO) is needed, this param lets p2p response full channel list.
 But Softap must be SHUT DOWN once P2P decide to set up connection and become a GO.*/
@@ -258,6 +251,7 @@ module_param(rtw_ext_iface_num, int, 0644);
 
 module_param(rtw_rfkfree_enable, int, 0644);
 module_param(rtw_initmac, charp, 0644);
+module_param(rtw_channel_plan, int, 0644);
 module_param(rtw_special_rf_path, int, 0644);
 module_param(rtw_chip_version, int, 0644);
 module_param(rtw_rfintfs, int, 0644);
@@ -642,16 +636,6 @@ _func_enter_;
 
 	registry_par->wifi_spec = (u8)rtw_wifi_spec;
 
-	if (strlen(rtw_country_code) != 2
-		|| is_alpha(rtw_country_code[0]) == _FALSE
-		|| is_alpha(rtw_country_code[1]) == _FALSE
-	) {
-		if (rtw_country_code != rtw_country_unspecified)
-			DBG_871X_LEVEL(_drv_err_, "%s discard rtw_country_code not in alpha2\n", __func__);
-		_rtw_memset(registry_par->alpha2, 0xFF, 2);
-	} else
-		_rtw_memcpy(registry_par->alpha2, rtw_country_code, 2);
-
 	registry_par->channel_plan = (u8)rtw_channel_plan;
 	registry_par->special_rf_path = (u8)rtw_special_rf_path;
 
@@ -933,13 +917,7 @@ static int rtw_ndev_notifier_call(struct notifier_block * nb, unsigned long stat
 	struct net_device *dev = ptr;
 #endif
 
-	if (dev == NULL)
-		return NOTIFY_DONE;
-
 #if (LINUX_VERSION_CODE>=KERNEL_VERSION(2,6,29))
-	if (dev->netdev_ops == NULL)
-		return NOTIFY_DONE;
-
 	if (dev->netdev_ops->ndo_do_ioctl == NULL)
 		return NOTIFY_DONE;
 
@@ -1524,7 +1502,6 @@ struct dvobj_priv *devobj_init(void)
 	_rtw_mutex_init(&pdvobj->h2c_fwcmd_mutex);
 	_rtw_mutex_init(&pdvobj->setch_mutex);
 	_rtw_mutex_init(&pdvobj->setbw_mutex);
-	_rtw_mutex_init(&pdvobj->rf_read_reg_mutex);
 #ifdef CONFIG_SDIO_INDIRECT_ACCESS
 	_rtw_mutex_init(&pdvobj->sd_indirect_access_mutex);
 #endif
@@ -1555,7 +1532,6 @@ void devobj_deinit(struct dvobj_priv *pdvobj)
 	_rtw_mutex_free(&pdvobj->h2c_fwcmd_mutex);
 	_rtw_mutex_free(&pdvobj->setch_mutex);
 	_rtw_mutex_free(&pdvobj->setbw_mutex);
-	_rtw_mutex_free(&pdvobj->rf_read_reg_mutex);
 #ifdef CONFIG_SDIO_INDIRECT_ACCESS
 	_rtw_mutex_free(&pdvobj->sd_indirect_access_mutex);
 #endif
@@ -1732,9 +1708,8 @@ _func_enter_;
 #endif
 
 	rtw_hal_dm_init(padapter);
-#ifdef CONFIG_SW_LED
 	rtw_hal_sw_led_init(padapter);
-#endif
+
 #ifdef DBG_CONFIG_ERROR_DETECT
 	rtw_hal_sreset_init(padapter);
 #endif
@@ -2129,6 +2104,7 @@ void rtw_drv_stop_vir_if(_adapter *padapter)
 
 	pnetdev = padapter->pnetdev;
 
+	rtw_cancel_all_timer(padapter);
 
 	if (padapter->bup == _TRUE)
 	{
@@ -2146,9 +2122,6 @@ void rtw_drv_stop_vir_if(_adapter *padapter)
 
 		padapter->bup = _FALSE;
 	}
-
-	/* cancel timer after thread stop */
-	rtw_cancel_all_timer(padapter);
 }
 
 void rtw_drv_free_vir_if(_adapter *padapter)
@@ -2474,6 +2447,7 @@ void rtw_drv_if2_stop(_adapter *if2)
 	if (padapter == NULL)
 		return;
 
+	rtw_cancel_all_timer(padapter);
 
 	if (padapter->bup == _TRUE) {
 		#ifdef CONFIG_XMIT_ACK
@@ -2490,9 +2464,6 @@ void rtw_drv_if2_stop(_adapter *if2)
 
 		padapter->bup = _FALSE;
 	}
-
-	/* cancel timer after thread stop */
-	rtw_cancel_all_timer(padapter);
 }
 #endif //end of CONFIG_CONCURRENT_MODE
 
@@ -3461,9 +3432,7 @@ void rtw_dev_unload(PADAPTER padapter)
 		RT_TRACE(_module_hci_intfs_c_, _drv_notice_, ("%s: bup==_FALSE\n",__FUNCTION__));
 		DBG_871X("%s: bup==_FALSE\n",__FUNCTION__);
 	}
-
-	/* cancel timer after thread stop */
-	rtw_cancel_all_timer(padapter);
+	
 	RT_TRACE(_module_hci_intfs_c_, _drv_notice_, ("-%s\n",__FUNCTION__));
 }
 
@@ -4122,15 +4091,10 @@ _func_enter_;
 	}
 
 	if (pwrpriv->wowlan_wake_reason == RX_PNOWakeUp) {
-#ifdef CONFIG_IOCTL_CFG80211
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 2, 0))
-			u8 locally_generated = 1;
-
-			cfg80211_disconnected(padapter->pnetdev, 0, NULL, 0, locally_generated, GFP_ATOMIC);
-#else
-			cfg80211_disconnected(padapter->pnetdev, 0, NULL, 0, GFP_ATOMIC);
+#ifdef CONFIG_IOCTL_CFG80211	
+		cfg80211_disconnected(padapter->pnetdev, 0, NULL, 0,
+				GFP_ATOMIC);
 #endif
-#endif /* CONFIG_IOCTL_CFG80211 */
 		rtw_lock_ext_suspend_timeout(10000);
 	}
 
@@ -4147,7 +4111,6 @@ _func_enter_;
 	pwrpriv->wowlan_mode =_FALSE;
 
 	// Power On LED
-#ifdef CONFIG_SW_LED
 	rtw_hal_sw_led_init(padapter);
 	if(pwrpriv->wowlan_wake_reason == Rx_DisAssoc ||
 		pwrpriv->wowlan_wake_reason == Rx_DeAuth ||
@@ -4155,7 +4118,7 @@ _func_enter_;
 		rtw_led_control(padapter, LED_CTL_NO_LINK);
 	else
 		rtw_led_control(padapter, LED_CTL_LINK);
-#endif
+
 	//clean driver side wake up reason.
 	pwrpriv->wowlan_wake_reason = 0;
 
@@ -4292,10 +4255,8 @@ _func_enter_;
 	pwrpriv->wowlan_wake_reason = 0;
 
 	// Power On LED
-#ifdef CONFIG_SW_LED
 	rtw_hal_sw_led_init(padapter);
 	rtw_led_control(padapter, LED_CTL_LINK);
-#endif
 exit:
 	DBG_871X("<== "FUNC_ADPT_FMT" exit....\n", FUNC_ADPT_ARG(padapter));
 _func_exit_;
@@ -4415,9 +4376,7 @@ _func_enter_;
 		}
 	}
 	#endif
-#ifdef CONFIG_SW_LED
-	rtw_hal_sw_led_init(padapter);
-#endif
+
 #ifdef CONFIG_RESUME_IN_WORKQUEUE
 	//rtw_unlock_suspend();
 #endif //CONFIG_RESUME_IN_WORKQUEUE

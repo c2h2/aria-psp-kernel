@@ -55,7 +55,6 @@
 	/* #define CONFIG_DRV_ISSUE_PROV_REQ */ /* IOT FOR S2 */
 
 	#define CONFIG_SET_SCAN_DENY_TIMER
-	/*#define SUPPLICANT_RTK_VERSION_LOWER_THAN_JB42*/ /* wpa_supplicant realtek version <= jb42 will be defined this */
 #endif
 
 #define CONFIG_AP_MODE
@@ -82,6 +81,7 @@
 
 	/* #define CONFIG_DBG_P2P */
 	#define CONFIG_P2P_PS
+	/* #define CONFIG_P2P_IPS */
 	#define CONFIG_P2P_OP_CHK_SOCIAL_CH
 	#define CONFIG_CFG80211_ONECHANNEL_UNDER_CONCURRENT  /* replace CONFIG_P2P_CHK_INVITE_CH_LIST flag */
 	#define CONFIG_P2P_INVITE_IOT
@@ -99,7 +99,7 @@
 	#define CONFIG_TDLS_AUTOSETUP
 */
 	#define CONFIG_TDLS_AUTOCHECKALIVE
-	#define CONFIG_TDLS_CH_SW	/* Enable this flag only when we confirm that TDLS CH SW is supported in FW */
+	#define CONFIG_TDLS_CH_SW		/* Enable "CONFIG_TDLS_CH_SW" by default, however limit it to only work in wifi logo test mode but not in normal mode currently */
 #endif
 
 /* #define CONFIG_CONCURRENT_MODE */	/* Set from Makefile */

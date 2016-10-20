@@ -1449,11 +1449,17 @@ int rtw_set_channel_plan(_adapter *adapter, u8 channel_plan)
 */
 int rtw_set_country(_adapter *adapter, const char *country_code)
 {
-#ifdef CONFIG_RTW_IOCTL_SET_COUNTRY
-	return rtw_set_country_cmd(adapter, RTW_CMDF_WAIT_ACK, country_code, 1);
-#else
-	return _FAIL;
-#endif
+	int channel_plan;
+
+	channel_plan = rtw_get_chplan_from_country(country_code);
+
+	if (channel_plan == -1) {
+		DBG_871X_LEVEL(_drv_always_, "%s unsupported country_code:%s\n", __func__, country_code);
+		return _FAIL;
+	}
+
+	DBG_871X_LEVEL(_drv_always_, "%s country_code:%s mapping to chplan:0x%02x\n", __func__, country_code, channel_plan);
+	return rtw_set_channel_plan(adapter, channel_plan);
 }
 
 /*

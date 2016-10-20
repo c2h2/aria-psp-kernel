@@ -257,6 +257,7 @@ void Hal_EfuseParseAntennaDiversity_8188F(PADAPTER padapter, u8 *hwinfo, BOOLEAN
 void Hal_EfuseParseXtal_8188F(PADAPTER pAdapter, u8 *hwinfo, u8 AutoLoadFail);
 void Hal_EfuseParseThermalMeter_8188F(PADAPTER padapter, u8 *hwinfo, u8 AutoLoadFail);
 void Hal_EfuseParseKFreeData_8188F(PADAPTER pAdapter, u8 *hwinfo, BOOLEAN AutoLoadFail);
+VOID Hal_EfuseParseMacHidden_8188F(PADAPTER pAdapter, u8 *hwinfo, BOOLEAN AutoLoadFail);
 
 #if 0 /* Do not need for rtl8188f */
 VOID Hal_EfuseParseVoltage_8188F(PADAPTER pAdapter,u8* hwinfo,BOOLEAN 	AutoLoadFail); 

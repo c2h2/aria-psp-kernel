@@ -129,7 +129,6 @@ typedef enum _RT_CHANNEL_DOMAIN
 	RTW_CHPLAN_MKK1_MKK1 = 0x27,
 	RTW_CHPLAN_WORLD_KCC1 = 0x28,
 	RTW_CHPLAN_WORLD_FCC2 = 0x29,
-	RTW_CHPLAN_FCC2_NULL = 0x2A,
 	RTW_CHPLAN_WORLD_FCC3 = 0x30,
 	RTW_CHPLAN_WORLD_FCC4 = 0x31,
 	RTW_CHPLAN_WORLD_FCC5 = 0x32,
@@ -160,7 +159,6 @@ typedef enum _RT_CHANNEL_DOMAIN
 	RTW_CHPLAN_FCC1_FCC10 = 0x57,
 	RTW_CHPLAN_MKK2_MKK4 = 0x58,
 	RTW_CHPLAN_WORLD_ETSI14 = 0x59,
-	RTW_CHPLAN_FCC1_FCC5 = 0x60,
 
 	RTW_CHPLAN_MAX,
 	RTW_CHPLAN_REALTEK_DEFINE = 0x7F,
@@ -176,7 +174,6 @@ typedef enum _RT_CHANNEL_DOMAIN_2G
 	RTW_RD_2G_ETSI2 = 5,	/* France */
 	RTW_RD_2G_GLOBAL = 6,	/* Global domain */
 	RTW_RD_2G_MKK2 = 7,		/* Japan */
-	RTW_RD_2G_FCC2 = 8,		/* US */
 
 	RTW_RD_2G_MAX,
 }RT_CHANNEL_DOMAIN_2G, *PRT_CHANNEL_DOMAIN_2G;
@@ -226,9 +223,9 @@ typedef enum _RT_CHANNEL_DOMAIN_5G
 	RTW_RD_5G_MAX,
 }RT_CHANNEL_DOMAIN_5G, *PRT_CHANNEL_DOMAIN_5G;
 
-bool rtw_chplan_is_empty(u8 id);
-#define rtw_is_channel_plan_valid(chplan) (((chplan) < RTW_CHPLAN_MAX || (chplan) == RTW_CHPLAN_REALTEK_DEFINE) && !rtw_chplan_is_empty(chplan))
+#define rtw_is_channel_plan_valid(chplan) ((chplan) < RTW_CHPLAN_MAX || (chplan) == RTW_CHPLAN_REALTEK_DEFINE)
 #define rtw_is_legacy_channel_plan(chplan) ((chplan) < 0x20)
+bool rtw_chplan_is_empty(u8 id);
 
 typedef struct _RT_CHANNEL_PLAN
 {
@@ -387,22 +384,26 @@ struct ss_res {
 #ifdef CONFIG_TDLS
 enum TDLS_option
 {
-	TDLS_ESTABLISHED = 1,
-	TDLS_ISSUE_PTI,				
-	TDLS_CH_SW_RESP,
-	TDLS_CH_SW_PREPARE,
-	TDLS_CH_SW_START,
-	TDLS_CH_SW_TO_OFF_CHNL,
-	TDLS_CH_SW_TO_BASE_CHNL_UNSOLICITED,
-	TDLS_CH_SW_TO_BASE_CHNL,
-	TDLS_CH_SW_END_TO_BASE_CHNL,
-	TDLS_CH_SW_END,
-	TDLS_RS_RCR,
-	TDLS_TEAR_STA,
+	TDLS_ESTABLISHED	= 	1,
+	TDLS_ISSUE_PTI				=	2,
+	TDLS_CH_SW_RESP			=	3,
+	TDLS_CH_SW				=	4,
+	TDLS_CH_SW_BACK			=	5,
+	TDLS_RS_RCR				=	6,
+	TDLS_TEAR_STA				=	7,
 	maxTDLS,
 };
 
 #endif //CONFIG_TDLS
+
+struct FW_Sta_Info
+{
+	struct sta_info	*psta;
+	u32	status;
+	u32	rx_pkt;
+	u32	retry;
+	NDIS_802_11_RATES_EX  SupportedRates;
+};
 
 /*
  * Usage:
@@ -474,6 +475,7 @@ struct mlme_ext_info
 	struct HT_caps_element	HT_caps;
 	struct HT_info_element		HT_info;
 	WLAN_BSSID_EX			network;//join network or bss_network, if in ap mode, it is the same to cur_network.network
+	struct FW_Sta_Info		FW_sta_info[NUM_STA];
 };
 
 // The channel information about this channel including joining, scanning, and power constraints.
@@ -523,8 +525,6 @@ enum {
 	RTW_CHF_NON_LONG_CAC = BIT5,
 };
 bool rtw_choose_available_chbw(_adapter *adapter, u8 req_bw, u8 *dec_ch, u8 *dec_bw, u8 *dec_offset, u8 d_flags);
-void dump_country_chplan(void *sel, const struct country_chplan *ent);
-void dump_country_chplan_map(void *sel);
 void dump_chplan_id_list(void *sel);
 void dump_chplan_test(void *sel);
 void dump_chset(void *sel, RT_CHANNEL_INFO *ch_set);
@@ -748,6 +748,8 @@ void clear_cam_cache(_adapter *adapter, u8 id);
 void invalidate_cam_all(_adapter *padapter);
 void CAM_empty_entry(PADAPTER Adapter, u8 ucIndex);
 
+
+int allocate_fw_sta_entry(_adapter *padapter);
 void flush_all_cam_entry(_adapter *padapter);
 
 BOOLEAN IsLegal5GChannel(PADAPTER Adapter, u8 channel);
@@ -793,7 +795,7 @@ void update_capinfo(PADAPTER Adapter, u16 updateCap);
 void update_wireless_mode(_adapter * padapter);
 void update_tx_basic_rate(_adapter *padapter, u8 modulation);
 void update_sta_basic_rate(struct sta_info *psta, u8 wireless_mode);
-int rtw_ies_get_supported_rate(u8 *ies, uint ies_len, u8 *rate_set, u8 *rate_num);
+int update_sta_support_rate(_adapter *padapter, u8* pvar_ie, uint var_ie_len, int cam_idx);
 
 //for sta/adhoc mode
 void update_sta_info(_adapter *padapter, struct sta_info *psta);
@@ -848,7 +850,7 @@ void report_join_res(_adapter *padapter, int res);
 void report_survey_event(_adapter *padapter, union recv_frame *precv_frame);
 void report_surveydone_event(_adapter *padapter);
 void report_del_sta_event(_adapter *padapter, unsigned char *MacAddr, unsigned short reason, bool enqueue);
-void report_add_sta_event(_adapter *padapter, unsigned char *MacAddr);
+void report_add_sta_event(_adapter *padapter, unsigned char* MacAddr, int cam_idx);
 bool rtw_port_switch_chk(_adapter *adapter);
 void report_wmm_edca_update(_adapter *padapter);
 
@@ -863,7 +865,6 @@ void update_mgntframe_attrib_addr(_adapter *padapter, struct xmit_frame *pmgntfr
 void dump_mgntframe(_adapter *padapter, struct xmit_frame *pmgntframe);
 s32 dump_mgntframe_and_wait(_adapter *padapter, struct xmit_frame *pmgntframe, int timeout_ms);
 s32 dump_mgntframe_and_wait_ack(_adapter *padapter, struct xmit_frame *pmgntframe);
-s32 dump_mgntframe_and_wait_ack_timeout(_adapter *padapter, struct xmit_frame *pmgntframe, int timeout_ms);
 
 #ifdef CONFIG_P2P
 void issue_probersp_p2p(_adapter *padapter, unsigned char *da);
@@ -889,7 +890,6 @@ int issue_deauth_ex(_adapter *padapter, u8 *da, unsigned short reason, int try_c
 void issue_action_spct_ch_switch(_adapter *padapter, u8 *ra, u8 new_ch, u8 ch_offset);
 void issue_addba_req(_adapter *adapter, unsigned char *ra, u8 tid);
 void issue_addba_rsp(_adapter *adapter, unsigned char *ra, u8 tid, u16 status, u8 size);
-u8 issue_addba_rsp_wait_ack(_adapter *adapter, unsigned char *ra, u8 tid, u16 status, u8 size, int try_cnt, int wait_ms);
 void issue_del_ba(_adapter *adapter, unsigned char *ra, u8 tid, u16 reason, u8 initiator);
 int issue_del_ba_ex(_adapter *adapter, unsigned char *ra, u8 tid, u16 reason, u8 initiator, int try_cnt, int wait_ms);
 
@@ -1037,7 +1037,6 @@ u8 set_stakey_hdl(_adapter *padapter, u8 *pbuf);
 u8 set_assocsta_hdl(_adapter *padapter, u8 *pbuf);
 u8 del_assocsta_hdl(_adapter *padapter, u8 *pbuf);
 u8 add_ba_hdl(_adapter *padapter, unsigned char *pbuf);
-u8 add_ba_rsp_hdl(_adapter *padapter, unsigned char *pbuf);
 
 u8 mlme_evt_hdl(_adapter *padapter, unsigned char *pbuf);
 u8 h2c_msg_hdl(_adapter *padapter, unsigned char *pbuf);
@@ -1126,7 +1125,6 @@ struct cmd_hdl wlancmds[] =
 	GEN_MLME_EXT_HANDLER(sizeof(struct TDLSoption_param), tdls_hdl) /*62*/
 	GEN_MLME_EXT_HANDLER(0, chk_bmc_sleepq_hdl) /*63*/
 	GEN_MLME_EXT_HANDLER(sizeof(struct RunInThread_param), run_in_thread_hdl) /*64*/
-	GEN_MLME_EXT_HANDLER(sizeof(struct addBaRsp_parm), add_ba_rsp_hdl) /* 65 */
 };
 
 #endif

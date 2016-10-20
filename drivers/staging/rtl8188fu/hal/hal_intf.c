@@ -23,19 +23,6 @@
 #include <drv_types.h>
 #include <hal_data.h>
 
-const u32 _chip_type_to_odm_ic_type[] = {
-	0,
-	ODM_RTL8188E,
-	ODM_RTL8192E,
-	ODM_RTL8812,
-	ODM_RTL8821,
-	ODM_RTL8723B,
-	ODM_RTL8814A,
-	ODM_RTL8703B,
-	ODM_RTL8188F,
-	0,
-};
-
 void rtw_hal_chip_configure(_adapter *padapter)
 {
 	padapter->HalFunc.intf_chip_configure(padapter);
@@ -63,7 +50,6 @@ void rtw_hal_read_chip_info(_adapter *padapter)
 void rtw_hal_read_chip_version(_adapter *padapter)
 {
 	padapter->HalFunc.read_chip_version(padapter);
-	rtw_odm_init_ic_type(padapter);
 }
 
 void rtw_hal_def_value_init(_adapter *padapter)
@@ -314,11 +300,6 @@ u8 rtw_hal_check_ips_status(_adapter *padapter)
 	return val;
 }
 
-s32 rtw_hal_fw_dl(_adapter *padapter, u8 wowlan)
-{
-	return padapter->HalFunc.fw_dl(padapter, wowlan);
-}
-
 #if defined(CONFIG_WOWLAN) || defined(CONFIG_AP_WOWLAN)
 void rtw_hal_clear_interrupt(_adapter *padapter)
 {  
@@ -326,6 +307,11 @@ void rtw_hal_clear_interrupt(_adapter *padapter)
 	padapter->HalFunc.clear_interrupt(padapter);
 #endif
 }
+void rtw_hal_set_wowlan_fw(_adapter *padapter, u8 sleep)
+{
+	padapter->HalFunc.hal_set_wowlan_fw(padapter, sleep);
+}
+
 #endif
 
 #if defined(CONFIG_USB_HCI) || defined (CONFIG_PCI_HCI)
@@ -618,6 +604,30 @@ void rtw_hal_bcn_related_reg_setting(_adapter *padapter)
 {	
 	padapter->HalFunc.SetBeaconRelatedRegistersHandler(padapter);	
 }
+
+
+#ifdef CONFIG_ANTENNA_DIVERSITY
+u8	rtw_hal_antdiv_before_linked(_adapter *padapter)
+{
+	struct dvobj_priv *dvobj = adapter_to_dvobj(padapter);
+	int i;
+
+	if (!padapter->HalFunc.AntDivBeforeLinkHandler)
+		return _FALSE;
+
+	for (i = 0; i < dvobj->iface_nums; i++) {
+		if (rtw_linked_check(dvobj->padapters[i]))
+			return _FALSE;
+	}
+
+	return padapter->HalFunc.AntDivBeforeLinkHandler(padapter);
+}
+void	rtw_hal_antdiv_rssi_compared(_adapter *padapter, WLAN_BSSID_EX *dst, WLAN_BSSID_EX *src)
+{
+	if(padapter->HalFunc.AntDivCompareHandler)
+		padapter->HalFunc.AntDivCompareHandler(padapter, dst, src);
+}
+#endif
 
 #ifdef CONFIG_HOSTAPD_MLME
 s32	rtw_hal_hostap_mgnt_xmit_entry(_adapter *padapter, _pkt *pkt)
@@ -1051,13 +1061,11 @@ u8 rtw_hal_ops_check(_adapter *padapter)
 		ret = _FAIL;
 	}
 	#endif
-	#endif /* CONFIG_WOWLAN */
-
-	if (NULL == padapter->HalFunc.fw_dl) {
-		rtw_hal_error_msg("fw_dl");
+	if (NULL == padapter->HalFunc.hal_set_wowlan_fw) {
+		rtw_hal_error_msg("hal_set_wowlan_fw");
 		ret = _FAIL;
 	}
-
+	#endif //CONFIG_WOWLAN
 	if ((IS_HARDWARE_TYPE_8814A(padapter)
 		|| IS_HARDWARE_TYPE_8822BU(padapter) || IS_HARDWARE_TYPE_8822BS(padapter))
 		&& NULL == padapter->HalFunc.fw_correct_bcn) {

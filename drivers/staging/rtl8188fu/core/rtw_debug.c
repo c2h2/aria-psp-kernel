@@ -68,7 +68,7 @@ u32 GlobalDebugLevel = _drv_err_;
 void dump_drv_version(void *sel)
 {
 	DBG_871X_SEL_NL(sel, "%s %s\n", DRV_NAME, DRIVERVERSION);
-	DBG_871X_SEL_NL(sel, "build time: %s %s\n", __DATE__, __TIME__);
+//	DBG_871X_SEL_NL(sel, "build time: %s %s\n", __DATE__, __TIME__);
 }
 
 void dump_drv_cfg(void *sel)
@@ -129,11 +129,7 @@ void dump_drv_cfg(void *sel)
 	#ifdef CONFIG_GPIO_WAKEUP
 	DBG_871X_SEL_NL(sel, "CONFIG_GPIO_WAKEUP - WAKEUP_GPIO_IDX:%d\n", WAKEUP_GPIO_IDX);
 	#endif
-#endif
-
-#ifdef CONFIG_TDLS
-	DBG_871X_SEL_NL(sel, "CONFIG_TDLS\n");
-#endif
+#endif	
 
 #ifdef CONFIG_USB_HCI
 	#ifdef CONFIG_SUPPORT_USB_INT	
@@ -1857,24 +1853,6 @@ int proc_get_hw_status(struct seq_file *m, void *v)
 	}
 
 	return 0;
-}
-int proc_get_trx_info_debug(struct seq_file *m, void *v)
-{
-	struct net_device *dev = m->private;
-	_adapter *padapter = (_adapter *)rtw_netdev_priv(dev);
-	HAL_DATA_TYPE	*pHalData = GET_HAL_DATA(padapter);
-
-	int i;
-
-
-	/*============  tx info ============	*/
-	rtw_hal_get_def_var(padapter, HW_DEF_RA_INFO_DUMP, m);
-
-	/*============  rx info ============	*/
-	rtw_hal_set_odm_var(padapter, HAL_ODM_RX_INFO_DUMP, m, _FALSE);
-
-
-return 0;
 }
 
 int proc_get_rx_signal(struct seq_file *m, void *v)

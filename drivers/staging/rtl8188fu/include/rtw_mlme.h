@@ -448,7 +448,6 @@ struct tdls_ch_switch{
 	u32	cur_time;
 	u8	delay_switch_back;
 	u8	dump_stack;
-	struct submit_ctx 	chsw_sctx;
 };
 #endif
 
@@ -525,9 +524,7 @@ struct mlme_priv {
 
 	u8	*nic_hdl;
 
-	#ifdef SUPPLICANT_RTK_VERSION_LOWER_THAN_JB42
 	u8	not_indic_disco;
-	#endif
 	_list		*pscanned;
 	_queue	free_bss_pool;
 	_queue	scanned_queue;
@@ -607,7 +604,6 @@ struct mlme_priv {
 	_timer	dynamic_chk_timer; //dynamic/periodic check timer
 
 	u8	acm_mask; // for wmm acm mask
-	const struct country_chplan *country_ent;
 	u8	ChannelPlan;
 	RT_SCAN_TYPE 	scan_mode; // active: 1, passive: 0
 

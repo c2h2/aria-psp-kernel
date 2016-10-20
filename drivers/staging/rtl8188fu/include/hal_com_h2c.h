@@ -38,7 +38,6 @@ enum h2c_cmd{
 	H2C_FCS_RSVDPAGE = 0x10,	
 	H2C_FCS_INFO = 0x11,	
 	H2C_AP_WOW_GPIO_CTRL = 0x13,
-	H2C_CHNL_SWITCH_OPER_OFFLOAD = 0x1C,
 
 	//PoweSave Class: 001
 	H2C_SET_PWR_MODE = 0x20,
@@ -202,8 +201,7 @@ enum h2c_cmd{
 #define H2C_MSR_ROLE_GC		3
 #define H2C_MSR_ROLE_GO		4
 #define H2C_MSR_ROLE_TDLS	5
-#define H2C_MSR_ROLE_ADHOC	6
-#define H2C_MSR_ROLE_MAX	7
+#define H2C_MSR_ROLE_MAX	6
 
 extern const char * const _h2c_msr_role_str[];
 #define h2c_msr_role_str(role) (((role) >= H2C_MSR_ROLE_MAX) ? _h2c_msr_role_str[H2C_MSR_ROLE_MAX] : _h2c_msr_role_str[(role)])

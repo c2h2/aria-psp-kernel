@@ -861,12 +861,17 @@ void update_bmc_sta(_adapter *padapter)
 	int supportRateNum = 0;
 	u64 tx_ra_bitmap = 0;
 	struct mlme_priv *pmlmepriv = &(padapter->mlmepriv);
+	struct mlme_ext_priv	*pmlmeext = &(padapter->mlmeextpriv);
+	struct mlme_ext_info	*pmlmeinfo = &(pmlmeext->mlmext_info);	
 	WLAN_BSSID_EX *pcur_network = (WLAN_BSSID_EX *)&pmlmepriv->cur_network.network;	
 	struct sta_info *psta = rtw_get_bcmc_stainfo(padapter);
 
 	if(psta)
 	{
 		psta->aid = 0;//default set to 0
+
+		pmlmeinfo->FW_sta_info[psta->mac_id].psta = psta;
+
 		psta->qos_option = 0;
 #ifdef CONFIG_80211N_HT	
 		psta->htpriv.ht_option = _FALSE;
@@ -897,6 +902,9 @@ void update_bmc_sta(_adapter *padapter)
 		tx_ra_bitmap = psta->ra_mask;
 
 		psta->raid = rtw_hal_networktype_to_raid(padapter,psta);
+
+		//ap mode
+		rtw_hal_set_odm_var(padapter, HAL_ODM_STA_INFO, psta, _TRUE);
 
 		//if(pHalData->fw_ractrl == _TRUE)
 		{
@@ -2139,15 +2147,16 @@ int rtw_check_beacon_data(_adapter *padapter, u8 *pbuf,  int len)
 
 	pmlmepriv->vhtpriv.vht_option = _FALSE;
 	// if channel in 5G band, then add vht ie .
-	if ((pbss_network->Configuration.DSConfig > 14)
-		&& (pmlmepriv->htpriv.ht_option == _TRUE)
-		&& REGSTY_IS_11AC_ENABLE(pregistrypriv)
-		&& hal_chk_proto_cap(padapter, PROTO_CAP_11AC)
-		&& (!pmlmepriv->country_ent || COUNTRY_CHPLAN_EN_11AC(pmlmepriv->country_ent))
-	) {
-		if (vht_cap == _TRUE)
+	if ((pbss_network->Configuration.DSConfig > 14) && 
+		(pmlmepriv->htpriv.ht_option == _TRUE) &&
+		(pregistrypriv->vht_enable)) 
+	{
+		if(vht_cap == _TRUE)
+		{
 			pmlmepriv->vhtpriv.vht_option = _TRUE;
-		else if (REGSTY_IS_11AC_AUTO(pregistrypriv)) {
+		}
+		else if(pregistrypriv->vht_enable == 2) // auto enabled
+		{
 			u8	cap_len, operation_len;
 
 			rtw_vht_use_default_setting(padapter);
@@ -3734,7 +3743,13 @@ void sta_info_update(_adapter *padapter, struct sta_info *psta)
 /* called >= TSR LEVEL for USB or SDIO Interface*/
 void ap_sta_info_defer_update(_adapter *padapter, struct sta_info *psta)
 {
-	if (psta->state & _FW_LINKED) {
+	struct mlme_ext_priv *pmlmeext = &padapter->mlmeextpriv;
+	struct mlme_ext_info	*pmlmeinfo = &(pmlmeext->mlmext_info);
+
+	if(psta->state & _FW_LINKED)
+	{
+		pmlmeinfo->FW_sta_info[psta->mac_id].psta = psta;
+	
 		//add ratid
 		add_RATid(padapter, psta, 0);//DM_RATR_STA_INIT
 	}	
