@@ -90,6 +90,7 @@
 #define EEPROM_24c02 1
 
 static int ili9806e_reset_gpio = GPIO_TO_PIN(1, 16);
+static int gpio2_0_pin = GPIO_TO_PIN(2, 0);
 
 static const struct display_panel disp_panel = {
 	WVGA,
@@ -795,18 +796,18 @@ static struct pinmux_config asclepius_gpio_mux[] = {
 
 /* pinmux for gpio asclepius  */
 static struct pinmux_config slot_gpio_mux[] = {
-	/*
-	{"gpmc_a1.gpio1_17", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
+	{"gpmc_a1.gpio1_17", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{"gpmc_a2.gpio1_18", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{"gpmc_a3.gpio1_19", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
-	{"gpmc_a4.gpio1_20", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+	{"gpmc_a4.gpio1_20", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
 	{"gpmc_a5.gpio1_21", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
 	{"gpmc_a6.gpio1_22", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
-	{"gpmc_a7.gpio1_23", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},*/
+	{"gpmc_a7.gpio1_23", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
 	{"gpmc_a8.gpio1_24", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
 	{"gpmc_a9.gpio1_25", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
 	{"gpmc_a10.gpio1_26", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
 	{"gpmc_a11.gpio1_27", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
+	{"gpmc_csn3.gpio2_0", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{"gpmc_clk.gpio2_1", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
 	{NULL, 0},
 };
@@ -2152,6 +2153,10 @@ static void asclepius_gpio_init(int evm_id, int profile)
 static void slot_gpio_init(int evm_id, int profile)
 {
         setup_pin_mux(slot_gpio_mux);
+
+	gpio_request(gpio2_0_pin, "gpio2-0");
+	gpio_direction_output(gpio2_0_pin, 1);
+	gpio_free(gpio2_0_pin);
 }
 
 /* setup spi0 */
