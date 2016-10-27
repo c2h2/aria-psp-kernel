@@ -43,6 +43,7 @@
 #include <linux/pwm/pwm.h>
 #include <linux/rtc/rtc-omap.h>
 #include <linux/opp.h>
+#include <linux/w1-gpio.h>
 
 /* LCD controller is similar to DA850 */
 #include <video/da8xx-fb.h>
@@ -835,37 +836,41 @@ static struct pinmux_config aria_gpio_led_mux[] = {
 
 /* pinmux for gpio asclepius  */
 static struct pinmux_config asclepius_gpio_mux[] = {
-	{"uart1_ctsn.gpio0_12", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
-	{"gpmc_a4.gpio1_20", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+	{"gpmc_a1.gpio1_17",  OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+	{"gpmc_a2.gpio1_18",  OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
+	{"gpmc_a4.gpio1_20", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
 	{"gpmc_a5.gpio1_21", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
 	{"gpmc_a6.gpio1_22", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
 	{"gpmc_a7.gpio1_23", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
 	{"gpmc_a8.gpio1_24", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
 	{"gpmc_a9.gpio1_25", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
-	{"gpmc_a10.gpio1_26", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
-	{"gpmc_a11.gpio1_27", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
-	{"gpmc_clk.gpio2_1", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
-	{"mcasp0_aclkx.gpio3_14", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
-	{"mcasp0_axr0.gpio3_16", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
-	{"mcasp0_aclkr.gpio3_18", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
-	{"mcasp0_fsr.gpio3_19", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
-	{"gpmc_csn3.gpio2_0", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
+	{"gpmc_a10.gpio1_26", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
+	{"gpmc_a11.gpio1_27", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
+	{"gpmc_a11.gpio1_28", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
+	{"mcasp0_aclkr.gpio3_18", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
+	{"mcasp0_fsr.gpio3_19", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
+	{"gpmc_clk.gpio2_1", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{NULL, 0},
 };
 
 static struct pinmux_config ssd2828_gpio_mux[] = {
-	{"gpmc_a1.gpio1_17", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+	{"gpmc_a0.gpio1_16", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{"gpmc_a3.gpio1_19", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
-	{"spi0_cs0.gpio0_5", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
-	{"spi0_d1.gpio0_4", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
-	{"spi0_d0.gpio0_3", OMAP_MUX_MODE7 | AM33XX_PULL_ENBL |
-		AM33XX_INPUT_EN},
-	{"spi0_sclk.gpio0_2", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+	{"uart1_ctsn.gpio0_12", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT}, /* CS0 */
+	{"mcasp0_axr0.gpio3_16", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT}, /* D1 */
+	{"mcasp0_fsx.gpio3_15", OMAP_MUX_MODE7 | AM33XX_PULL_ENBL |
+		AM33XX_INPUT_EN}, /* D0 */
+	{"mcasp0_aclkx.gpio3_14", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT}, /* SCLK */
 	{NULL, 0},
 };
 
 static struct pinmux_config gpio_ddr_vtt_enb_pin_mux[] = {
 	{"ecap0_in_pwm0_out.pio0_7", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+	{NULL, 0},
+};
+
+static struct pinmux_config w1_gpio_mux[] = {
+	{"uart1_rtsn.gpio0_13", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
 	{NULL, 0},
 };
 
@@ -1072,7 +1077,7 @@ static struct pinmux_config ecap0_pin_mux[] = {
 
 /* Module pin mux for eCAP */
 static struct pinmux_config ecap2_pin_mux[] = {
-	{"mcasp0_ahclkr.ecap2_in_pwm2_out", AM33XX_PIN_OUTPUT},
+	{"mcasp0_ahclkr.ecap2_in_pwm2_out", OMAP_MUX_MODE4 | AM33XX_PIN_OUTPUT},
 	{NULL, 0},
 };
 
@@ -1741,17 +1746,12 @@ static void lis331dlh_init(int evm_id, int profile)
 }
 
 static struct i2c_board_info am335x_i2c1_boardinfo[] = {
-/*
 	{
-		I2C_BOARD_INFO("tlv320aic3x", 0x1b),
+		I2C_BOARD_INFO("rx8025", 0x32),
 	},
 	{
-		I2C_BOARD_INFO("tsl2550", 0x39),
+		I2C_BOARD_INFO("GDIX1001:00", 0x5D),
 	},
-	{
-		I2C_BOARD_INFO("tmp275", 0x48),
-	},
-*/
 };
 
 static void i2c1_init(int evm_id, int profile)
@@ -1768,12 +1768,6 @@ static struct i2c_board_info am335x_i2c2_boardinfo[] = {
                 I2C_BOARD_INFO("ds1307", 0x68),
         },
 #endif
-	{
-		I2C_BOARD_INFO("rx8025", 0x32),
-	},
-	{
-		I2C_BOARD_INFO("GDIX1001:00", 0x5D),
-	},
 };
 
 static void i2c2_init(int evm_id, int profile)
@@ -2208,7 +2202,13 @@ static void aria_gpio_led_init(int evm_id, int profile)
 
 static void asclepius_gpio_init(int evm_id, int profile)
 {
+	int gpio_33_enable = GPIO_TO_PIN(2, 1);
+
         setup_pin_mux(asclepius_gpio_mux);
+
+	gpio_request(gpio_33_enable, "gpio-33-enable");
+	gpio_direction_output(gpio_33_enable, 1);
+	gpio_free(gpio_33_enable);
 }
 
 static void ssd2828_gpio_init(int evm_id, int profile)
@@ -2234,6 +2234,35 @@ static void spi1_init(int evm_id, int profile)
 	spi_register_board_info(am335x_spi1_slave_info,
 			ARRAY_SIZE(am335x_spi1_slave_info));
 	return;
+}
+
+static struct w1_gpio_platform_data w1_gpio_pdata = {
+	.pin		= GPIO_TO_PIN(0, 13),
+	.is_open_drain	= 0,
+};
+
+struct platform_device w1_device = {
+        .name                   = "w1-gpio",
+        .id                     = -1,
+        .dev.platform_data      = &w1_gpio_pdata,
+};
+
+static void w1_init(int evm_id, int profile)
+{
+	int err;
+
+	setup_pin_mux(w1_gpio_mux);
+	
+	err = platform_device_register(&w1_device);
+	
+	if(err)
+	{
+		pr_err("Failed to register w1 temp sensor!\n");
+	}
+	else
+	{
+		printk("Registered w1 temp sensor.\n");
+	}
 }
 
 
@@ -2532,12 +2561,9 @@ static struct evm_dev_cfg beagleboneblack_dev_cfg[] = {
 static struct evm_dev_cfg aria_cfg[] = {
 	{am335x_rtc_init, DEV_ON_BASEBOARD, PROFILE_NONE},
 	{enable_ecap2,     DEV_ON_BASEBOARD, PROFILE_ALL},
-	//{mfd_tscadc_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{lcdc_init,	DEV_ON_BASEBOARD, PROFILE_NONE },
-	//{aria_gpio_led_init,  DEV_ON_BASEBOARD, PROFILE_ALL},
 	{asclepius_gpio_init, DEV_ON_BASEBOARD, PROFILE_ALL},
 	{ssd2828_gpio_init, DEV_ON_BASEBOARD, PROFILE_ALL},
-	//{tps65217_init, DEV_ON_BASEBOARD, PROFILE_NONE},
 	{mcasp1_init, DEV_ON_BASEBOARD, PROFILE_NONE},
 	{aria_mii1_init, DEV_ON_BASEBOARD, PROFILE_NONE},
 	{usb0_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
@@ -2545,12 +2571,12 @@ static struct evm_dev_cfg aria_cfg[] = {
 	//{evm_nand_init, DEV_ON_BASEBOARD, PROFILE_ALL},
 	{mmc1_emmc_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{mmc0_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
-	//{i2c1_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
-	{i2c2_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
-	//{spi0_init,     DEV_ON_BASEBOARD, PROFILE_ALL},
-        //{uart2_init,     DEV_ON_BASEBOARD, PROFILE_ALL},
+	{i2c1_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
+	//{i2c2_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
+        {uart2_init,     DEV_ON_BASEBOARD, PROFILE_ALL},
         {uart1_init, DEV_ON_BASEBOARD, PROFILE_ALL},
         {uart4_init, DEV_ON_BASEBOARD, PROFILE_ALL},
+	{w1_init, DEV_ON_BASEBOARD, PROFILE_ALL}, 
 	{NULL, 0, 0},
 };
 	

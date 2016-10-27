@@ -14,19 +14,18 @@
 #define MDELAY(n)   mdelay(n)
 
 #define SET_RESET_PIN(v)    gpio_direction_output(GPIO_TO_PIN(1, 19), v)
-#define SET_RESET_PIN_LCD(v)    gpio_direction_output(GPIO_TO_PIN(1, 17), v)
 
 
-#define SET_LSCE_LOW   gpio_direction_output(GPIO_TO_PIN(0, 5), 0)
-#define SET_LSCE_HIGH  gpio_direction_output(GPIO_TO_PIN(0, 5), 1)
+#define SET_LSCE_LOW   gpio_direction_output(GPIO_TO_PIN(0, 12), 0)
+#define SET_LSCE_HIGH  gpio_direction_output(GPIO_TO_PIN(0, 12), 1)
 
-#define SET_LSCK_LOW   gpio_direction_output(GPIO_TO_PIN(0, 2), 0)
-#define SET_LSCK_HIGH  gpio_direction_output(GPIO_TO_PIN(0, 2), 1)
+#define SET_LSCK_LOW   gpio_direction_output(GPIO_TO_PIN(3, 14), 0) /* SCLK */
+#define SET_LSCK_HIGH  gpio_direction_output(GPIO_TO_PIN(3, 14), 1)
 
-#define SET_LSDA_LOW   gpio_direction_output(GPIO_TO_PIN(0, 4), 0)
-#define SET_LSDA_HIGH  gpio_direction_output(GPIO_TO_PIN(0, 4), 1)
+#define SET_LSDA_LOW   gpio_direction_output(GPIO_TO_PIN(3, 16), 0) /* DI */
+#define SET_LSDA_HIGH  gpio_direction_output(GPIO_TO_PIN(3, 16), 1)
 
-#define GET_HX_SDI     gpio_get_value(GPIO_TO_PIN(0, 3))
+#define GET_HX_SDI     gpio_get_value(GPIO_TO_PIN(3, 15)) /* D0 */
 
 
 #define HX_WR_COM       (0x70)
@@ -622,13 +621,11 @@ void ssd2828_init(void)
 	u16 id;
 
 	gpio_request_one(GPIO_TO_PIN(1, 19),
-		GPIOF_OUT_INIT_HIGH, "lcd-reset");
-	gpio_request_one(GPIO_TO_PIN(1, 17),
 		GPIOF_OUT_INIT_HIGH, "ssd2828-reset");
-	gpio_request(GPIO_TO_PIN(0, 5), "ssd2828-spi0-cs0");
-	gpio_request(GPIO_TO_PIN(0, 2), "ssd2828-spi0-sclk");
-	gpio_request(GPIO_TO_PIN(0, 3), "ssd2828-spi0-d0");
-	gpio_request(GPIO_TO_PIN(0, 4), "ssd2828-spi0-d1");
+	gpio_request(GPIO_TO_PIN(0, 12), "ssd2828-spi0-cs0");
+	gpio_request(GPIO_TO_PIN(3, 14), "ssd2828-spi0-sclk");
+	gpio_request(GPIO_TO_PIN(3, 15), "ssd2828-spi0-d0");
+	gpio_request(GPIO_TO_PIN(3, 16), "ssd2828-spi0-d1");
 
 	
 	Write_com(0x00b0);    
@@ -636,11 +633,9 @@ void ssd2828_init(void)
 	LCM_DEBUG("Linux Kernel--SSD2828 id is: 0x%x\n",id);
 
 	SET_RESET_PIN(0);
-	SET_RESET_PIN_LCD(0);
 	MDELAY(25);
 
 	SET_RESET_PIN(1);
-	SET_RESET_PIN_LCD(1);
 	MDELAY(120);    
 	init_lcm_registers();
 	Write_com(0x00b0);    
