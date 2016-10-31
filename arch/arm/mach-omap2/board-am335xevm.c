@@ -846,7 +846,7 @@ static struct pinmux_config asclepius_gpio_mux[] = {
 	{"gpmc_a9.gpio1_25", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
 	{"gpmc_a10.gpio1_26", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
 	{"gpmc_a11.gpio1_27", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
-	{"gpmc_a12.gpio1_28", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
+	{"gpmc_ben1.gpio1_28", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
 	{"mcasp0_aclkr.gpio3_18", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
 	{"mcasp0_fsr.gpio3_19", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
 	{"gpmc_clk.gpio2_1", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
@@ -855,11 +855,10 @@ static struct pinmux_config asclepius_gpio_mux[] = {
 };
 
 static struct pinmux_config ssd2828_gpio_mux[] = {
-	{"gpmc_a0.gpio1_16", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{"gpmc_a3.gpio1_19", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{"uart1_ctsn.gpio0_12", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT}, /* CS0 */
-	{"mcasp0_axr0.gpio3_16", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT}, /* D1 */
-	{"mcasp0_fsx.gpio3_15", OMAP_MUX_MODE7 | AM33XX_PULL_ENBL |
+	{"mcasp0_fsx.gpio3_15", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT}, /* D1 */
+	{"mcasp0_axr0.gpio3_16", OMAP_MUX_MODE7 | AM33XX_PULL_ENBL |
 		AM33XX_INPUT_EN}, /* D0 */
 	{"mcasp0_aclkx.gpio3_14", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT}, /* SCLK */
 	{NULL, 0},
@@ -1758,6 +1757,7 @@ static struct i2c_board_info am335x_i2c1_boardinfo[] = {
 static void i2c1_init(int evm_id, int profile)
 {
 	setup_pin_mux(i2c1_pin_mux);
+	setup_pin_mux(cap_touch_pin_mux);
 	omap_register_i2c_bus(2, 400, am335x_i2c1_boardinfo,
 			ARRAY_SIZE(am335x_i2c1_boardinfo));
 	return;
@@ -1774,7 +1774,6 @@ static struct i2c_board_info am335x_i2c2_boardinfo[] = {
 static void i2c2_init(int evm_id, int profile)
 {
 	setup_pin_mux(i2c2_pin_mux);
-	setup_pin_mux(cap_touch_pin_mux);
 	omap_register_i2c_bus(3, 400, am335x_i2c2_boardinfo,
 			ARRAY_SIZE(am335x_i2c2_boardinfo));
 	return;
