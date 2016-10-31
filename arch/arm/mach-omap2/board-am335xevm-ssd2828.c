@@ -206,9 +206,12 @@ unsigned short get_lcd_driver_id(void)
 	unsigned short reg_mipi_buffer[2] = {0,0};
 	unsigned long i = 0, loop_en = 1;
 	unsigned short r_data;
+	
+	unsigned int retry_count = 30;
+
 	SPI_2825_WrReg(0xbc, 0x0002);
 	SPI_2825_WrReg(0xBF, 0x0028);
-	while(loop_en)
+	while(loop_en && retry_count>0)
 	{
 		SPI_2825_WrReg(0xbc, 0x0002);
 		SPI_2825_WrReg(0xBF, 0x00B0);
@@ -230,6 +233,9 @@ unsigned short get_lcd_driver_id(void)
 				loop_en = 0;
 			}
 		}
+
+		retry_count--;
+		msleep(100);
 	}
 	return ((reg_mipi_buffer[0] << 8) | reg_mipi_buffer[1]);
 }
@@ -239,10 +245,13 @@ unsigned short get_lcd_driver_id_new(unsigned short driver_id)
 	unsigned short reg_mipi_buffer[2] = {0,0};
     	unsigned long i = 0, loop_en = 1, ret;
 	unsigned short r_data;
+
+	unsigned int retry_count = 30;
+
 	SPI_2825_WrReg(0xc0, 0x0001);
 	SPI_2825_WrReg(0xbc, 0x0002);
 	SPI_2825_WrReg(0xBF, 0x0028);
-	while(loop_en)
+	while(loop_en && retry_count>0)
 	{
 		switch(driver_id)
 		{
@@ -282,6 +291,9 @@ unsigned short get_lcd_driver_id_new(unsigned short driver_id)
 					loop_en = 0;
 				}
 		}
+
+		retry_count--;
+		msleep(100);
     	}
 	ret = (((reg_mipi_buffer[0] & 0xff) << 8) +
 		(reg_mipi_buffer[1] & 0xff));
@@ -1229,7 +1241,13 @@ static void init_lcm_registers(void)
 		lcd_driver_id = get_lcd_driver_id_new(0x8394);
 		LCM_DEBUG("[LCM Driver ID = 0x%04X]\n", lcd_driver_id);
 		if(lcd_driver_id == 0x8394)
-		init_HY_CCG6169();
+		{
+			init_HY_CCG6169();
+		}
+		else
+		{
+			LCM_DEBUG("No valid LCD ID detected!\n");
+		}
 	}
 }
 
