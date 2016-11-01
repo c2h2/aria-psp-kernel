@@ -602,7 +602,7 @@ static struct pinmux_config mii1_pin_mux[] = {
 
 /* Module pin mux for mii1 */
 static struct pinmux_config aria_mii1_pin_mux[] = {
-	//{"mii1_rxerr.mii1_rxerr", OMAP_MUX_MODE0 | AM33XX_PIN_INPUT_PULLDOWN},
+	{"mii1_rxerr.mii1_rxerr", OMAP_MUX_MODE0 | AM33XX_PIN_INPUT_PULLDOWN},
 	{"mii1_txen.mii1_txen", OMAP_MUX_MODE0 | AM33XX_PIN_OUTPUT},
 	{"mii1_rxdv.mii1_rxdv", OMAP_MUX_MODE0 | AM33XX_PIN_INPUT_PULLDOWN},
 	{"mii1_txd3.mii1_txd3", OMAP_MUX_MODE0 | AM33XX_PIN_OUTPUT},
@@ -617,7 +617,7 @@ static struct pinmux_config aria_mii1_pin_mux[] = {
 	{"mii1_rxd0.mii1_rxd0", OMAP_MUX_MODE0 | AM33XX_PIN_INPUT_PULLDOWN},
 	{"mdio_data.mdio_data", OMAP_MUX_MODE0 | AM33XX_PIN_INPUT_PULLUP},
 	{"mdio_clk.mdio_clk", OMAP_MUX_MODE0 | AM33XX_PIN_OUTPUT_PULLUP},
-        {"ecap0_in_pwm0_out.gpio0_7", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT_PULLUP},
+        {"emu0.gpio3_7", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT_PULLUP},
 	{NULL, 0},
 };
 
@@ -655,7 +655,7 @@ static struct pinmux_config i2c2_pin_mux[] = {
 /* Module pin mux for mcasp1 */
 static struct pinmux_config mcasp1_pin_mux[] = {
 	{"mii1_crs.mcasp1_aclkx", OMAP_MUX_MODE4 | AM33XX_PIN_INPUT_PULLDOWN},
-	{"mii1_rxerr.mcasp1_fsx", OMAP_MUX_MODE4 | AM33XX_PIN_INPUT_PULLDOWN},
+	{"mcasp0_fsr.mcasp1_fsx", OMAP_MUX_MODE3 | AM33XX_PIN_INPUT_PULLDOWN},
 	{"mii1_col.mcasp1_axr2", OMAP_MUX_MODE4 | AM33XX_PIN_INPUT_PULLDOWN},
 	{"rmii1_refclk.mcasp1_axr3", OMAP_MUX_MODE4 |
 						AM33XX_PIN_INPUT_PULLDOWN},
@@ -2623,17 +2623,17 @@ static void setup_beagleboneblack(void)
 }
 
 static void setup_aria(void){
-    pr_info("The board is an Aria.\n");
+	pr_info("The board is an Aria.\n");
 
-    /* Aria has Micro-SD slot which doesn't have Write Protect pin */
-    am335x_mmc[1].gpio_wp = -EINVAL;
+	/* Aria has Micro-SD slot which doesn't have Write Protect pin */
+	am335x_mmc[1].gpio_wp = -EINVAL;
 
-    _configure_device(ARIA_BOARD, aria_cfg, PROFILE_NONE);
+	_configure_device(ARIA_BOARD, aria_cfg, PROFILE_NONE);
 
 	/* TPS65217 regulator has full constraints */
 	//regulator_has_full_constraints();  //this may cause net or audio fail, plz invstigate.
 
-    am33xx_cpsw_init(AM33XX_CPSW_MODE_MII, NULL, NULL);
+	am33xx_cpsw_init(AM33XX_CPSW_MODE_MII, NULL, NULL);
 }
 
 
