@@ -2851,7 +2851,7 @@ static void am335x_setup_daughter_board(struct memory_accessor *m, void *c)
 
 static void am335x_evm_setup(struct memory_accessor *mem_acc, void *context)
 {
-	setup_aria();
+	//setup_aria();
 	return;
 	//am335x_opp_update();
 }
@@ -2948,6 +2948,10 @@ static struct tps65910_board am335x_tps65910_info = {
 static struct i2c_board_info __initdata am335x_i2c0_boardinfo[] = {
 	{
 		I2C_BOARD_INFO("tlv320aic3x", 0x1b),
+	},
+	{
+		I2C_BOARD_INFO("24c02", 0x50),
+		.platform_data = &am335x_baseboard_eeprom_info,
 	},
 };
 
