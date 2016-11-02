@@ -67,11 +67,12 @@ static int smsc_phy_config_init(struct phy_device *phydev)
 		return rc;
 
 	/* Enable energy detect mode for this SMSC Transceivers */
+#if 0
 	rc = phy_write(phydev, MII_LAN83C185_CTRL_STATUS,
 		       rc | MII_LAN83C185_EDPWRDOWN);
 	if (rc < 0)
 		return rc;
-
+#endif
 	return smsc_phy_ack_interrupt (phydev);
 }
 
