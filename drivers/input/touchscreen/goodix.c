@@ -518,7 +518,7 @@ static int goodix_get_gpio_config(struct goodix_ts_data *ts)
 	error = gpio_request(gpiod, "Goodix");
 	if (error < 0)
 	{
-		dev_dbg(dev, "Failed to get %d GPIO: %d\n",
+		dev_err(dev, "Failed to get %d GPIO: %d\n",
 			gpiod, error);
 	}
 	gpio_direction_input(gpiod);
@@ -530,7 +530,7 @@ static int goodix_get_gpio_config(struct goodix_ts_data *ts)
 	error = gpio_request(gpiod, "Goodix");
 	if (error < 0)
 	{
-		dev_dbg(dev, "Failed to get %d GPIO: %d\n",
+		dev_err(dev, "Failed to get %d GPIO: %d\n",
 			gpiod, error);
 	}
 	gpio_direction_input(gpiod);
@@ -657,6 +657,8 @@ static int goodix_i2c_test(struct i2c_client *client)
 static int goodix_request_input_dev(struct goodix_ts_data *ts)
 {
 	int error;
+
+	printk("Request Goodix input dev...\n");
 
 	ts->input_dev = input_allocate_device();
 	if (!ts->input_dev) {
@@ -812,6 +814,8 @@ static int goodix_ts_probe(struct i2c_client *client,
 	struct goodix_ts_data *ts;
 	int error;
 
+	printk("Initialize Goodix touchscreen...\n");
+
 	dev_dbg(&client->dev, "I2C Address: 0x%02x\n", client->addr);
 
 	if (!i2c_check_functionality(client->adapter, I2C_FUNC_I2C)) {
@@ -857,6 +861,7 @@ static int goodix_ts_probe(struct i2c_client *client,
 
 	ts->cfg_len = goodix_get_cfg_len(ts->id);
 
+#if 0
 	if (ts->gpiod_int && ts->gpiod_rst) {
 		/* update device config */
 		ts->cfg_name = kasprintf(GFP_KERNEL,
@@ -880,6 +885,12 @@ static int goodix_ts_probe(struct i2c_client *client,
 		if (error)
 			return error;
 	}
+#endif
+
+	error = goodix_configure_dev(ts);
+	if (error)
+		return error;
+
 	
 	schedule_delayed_work(&ts->work, round_jiffies_relative(
 		msecs_to_jiffies(GOODIX_RESET_TIME_POLL)));
