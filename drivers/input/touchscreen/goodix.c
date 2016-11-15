@@ -857,6 +857,7 @@ static int goodix_ts_probe(struct i2c_client *client,
 
 	ts->cfg_len = goodix_get_cfg_len(ts->id);
 
+#if 0
 	if (ts->gpiod_int && ts->gpiod_rst) {
 		/* update device config */
 		ts->cfg_name = kasprintf(GFP_KERNEL,
@@ -880,6 +881,10 @@ static int goodix_ts_probe(struct i2c_client *client,
 		if (error)
 			return error;
 	}
+#endif
+	error = goodix_configure_dev(ts);
+	if (error)
+		return error;
 	
 	schedule_delayed_work(&ts->work, round_jiffies_relative(
 		msecs_to_jiffies(GOODIX_RESET_TIME_POLL)));
