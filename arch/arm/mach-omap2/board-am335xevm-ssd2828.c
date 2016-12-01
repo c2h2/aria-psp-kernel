@@ -1,3 +1,10 @@
+/*
+Version:		1.71
+Description:	Add VCOM configuration, page0, setup 0xb1 from default 0x80 to 0x24
+
+Version:		1.7
+Description:	Add page 3 configuration.
+*/
 #include <linux/gpio.h>
 #include <linux/string.h>
 #include <linux/delay.h>
@@ -329,38 +336,23 @@ void init_hir080(void)
 
 	mdelay(50);
 
-	SPI_2825_WrReg(0xbc, 0x0002);
-	Write_com(0xBF); 
-	Write_register(((unsigned short)(BIT6 | BIT0 | BIT1 | BIT0 | BIT0)
-		<< 8) | 0xB2);
+	SPI_2825_WrReg(0xbc, 0x0002); Write_com(0xBF); Write_register(0x00B0);     //page0
+	SPI_2825_WrReg(0xbc, 0x0002); Write_com(0xBF); Write_register(0x24B1);		//Vcom
+	SPI_2825_WrReg(0xbc, 0x0002);	Write_com(0xBF);	Write_register(((unsigned short)(BIT6 | BIT0 | BIT1 | BIT0 | BIT0) << 8) | 0xB2);
 
-	SPI_2825_WrReg(0xbc, 0x0002);
-	Write_com(0xBF);
-	Write_register(0x38B3);
+	SPI_2825_WrReg(0xbc, 0x0002);	Write_com(0xBF);	Write_register(0x38B3);
 
-	SPI_2825_WrReg(0xbc, 0x0002);
-	Write_com(0xBF);
-	Write_register(0x73B7);
+	SPI_2825_WrReg(0xbc, 0x0002);	Write_com(0xBF);	Write_register(0x73B7);
 
-	SPI_2825_WrReg(0xbc, 0x0002);
-	Write_com(0xBF);
-	Write_register(0xABBA);
+	SPI_2825_WrReg(0xbc, 0x0002);	Write_com(0xBF);	Write_register(0xABBA);
 	
-	SPI_2825_WrReg(0xbc, 0x0002);
-	Write_com(0xBF);
-	Write_register(0xE8BB);
+	SPI_2825_WrReg(0xbc, 0x0002);	Write_com(0xBF);	Write_register(0xE8BB);
 	
-	SPI_2825_WrReg(0xbc, 0x0002);
-	Write_com(0xBF);
-	Write_register(0xFFBD);
+	SPI_2825_WrReg(0xbc, 0x0002);	Write_com(0xBF);	Write_register(0xFFBD);
 	
-	SPI_2825_WrReg(0xbc, 0x0002);
-	Write_com(0xBF);
-	Write_register(0x3FBE);
+	SPI_2825_WrReg(0xbc, 0x0002);	Write_com(0xBF);	Write_register(0x3FBE);
 	
-	SPI_2825_WrReg(0xbc, 0x0002);
-	Write_com(0xBF);
-	Write_register(0x50C3);
+	SPI_2825_WrReg(0xbc, 0x0002);	Write_com(0xBF);	Write_register(0x50C3);
 	
 	SPI_2825_WrReg(0xbc, 0x0002);
 	Write_com(0xBF);
@@ -665,6 +657,7 @@ void init_hir080(void)
 	Write_com(0xBF);
 	Write_register(0x03B0);
 	
+	/* \B4˲\BF\B7\D6\C9\E8\D6\C3\D3в\D0Ӱ\CE\CA\CC\E2
 	SPI_2825_WrReg(0xbc, 0x0002);
 	Write_com(0xBF);
 	Write_register(0x0BC4);
@@ -688,6 +681,23 @@ void init_hir080(void)
 	SPI_2825_WrReg(0xbc, 0x0002);
 	Write_com(0xBF);
 	Write_register(0x00CC);
+	*/
+	//\D2\D4\CF\C2\C9\E8\D6ý\E2\BE\F6\B2\D0Ӱ\CE\CA\CC\E2
+	//\BD\E2\BE\F6\B2\D0Ӱ\BCĴ\E6\C6\F7\D7\E9\D0\C2ֵ, V1.7\B8Ķ\AF\B5\E3
+	SPI_2825_WrReg(0xbc, 0x0002); Write_com(0xBF); Write_register(0x10B6);
+	SPI_2825_WrReg(0xbc, 0x0002); Write_com(0xBF); Write_register(0x00B7);
+	SPI_2825_WrReg(0xbc, 0x0002); Write_com(0xBF); Write_register(0x21BA);
+	SPI_2825_WrReg(0xbc, 0x0002); Write_com(0xBF); Write_register(0x21BE);
+	SPI_2825_WrReg(0xbc, 0x0002); Write_com(0xBF); Write_register(0x03C3);
+	SPI_2825_WrReg(0xbc, 0x0002); Write_com(0xBF); Write_register(0x0AC4);
+	SPI_2825_WrReg(0xbc, 0x0002); Write_com(0xBF); Write_register(0x03C5);
+	SPI_2825_WrReg(0xbc, 0x0002); Write_com(0xBF); Write_register(0x06C6);
+	SPI_2825_WrReg(0xbc, 0x0002); Write_com(0xBF); Write_register(0x01C7);
+	SPI_2825_WrReg(0xbc, 0x0002); Write_com(0xBF); Write_register(0x3CCA);
+	SPI_2825_WrReg(0xbc, 0x0002); Write_com(0xBF); Write_register(0x04CB);
+	SPI_2825_WrReg(0xbc, 0x0002); Write_com(0xBF); Write_register(0x10B6);
+	SPI_2825_WrReg(0xbc, 0x0002); Write_com(0xBF); Write_register(0x05CC);
+	//end
 
 	MDELAY(10);
 
