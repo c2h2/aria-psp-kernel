@@ -13,6 +13,6 @@ echo "Converting $1 PNG file to $TGT"
 #cp logo_linux_clut224.ppm drivers/video/logo
 
 #require imagemagick
-convert $1 -resize 800x1200\! -colors 224 -compress none $TGT
+convert $1 -resize 800x1280\! -colors 224 -compress none $TGT
 exit 0
 
