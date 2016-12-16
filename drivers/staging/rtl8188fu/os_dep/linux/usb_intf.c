@@ -840,7 +840,7 @@ int rtw_hw_suspend(_adapter *padapter )
 			_clr_fwstate_(pmlmepriv, _FW_LINKED);
 			rtw_led_control(padapter, LED_CTL_NO_LINK);
 
-			rtw_os_indicate_disconnect(padapter);
+			rtw_os_indicate_disconnect(padapter, 0, _FALSE);
 
 			#ifdef CONFIG_LPS
 			//donnot enqueue cmd
@@ -1378,8 +1378,6 @@ static void rtw_usb_if1_deinit(_adapter *if1)
 	#endif
 #endif
 
-	rtw_cancel_all_timer(if1);
-
 #ifdef CONFIG_WOWLAN
 	pwrctl->wowlan_mode=_FALSE;
 #endif //CONFIG_WOWLAN
@@ -1556,6 +1554,9 @@ _func_enter_;
 		LeaveAllPowerSaveMode(padapter);
 	}
 	rtw_set_drv_stopped(padapter);	/*for stop thread*/
+
+	/* stop cmd thread */
+	rtw_stop_cmd_thread(padapter);
 #ifdef CONFIG_CONCURRENT_MODE
 #ifdef CONFIG_MULTI_VIR_IFACES
 	rtw_drv_stop_vir_ifaces(dvobj);

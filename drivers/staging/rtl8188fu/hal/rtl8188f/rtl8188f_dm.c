@@ -239,7 +239,6 @@ static void Init_ODM_ComInfo_8188f(PADAPTER	Adapter)
 	Init_ODM_ComInfo(Adapter);
 
 	ODM_CmnInfoInit(pDM_Odm, ODM_CMNINFO_PACKAGE_TYPE, pHalData->PackageType);
-	ODM_CmnInfoInit(pDM_Odm, ODM_CMNINFO_IC_TYPE, ODM_RTL8188F);
 
 	fab_ver = ODM_TSMC;
 	cut_ver = GET_CVID_CUT_VERSION(pHalData->VersionID);
@@ -254,8 +253,6 @@ static void Init_ODM_ComInfo_8188f(PADAPTER	Adapter)
 	SupportAbility =	ODM_RF_CALIBRATION		|
 						ODM_RF_TX_PWR_TRACK	/*| */
 						;
-	/*if(pHalData->AntDivCfg) */
-	/*	pdmpriv->InitODMFlag |= ODM_BB_ANT_DIV; */
 #endif
 
 	ODM_CmnInfoUpdate(pDM_Odm, ODM_CMNINFO_ABILITY, SupportAbility);
@@ -273,8 +270,8 @@ static void Update_ODM_ComInfo_8188f(PADAPTER	Adapter)
 					 | ODM_BB_DYNAMIC_TXPWR
 					 | ODM_BB_FA_CNT
 					 | ODM_BB_RSSI_MONITOR
-					 /*| ODM_BB_CCK_PD
-					 | ODM_BB_PWR_SAVE */
+					 | ODM_BB_CCK_PD
+					 /* | ODM_BB_PWR_SAVE */
 					 | ODM_BB_CFO_TRACKING
 					 | ODM_MAC_EDCA_TURBO
 					 | ODM_RF_TX_PWR_TRACK
@@ -327,8 +324,7 @@ rtl8188f_InitHalDm(
 
 	Update_ODM_ComInfo_8188f(Adapter);
 
-	if (Adapter->registrypriv.mp_mode == 0)
-		ODM_DMInit(pDM_Odm);
+	ODM_DMInit(pDM_Odm);
 
 }
 

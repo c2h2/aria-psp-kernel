@@ -830,7 +830,7 @@ inline void _rtw_memmove(void *dst, const void *src, u32 sz)
 #endif
 }
 
-int	_rtw_memcmp(void *dst, void *src, u32 sz)
+int	_rtw_memcmp(void *dst, const void *src, u32 sz)
 {
 
 #if defined (PLATFORM_LINUX)|| defined (PLATFORM_FREEBSD)
@@ -1901,12 +1901,20 @@ static int closeFile(struct file *fp)
 static int readFile(struct file *fp,char *buf,int len) 
 { 
 	int rlen=0, sum=0;
-	
-	if (!fp->f_op || !fp->f_op->read) 
+
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 1, 0))
+	if (!(fp->f_mode & FMODE_CAN_READ))
+#else
+	if (!fp->f_op || !fp->f_op->read)
+#endif
 		return -EPERM;
 
 	while(sum<len) {
-		rlen=fp->f_op->read(fp,buf+sum,len-sum, &fp->f_pos);
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 1, 0))
+		rlen = __vfs_read(fp, buf+sum, len-sum, &fp->f_pos);
+#else
+		rlen = fp->f_op->read(fp, buf+sum, len-sum, &fp->f_pos);
+#endif
 		if(rlen>0)
 			sum+=rlen;
 		else if(0 != rlen)
@@ -2484,5 +2492,43 @@ struct rtw_cbuf *rtw_cbuf_alloc(u32 size)
 void rtw_cbuf_free(struct rtw_cbuf *cbuf)
 {
 	rtw_mfree((u8*)cbuf, sizeof(*cbuf) + sizeof(void*)*cbuf->size);
+}
+
+/**
+* IsHexDigit -
+*
+* Return	TRUE if chTmp is represent for hex digit
+*		FALSE otherwise.
+*/
+inline BOOLEAN IsHexDigit(char chTmp)
+{
+	if ((chTmp >= '0' && chTmp <= '9') ||
+		(chTmp >= 'a' && chTmp <= 'f') ||
+		(chTmp >= 'A' && chTmp <= 'F'))
+		return _TRUE;
+	else
+		return _FALSE;
+}
+
+/**
+* is_alpha -
+*
+* Return	TRUE if chTmp is represent for alphabet
+*		FALSE otherwise.
+*/
+inline BOOLEAN is_alpha(char chTmp)
+{
+	if ((chTmp >= 'a' && chTmp <= 'z') ||
+		(chTmp >= 'A' && chTmp <= 'Z'))
+		return _TRUE;
+	else
+		return _FALSE;
+}
+
+inline char alpha_to_upper(char c)
+{
+	if ((c >= 'a' && c <= 'z'))
+		c = 'A' + (c - 'a');
+	return c;
 }
 

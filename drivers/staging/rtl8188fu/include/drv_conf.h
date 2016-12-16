@@ -173,6 +173,17 @@
 	#define CONFIG_IEEE80211_BAND_5GHZ
 #endif
 
+#ifndef RTW_DEF_MODULE_REGULATORY_CERT
+	#define RTW_DEF_MODULE_REGULATORY_CERT 0
+#endif
+
+#if RTW_DEF_MODULE_REGULATORY_CERT
+	/* force enable TX power by rate and TX power limit */
+	#ifndef CONFIG_CALIBRATE_TX_POWER_BY_REGULATORY
+		#define CONFIG_CALIBRATE_TX_POWER_BY_REGULATORY
+	#endif
+#endif
+
 /*
 	Mark CONFIG_DEAUTH_BEFORE_CONNECT by Arvin 2015/07/20
 	If the failure of Wi-Fi connection is due to some irregular disconnection behavior (like unplug dongle,

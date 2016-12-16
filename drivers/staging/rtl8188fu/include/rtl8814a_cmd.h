@@ -34,6 +34,7 @@
 #define SET_8814A_H2CCMD_PWRMODE_PARM_SMART_PS(__pH2CCmd, __Value)		SET_BITS_TO_LE_1BYTE((__pH2CCmd)+1, 4, 4, __Value)
 #define SET_8814A_H2CCMD_PWRMODE_PARM_BCN_PASS_TIME(__pH2CCmd, __Value)	SET_BITS_TO_LE_1BYTE((__pH2CCmd)+2, 0, 8, __Value)
 #define SET_8814A_H2CCMD_PWRMODE_PARM_ALL_QUEUE_UAPSD(__pH2CCmd, __Value)	SET_BITS_TO_LE_1BYTE((__pH2CCmd)+3, 0, 8, __Value)
+#define SET_8814A_H2CCMD_PWRMODE_PARM_BCN_EARLY_C2H_RPT(__pH2CCmd, __Value)	SET_BITS_TO_LE_1BYTE((__pH2CCmd)+3, 2, 1, __Value)
 #define SET_8814A_H2CCMD_PWRMODE_PARM_PWR_STATE(__pH2CCmd, __Value)	SET_BITS_TO_LE_1BYTE((__pH2CCmd)+4, 0, 8, __Value)
 #define SET_8814A_H2CCMD_PWRMODE_PARM_BYTE5(__pH2CCmd, __Value)	SET_BITS_TO_LE_1BYTE((__pH2CCmd)+5, 0, 8, __Value)
 
@@ -123,6 +124,12 @@ void rtl8814_set_FwJoinBssReport_cmd(PADAPTER padapter, u8 mstatus);
 void rtl8814_set_FwPwrMode_cmd(PADAPTER padapter, u8 PSMode);
 u8 GetTxBufferRsvdPageNum8814(_adapter *padapter, bool wowlan);
 u8 rtl8814_set_rssi_cmd(_adapter*padapter, u8 *param);
+
+#ifdef CONFIG_TDLS
+#ifdef CONFIG_TDLS_CH_SW
+void rtl8814_set_BcnEarly_C2H_Rpt_cmd(PADAPTER padapter, u8 enable);
+#endif
+#endif
 
 void
 Set_RA_LDPC_8814(

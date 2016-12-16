@@ -227,10 +227,6 @@ _func_enter_;
 	if (obj == NULL)
 		goto exit;
 
-	if(obj->cmdsz > MAX_CMDSZ ){
-		DBG_871X("%s failed due to obj->cmdsz(%d) > MAX_CMDSZ(%d) \n",__FUNCTION__, obj->cmdsz,MAX_CMDSZ);
-		goto exit;
-	}
 	//_enter_critical_bh(&queue->lock, &irqL);
 	_enter_critical(&queue->lock, &irqL);	
 
@@ -459,7 +455,19 @@ _func_enter_;
 		pcmdpriv = &(padapter->pbuddy_adapter->cmdpriv);
 #endif	
 
-	if( _FAIL == (res=rtw_cmd_filter(pcmdpriv, cmd_obj)) ) {
+	res = rtw_cmd_filter(pcmdpriv, cmd_obj);
+	if ((_FAIL == res) || (cmd_obj->cmdsz > MAX_CMDSZ)) {
+		if (cmd_obj->cmdsz > MAX_CMDSZ) {
+			DBG_871X("%s failed due to obj->cmdsz(%d) > MAX_CMDSZ(%d)\n", __func__, cmd_obj->cmdsz, MAX_CMDSZ);
+			rtw_warn_on(1);
+		}
+
+		if (cmd_obj->cmdcode == GEN_CMD_CODE(_Set_Drv_Extra)) {
+			struct drvextra_cmd_parm *extra_parm = (struct drvextra_cmd_parm *)cmd_obj->parmbuf;
+
+			if (extra_parm->pbuf && extra_parm->size > 0)
+				rtw_mfree(extra_parm->pbuf, extra_parm->size);
+		}
 		rtw_free_cmd_obj(cmd_obj);
 		goto exit;
 	}
@@ -722,6 +730,9 @@ post_process:
 	rtw_unregister_cmd_alive(padapter);
 #endif
 
+	/* to avoid enqueue cmd after free all cmd_obj  */
+	ATOMIC_SET(&(pcmdpriv->cmdthd_running), _FALSE);
+
 	/* free all cmd_obj resources */
 	do {
 		pcmd = rtw_dequeue_cmd(pcmdpriv);
@@ -742,7 +753,6 @@ post_process:
 	} while (1);
 
 	_rtw_up_sema(&pcmdpriv->terminate_cmdthread_sema);
-	ATOMIC_SET(&(pcmdpriv->cmdthd_running), _FALSE);
 
 _func_exit_;
 
@@ -1546,7 +1556,11 @@ _func_enter_;
 
 #ifdef CONFIG_80211AC_VHT
 	pvhtpriv->vht_option = _FALSE;
-	if (phtpriv->ht_option && pregistrypriv->vht_enable) {
+	if (phtpriv->ht_option
+		&& REGSTY_IS_11AC_ENABLE(pregistrypriv)
+		&& hal_chk_proto_cap(padapter, PROTO_CAP_11AC)
+		&& (!pmlmepriv->country_ent || COUNTRY_CHPLAN_EN_11AC(pmlmepriv->country_ent))
+	) {
 		rtw_restructure_vht_ie(padapter, &pnetwork->network.IEs[0], &psecnetwork->IEs[0], 
 								pnetwork->network.IELength, &psecnetwork->IELength);
 	}
@@ -1982,6 +1996,46 @@ _func_exit_;
 
 	return res;
 }
+
+u8 rtw_addbarsp_cmd(_adapter *padapter, u8 *addr, u16 tid, u8 status, u8 size, u16 start_seq)
+{
+	struct cmd_priv *pcmdpriv = &padapter->cmdpriv;
+	struct cmd_obj *ph2c;
+	struct addBaRsp_parm *paddBaRsp_parm;
+	u8 res = _SUCCESS;
+
+_func_enter_;
+
+	ph2c = (struct cmd_obj *)rtw_zmalloc(sizeof(struct cmd_obj));
+	if (ph2c == NULL) {
+		res = _FAIL;
+		goto exit;
+	}
+
+	paddBaRsp_parm = (struct addBaRsp_parm *)rtw_zmalloc(sizeof(struct addBaRsp_parm));
+
+	if (paddBaRsp_parm == NULL) {
+		rtw_mfree((unsigned char *)ph2c, sizeof(struct cmd_obj));
+		res = _FAIL;
+		goto exit;
+	}
+
+	_rtw_memcpy(paddBaRsp_parm->addr, addr, ETH_ALEN);
+	paddBaRsp_parm->tid = tid;
+	paddBaRsp_parm->status = status;
+	paddBaRsp_parm->size = size;
+	paddBaRsp_parm->start_seq = start_seq;
+
+	init_h2fwcmd_w_parm_no_rsp(ph2c, paddBaRsp_parm, GEN_CMD_CODE(_AddBARsp));
+
+	res = rtw_enqueue_cmd(pcmdpriv, ph2c);
+
+exit:
+
+_func_exit_;
+
+	return res;
+}
 //add for CONFIG_IEEE80211W, none 11w can use it
 u8 rtw_reset_securitypriv_cmd(_adapter*padapter)
 {
@@ -2168,7 +2222,7 @@ _func_exit_;
 	return res;
 }
 
-u8 rtw_set_chplan_cmd(_adapter *adapter, int flags, u8 chplan, u8 swconfig)
+u8 _rtw_set_chplan_cmd(_adapter *adapter, int flags, u8 chplan, const struct country_chplan *country_ent, u8 swconfig)
 {
 	struct cmd_obj *cmdobj;
 	struct	SetChannelPlan_param *parm;
@@ -2185,13 +2239,12 @@ _func_enter_;
 		goto exit;
 	}
 
+	/* if country_entry is provided, replace chplan */
+	if (country_ent)
+		chplan = country_ent->chplan;
+
 	/* check input parameter */
 	if (!rtw_is_channel_plan_valid(chplan)) {
-		res = _FAIL;
-		goto exit;
-	}
-
-	if (rtw_chplan_is_empty(chplan) == _TRUE) {
 		res = _FAIL;
 		goto exit;
 	}
@@ -2202,6 +2255,7 @@ _func_enter_;
 		res = _FAIL;
 		goto exit;
 	}
+	parm->country_ent = country_ent;
 	parm->channel_plan = chplan;
 
 	if (flags & RTW_CMDF_DIRECTLY) {
@@ -2241,6 +2295,34 @@ exit:
 _func_exit_;	
 
 	return res;
+}
+
+inline u8 rtw_set_chplan_cmd(_adapter *adapter, int flags, u8 chplan, u8 swconfig)
+{
+	return _rtw_set_chplan_cmd(adapter, flags, chplan, NULL, swconfig);
+}
+
+inline u8 rtw_set_country_cmd(_adapter *adapter, int flags, const char *country_code, u8 swconfig)
+{
+	const struct country_chplan *ent;
+
+	if (is_alpha(country_code[0]) == _FALSE
+		|| is_alpha(country_code[1]) == _FALSE
+	) {
+		DBG_871X_LEVEL(_drv_always_, "%s input country_code is not alpha2\n", __func__);
+		return _FAIL;
+	}
+
+	ent = rtw_get_chplan_from_country(country_code);
+
+	if (ent == NULL) {
+		DBG_871X_LEVEL(_drv_always_, "%s unsupported country_code:\"%c%c\"\n", __func__, country_code[0], country_code[1]);
+		return _FAIL;
+	}
+
+	DBG_871X_LEVEL(_drv_always_, "%s country_code:\"%c%c\" mapping to chplan:0x%02x\n", __func__, country_code[0], country_code[1], ent->chplan);
+
+	return _rtw_set_chplan_cmd(adapter, flags, RTW_CHPLAN_MAX, ent, swconfig);
 }
 
 u8 rtw_led_blink_cmd(_adapter*padapter, PVOID pLed)
@@ -2318,7 +2400,7 @@ _func_exit_;
 	return res;
 }
 
-u8 rtw_tdls_cmd(_adapter *padapter, u8 *addr, u8 option)
+u8 rtw_tdls_cmd(_adapter *padapter, const u8 *addr, u8 option)
 {
 	struct	cmd_obj*	pcmdobj;
 	struct	TDLSoption_param	*TDLSoption;
@@ -3049,7 +3131,7 @@ _func_exit_;
 #ifdef CONFIG_ANTENNA_DIVERSITY
 void antenna_select_wk_hdl(_adapter *padapter, u8 antenna)
 {
-	rtw_hal_set_hwreg(padapter, HW_VAR_ANTENNA_DIVERSITY_SELECT, (u8 *)(&antenna));
+	rtw_hal_set_odm_var(padapter, HAL_ODM_ANTDIV_SELECT, &antenna, _TRUE);
 }
 
 u8 rtw_antenna_select_cmd(_adapter*padapter, u8 antenna,u8 enqueue)
@@ -3057,12 +3139,20 @@ u8 rtw_antenna_select_cmd(_adapter*padapter, u8 antenna,u8 enqueue)
 	struct cmd_obj		*ph2c;
 	struct drvextra_cmd_parm	*pdrvextra_cmd_parm;	
 	struct cmd_priv	*pcmdpriv = &padapter->cmdpriv;
+	struct dvobj_priv *dvobj = adapter_to_dvobj(padapter);
 	u8 	bSupportAntDiv = _FALSE;
 	u8	res = _SUCCESS;
+	int	i;
 
 _func_enter_;
 	rtw_hal_get_def_var(padapter, HAL_DEF_IS_SUPPORT_ANT_DIV, &(bSupportAntDiv));
-	if(_FALSE == bSupportAntDiv )	return res;
+	if (_FALSE == bSupportAntDiv)
+		return _FAIL;
+
+	for (i = 0; i < dvobj->iface_nums; i++) {
+		if (rtw_linked_check(dvobj->padapters[i]))
+			return _FAIL;
+	}
 
 	if(_TRUE == enqueue)
 	{
@@ -3753,6 +3843,7 @@ u8 rtw_c2h_packet_wk_cmd(PADAPTER padapter, u8 *pbuf, u16 length)
 	struct cmd_obj *ph2c;
 	struct drvextra_cmd_parm *pdrvextra_cmd_parm;
 	struct cmd_priv *pcmdpriv = &padapter->cmdpriv;
+	u8	*extra_cmd_buf;
 	u8	res = _SUCCESS;
 
 	ph2c = (struct cmd_obj*)rtw_zmalloc(sizeof(struct cmd_obj));
@@ -3768,14 +3859,166 @@ u8 rtw_c2h_packet_wk_cmd(PADAPTER padapter, u8 *pbuf, u16 length)
 		goto exit;
 	}
 
+	extra_cmd_buf = rtw_zmalloc(length);
+	if (extra_cmd_buf == NULL) {
+		rtw_mfree((u8 *)ph2c, sizeof(struct cmd_obj));
+		rtw_mfree((u8 *)pdrvextra_cmd_parm, sizeof(struct drvextra_cmd_parm));
+		res = _FAIL;
+		goto exit;
+	}
+
+	_rtw_memcpy(extra_cmd_buf, pbuf, length);
 	pdrvextra_cmd_parm->ec_id = C2H_WK_CID;
 	pdrvextra_cmd_parm->type = 0;
 	pdrvextra_cmd_parm->size = length;
-	pdrvextra_cmd_parm->pbuf = pbuf;
+	pdrvextra_cmd_parm->pbuf = extra_cmd_buf;
 
 	init_h2fwcmd_w_parm_no_rsp(ph2c, pdrvextra_cmd_parm, GEN_CMD_CODE(_Set_Drv_Extra));
 
 	res = rtw_enqueue_cmd(pcmdpriv, ph2c);
+
+exit:
+	return res;
+}
+
+static s32 rtw_mp_cmd_hdl(_adapter *padapter, u8 mp_cmd_id)
+{
+	HAL_DATA_TYPE	*pHalData = GET_HAL_DATA(padapter);
+	int ret = H2C_SUCCESS;
+	u8 rfreg0;
+
+	if (mp_cmd_id == MP_START) {
+		if (padapter->registrypriv.mp_mode == 0) {
+			rtw_hal_deinit(padapter);
+			padapter->registrypriv.mp_mode = 1;
+#ifdef CONFIG_RF_POWER_TRIM
+			if (!IS_HARDWARE_TYPE_8814A(padapter) && !IS_HARDWARE_TYPE_8822B(padapter)) {
+				padapter->registrypriv.RegPwrTrimEnable = 1;
+				rtw_hal_read_chip_info(padapter);
+			}
+#endif /*CONFIG_RF_POWER_TRIM*/
+			rtw_hal_init(padapter);
+		}
+
+		if (padapter->registrypriv.mp_mode == 0) {
+			ret = H2C_REJECTED;
+			goto exit;
+		}
+
+		if (padapter->mppriv.mode == MP_OFF) {
+			if (mp_start_test(padapter) == _FAIL) {
+				ret = H2C_REJECTED;
+				goto exit;
+			}
+			padapter->mppriv.mode = MP_ON;
+			MPT_PwrCtlDM(padapter, 0);
+		}
+		padapter->mppriv.bmac_filter = _FALSE;
+#ifdef CONFIG_RTL8723B
+#ifdef CONFIG_USB_HCI
+		rtw_write32(padapter, 0x765, 0x0000);
+		rtw_write32(padapter, 0x948, 0x0280);
+#else
+		rtw_write32(padapter, 0x765, 0x0000);
+		rtw_write32(padapter, 0x948, 0x0000);
+#endif
+#ifdef CONFIG_FOR_RTL8723BS_VQ0
+		rtw_write32(padapter, 0x765, 0x0000);
+		rtw_write32(padapter, 0x948, 0x0280);
+#endif
+		rtw_write8(padapter, 0x66, 0x27); /*Open BT uart Log*/
+		rtw_write8(padapter, 0xc50, 0x20); /*for RX init Gain*/
+#endif
+		ODM_Write_DIG(&pHalData->odmpriv, 0x20);
+
+#ifdef CONFIG_RTL8188F
+		DBG_871X("Set reg 0x88c, 0x58, 0x00\n");
+		rfreg0 = PHY_QueryRFReg(padapter, RF_PATH_A, 0x0, 0x1f);
+		PHY_SetBBReg(padapter, 0x88c, BIT21|BIT20, 0x3);
+		PHY_SetRFReg(padapter, RF_PATH_A, 0x58, BIT1, 0x1);
+		PHY_SetRFReg(padapter, RF_PATH_A, 0x0, 0xF001f, 0x2001f);
+		rtw_msleep_os(200);
+		PHY_SetRFReg(padapter, RF_PATH_A, 0x0, 0xF001f, 0x30000 | rfreg0);
+		PHY_SetRFReg(padapter, RF_PATH_A, 0x58, BIT1, 0x0);
+		PHY_SetBBReg(padapter, 0x88c, BIT21|BIT20, 0x0);
+		rtw_msleep_os(1000);
+#endif
+
+	} else if (mp_cmd_id == MP_STOP) {
+		if (padapter->registrypriv.mp_mode == 1) {
+			MPT_DeInitAdapter(padapter);
+			rtw_hal_deinit(padapter);
+			padapter->registrypriv.mp_mode = 0;
+			rtw_hal_init(padapter);
+		}
+
+		if (padapter->mppriv.mode != MP_OFF) {
+			mp_stop_test(padapter);
+			padapter->mppriv.mode = MP_OFF;
+		}
+
+	} else {
+		DBG_871X(FUNC_ADPT_FMT"invalid id:%d\n", FUNC_ADPT_ARG(padapter), mp_cmd_id);
+		ret = H2C_PARAMETERS_ERROR;
+		rtw_warn_on(1);
+	}
+
+exit:
+	return ret;
+}
+
+u8 rtw_mp_cmd(_adapter *adapter, u8 mp_cmd_id, u8 flags)
+{
+	struct cmd_obj *cmdobj;
+	struct drvextra_cmd_parm *parm;
+	struct cmd_priv *pcmdpriv = &adapter->cmdpriv;
+	struct submit_ctx sctx;
+	u8	res = _SUCCESS;
+
+	parm = (struct drvextra_cmd_parm *)rtw_zmalloc(sizeof(struct drvextra_cmd_parm));
+	if (parm == NULL) {
+		res = _FAIL;
+		goto exit;
+	}
+
+	parm->ec_id = MP_CMD_WK_CID;
+	parm->type = mp_cmd_id;
+	parm->size = 0;
+	parm->pbuf = NULL;
+
+	if (flags & RTW_CMDF_DIRECTLY) {
+		/* no need to enqueue, do the cmd hdl directly and free cmd parameter */
+		if (H2C_SUCCESS != rtw_mp_cmd_hdl(adapter, mp_cmd_id))
+			res = _FAIL;
+		rtw_mfree((u8 *)parm, sizeof(*parm));
+	} else {
+		/* need enqueue, prepare cmd_obj and enqueue */
+		cmdobj = (struct cmd_obj *)rtw_zmalloc(sizeof(*cmdobj));
+		if (cmdobj == NULL) {
+			res = _FAIL;
+			rtw_mfree((u8 *)parm, sizeof(*parm));
+			goto exit;
+		}
+
+		init_h2fwcmd_w_parm_no_rsp(cmdobj, parm, GEN_CMD_CODE(_Set_Drv_Extra));
+
+		if (flags & RTW_CMDF_WAIT_ACK) {
+			cmdobj->sctx = &sctx;
+			rtw_sctx_init(&sctx, 10 * 1000);
+		}
+
+		res = rtw_enqueue_cmd(pcmdpriv, cmdobj);
+
+		if (res == _SUCCESS && (flags & RTW_CMDF_WAIT_ACK)) {
+			rtw_sctx_wait(&sctx, __func__);
+			_enter_critical_mutex(&pcmdpriv->sctx_mutex, NULL);
+			if (sctx.status == RTW_SCTX_SUBMITTED)
+				cmdobj->sctx = NULL;
+			_exit_critical_mutex(&pcmdpriv->sctx_mutex, NULL);
+			if (sctx.status != RTW_SCTX_DONE_SUCCESS)
+				res = _FAIL;
+		}
+	}
 
 exit:
 	return res;
@@ -4210,6 +4453,7 @@ exit:
 
 u8 rtw_drvextra_cmd_hdl(_adapter *padapter, unsigned char *pbuf)
 {
+	int ret = H2C_SUCCESS;
 	struct drvextra_cmd_parm *pdrvextra_cmd;
 
 	if(!pbuf)
@@ -4317,6 +4561,10 @@ u8 rtw_drvextra_cmd_hdl(_adapter *padapter, unsigned char *pbuf)
 		rtw_hal_set_hwreg(padapter, HW_VAR_EN_HW_UPDATE_TSF, NULL);
 		break;
 
+	case MP_CMD_WK_CID:
+		ret = rtw_mp_cmd_hdl(padapter, pdrvextra_cmd->type);
+		break;
+
 		default:
 			break;
 	}
@@ -4326,7 +4574,7 @@ u8 rtw_drvextra_cmd_hdl(_adapter *padapter, unsigned char *pbuf)
 		rtw_mfree(pdrvextra_cmd->pbuf, pdrvextra_cmd->size);
 	}
 
-	return H2C_SUCCESS;
+	return ret;
 }
 
 void rtw_survey_cmd_callback(_adapter*	padapter ,  struct cmd_obj *pcmd)

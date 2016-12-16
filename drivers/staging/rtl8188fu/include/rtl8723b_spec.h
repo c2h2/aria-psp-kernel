@@ -211,14 +211,14 @@
 //	0x0600h ~ 0x07FFh	WMAC Configuration
 //
 //-----------------------------------------------------
-#ifdef CONFIG_RF_GAIN_OFFSET
+#ifdef CONFIG_RF_POWER_TRIM
 
 #ifdef CONFIG_RTL8723B
 #define EEPROM_RF_GAIN_OFFSET			0xC1
 #endif
 
 #define EEPROM_RF_GAIN_VAL				0x1F6
-#endif //CONFIG_RF_GAIN_OFFSET
+#endif /*CONFIG_RF_POWER_TRIM*/
 
 
 //----------------------------------------------------------------------------
@@ -290,6 +290,7 @@
 #define NSS_NUM_8723B 1
 #define BAND_CAP_8723B (BAND_CAP_2G)
 #define BW_CAP_8723B (BW_CAP_20M | BW_CAP_40M)
+#define PROTO_CAP_8723B (PROTO_CAP_11B|PROTO_CAP_11G|PROTO_CAP_11N)
 
 #endif /* __RTL8723B_SPEC_H__ */
 

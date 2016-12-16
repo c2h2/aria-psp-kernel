@@ -188,266 +188,418 @@ const u8 _band_to_band_cap[] = {
 	0,
 };
 
-struct country_chplan {
-	char alpha2[2];
-	u8 chplan;
+#ifdef CONFIG_80211AC_VHT
+#define COUNTRY_CHPLAN_ASSIGN_EN_11AC(_val) , .en_11ac = (_val)
+#else
+#define COUNTRY_CHPLAN_ASSIGN_EN_11AC(_val)
+#endif
+
+#if RTW_DEF_MODULE_REGULATORY_CERT
+#define COUNTRY_CHPLAN_ASSIGN_DEF_MODULE_FLAGS(_val) , .def_module_flags = (_val)
+#else
+#define COUNTRY_CHPLAN_ASSIGN_DEF_MODULE_FLAGS(_val)
+#endif
+
+/* has def_module_flags specified, used by common map and HAL dfference map */
+#define COUNTRY_CHPLAN_ENT(_alpha2, _chplan, _en_11ac, _def_module_flags) \
+	{.alpha2 = (_alpha2), .chplan = (_chplan) \
+		COUNTRY_CHPLAN_ASSIGN_EN_11AC(_en_11ac) \
+		COUNTRY_CHPLAN_ASSIGN_DEF_MODULE_FLAGS(_def_module_flags) \
+	}
+
+#ifdef CONFIG_CUSTOMIZED_COUNTRY_CHPLAN_MAP
+
+#include "../platform/custom_country_chplan.h"
+
+#elif RTW_DEF_MODULE_REGULATORY_CERT
+
+#if (RTW_DEF_MODULE_REGULATORY_CERT & RTW_MODULE_RTL8821AE_HMC_M2)
+static const struct country_chplan RTL8821AE_HMC_M2_country_chplan_map[] = {
+	COUNTRY_CHPLAN_ENT("CN", 0x51, 1, 0xFB), /* China */
+	COUNTRY_CHPLAN_ENT("RU", 0x59, 0, 0xFB), /* Russia(fac/gost), Kaliningrad */
+	COUNTRY_CHPLAN_ENT("UA", 0x26, 0, 0xFB), /* Ukraine */
 };
+static const u16 RTL8821AE_HMC_M2_country_chplan_map_sz = sizeof(RTL8821AE_HMC_M2_country_chplan_map)/sizeof(struct country_chplan);
+#endif
+
+#if (RTW_DEF_MODULE_REGULATORY_CERT & RTW_MODULE_RTL8821AU)
+static const struct country_chplan RTL8821AU_country_chplan_map[] = {
+	COUNTRY_CHPLAN_ENT("RU", 0x59, 0, 0xFB), /* Russia(fac/gost), Kaliningrad */
+	COUNTRY_CHPLAN_ENT("UA", 0x26, 0, 0xFB), /* Ukraine */
+};
+static const u16 RTL8821AU_country_chplan_map_sz = sizeof(RTL8821AU_country_chplan_map)/sizeof(struct country_chplan);
+#endif
+
+#if (RTW_DEF_MODULE_REGULATORY_CERT & RTW_MODULE_RTL8812AENF_NGFF)
+static const struct country_chplan RTL8812AENF_NGFF_country_chplan_map[] = {
+};
+static const u16 RTL8812AENF_NGFF_country_chplan_map_sz = sizeof(RTL8812AENF_NGFF_country_chplan_map)/sizeof(struct country_chplan);
+#endif
+
+#if (RTW_DEF_MODULE_REGULATORY_CERT & RTW_MODULE_RTL8812AEBT_HMC)
+static const struct country_chplan RTL8812AEBT_HMC_country_chplan_map[] = {
+};
+static const u16 RTL8812AEBT_HMC_country_chplan_map_sz = sizeof(RTL8812AEBT_HMC_country_chplan_map)/sizeof(struct country_chplan);
+#endif
+
+#if (RTW_DEF_MODULE_REGULATORY_CERT & RTW_MODULE_RTL8188EE_HMC_M2)
+static const struct country_chplan RTL8188EE_HMC_M2_country_chplan_map[] = {
+};
+static const u16 RTL8188EE_HMC_M2_country_chplan_map_sz = sizeof(RTL8188EE_HMC_M2_country_chplan_map)/sizeof(struct country_chplan);
+#endif
+
+#if (RTW_DEF_MODULE_REGULATORY_CERT & RTW_MODULE_RTL8723BE_HMC_M2)
+static const struct country_chplan RTL8723BE_HMC_M2_country_chplan_map[] = {
+};
+static const u16 RTL8723BE_HMC_M2_country_chplan_map_sz = sizeof(RTL8723BE_HMC_M2_country_chplan_map)/sizeof(struct country_chplan);
+#endif
+
+#if (RTW_DEF_MODULE_REGULATORY_CERT & RTW_MODULE_RTL8723BS_NGFF1216)
+static const struct country_chplan RTL8723BS_NGFF1216_country_chplan_map[] = {
+};
+static const u16 RTL8723BS_NGFF1216_country_chplan_map_sz = sizeof(RTL8723BS_NGFF1216_country_chplan_map)/sizeof(struct country_chplan);
+#endif
+
+#if (RTW_DEF_MODULE_REGULATORY_CERT & RTW_MODULE_RTL8192EEBT_HMC_M2)
+static const struct country_chplan RTL8192EEBT_HMC_M2_country_chplan_map[] = {
+};
+static const u16 RTL8192EEBT_HMC_M2_country_chplan_map_sz = sizeof(RTL8192EEBT_HMC_M2_country_chplan_map)/sizeof(struct country_chplan);
+#endif
+
+/**
+ * rtw_def_module_get_chplan_from_country -
+ * @country_code: string of country code
+ * @return:
+ * Return NULL for case referring to common map
+ */
+static const struct country_chplan *rtw_def_module_get_chplan_from_country(const char *country_code)
+{
+	const struct country_chplan *ent = NULL;
+	const struct country_chplan *hal_map = NULL;
+	u16 hal_map_sz = 0;
+	int i;
+
+	/* TODO: runtime selection for multi driver */
+#if (RTW_DEF_MODULE_REGULATORY_CERT == RTW_MODULE_RTL8821AE_HMC_M2)
+	hal_map = RTL8821AE_HMC_M2_country_chplan_map;
+	hal_map_sz = RTL8821AE_HMC_M2_country_chplan_map_sz;
+#elif (RTW_DEF_MODULE_REGULATORY_CERT == RTW_MODULE_RTL8821AU)
+	hal_map = RTL8821AU_country_chplan_map;
+	hal_map_sz = RTL8821AU_country_chplan_map_sz;
+#elif (RTW_DEF_MODULE_REGULATORY_CERT == RTW_MODULE_RTL8812AENF_NGFF)
+	hal_map = RTL8812AENF_NGFF_country_chplan_map;
+	hal_map_sz = RTL8812AENF_NGFF_country_chplan_map_sz;
+#elif (RTW_DEF_MODULE_REGULATORY_CERT == RTW_MODULE_RTL8812AEBT_HMC)
+	hal_map = RTL8812AEBT_HMC_country_chplan_map;
+	hal_map_sz = RTL8812AEBT_HMC_country_chplan_map_sz;
+#elif (RTW_DEF_MODULE_REGULATORY_CERT == RTW_MODULE_RTL8188EE_HMC_M2)
+	hal_map = RTL8188EE_HMC_M2_country_chplan_map;
+	hal_map_sz = RTL8188EE_HMC_M2_country_chplan_map_sz;
+#elif (RTW_DEF_MODULE_REGULATORY_CERT == RTW_MODULE_RTL8723BE_HMC_M2)
+	hal_map = RTL8723BE_HMC_M2_country_chplan_map;
+	hal_map_sz = RTL8723BE_HMC_M2_country_chplan_map_sz;
+#elif (RTW_DEF_MODULE_REGULATORY_CERT == RTW_MODULE_RTL8723BS_NGFF1216)
+	hal_map = RTL8723BS_NGFF1216_country_chplan_map;
+	hal_map_sz = RTL8723BS_NGFF1216_country_chplan_map_sz;
+#elif (RTW_DEF_MODULE_REGULATORY_CERT == RTW_MODULE_RTL8192EEBT_HMC_M2)
+	hal_map = RTL8192EEBT_HMC_M2_country_chplan_map;
+	hal_map_sz = RTL8192EEBT_HMC_M2_country_chplan_map_sz;
+#endif
+
+	if (hal_map == NULL || hal_map_sz == 0)
+		goto exit;
+
+	for (i = 0; i < hal_map_sz; i++) {
+		if (strncmp(country_code, hal_map[i].alpha2, 2) == 0) {
+			ent = &hal_map[i];
+			break;
+		}
+	}
+
+exit:
+	return ent;
+}
+#endif /* CONFIG_CUSTOMIZED_COUNTRY_CHPLAN_MAP or RTW_DEF_MODULE_REGULATORY_CERT */
 
 static const struct country_chplan country_chplan_map[] = {
-	{"AD", 0x26}, /* Andorra */
-	{"AE", 0x26}, /* United Arab Emirates */
-	{"AF", 0x42}, /* Afghanistan */
-	{"AG", 0x30}, /* Antigua & Barbuda */
-	{"AI", 0x26}, /* Anguilla(UK) */
-	{"AL", 0x26}, /* Albania */
-	{"AM", 0x34}, /* Armenia */
-	{"AO", 0x26}, /* Angola */
-	{"AQ", 0x26}, /* Antarctica */
-	{"AR", 0x57}, /* Argentina */
-	{"AS", 0x34}, /* American Samoa */
-	{"AT", 0x26}, /* Austria */
-	{"AU", 0x45}, /* Australia */
-	{"AW", 0x34}, /* Aruba */
-	{"AZ", 0x26}, /* Azerbaijan */
-	{"BA", 0x26}, /* Bosnia & Herzegovina */
-	{"BB", 0x34}, /* Barbados */
-	{"BD", 0x26}, /* Bangladesh */
-	{"BE", 0x26}, /* Belgium */
-	{"BF", 0x26}, /* Burkina Faso */
-	{"BG", 0x26}, /* Bulgaria */
-	{"BH", 0x47}, /* Bahrain */
-	{"BI", 0x26}, /* Burundi */
-	{"BJ", 0x26}, /* Benin */
-	{"BN", 0x47}, /* Brunei */
-	{"BO", 0x30}, /* Bolivia */
-	{"BR", 0x34}, /* Brazil */
-	{"BS", 0x34}, /* Bahamas */
-	{"BW", 0x26}, /* Botswana */
-	{"BY", 0x26}, /* Belarus */
-	{"BZ", 0x34}, /* Belize */
-	{"CA", 0x34}, /* Canada */
-	{"CC", 0x26}, /* Cocos (Keeling) Islands (Australia) */
-	{"CD", 0x26}, /* Congo, Republic of the */
-	{"CF", 0x26}, /* Central African Republic */
-	{"CG", 0x26}, /* Congo, Democratic Republic of the. Zaire */
-	{"CH", 0x26}, /* Switzerland */
-	{"CI", 0x26}, /* Cote d'Ivoire */
-	{"CK", 0x26}, /* Cook Islands */
-	{"CL", 0x30}, /* Chile */
-	{"CM", 0x26}, /* Cameroon */
-	{"CN", 0x48}, /* China */
-	{"CO", 0x34}, /* Colombia */
-	{"CR", 0x34}, /* Costa Rica */
-	{"CV", 0x26}, /* Cape Verde */
-	{"CX", 0x45}, /* Christmas Island (Australia) */
-	{"CY", 0x26}, /* Cyprus */
-	{"CZ", 0x26}, /* Czech Republic */
-	{"DE", 0x26}, /* Germany */
-	{"DJ", 0x26}, /* Djibouti */
-	{"DK", 0x26}, /* Denmark */
-	{"DM", 0x34}, /* Dominica */
-	{"DO", 0x34}, /* Dominican Republic */
-	{"DZ", 0x26}, /* Algeria */
-	{"EC", 0x34}, /* Ecuador */
-	{"EE", 0x26}, /* Estonia */
-	{"EG", 0x47}, /* Egypt */
-	{"EH", 0x47}, /* Western Sahara */
-	{"ER", 0x26}, /* Eritrea */
-	{"ES", 0x26}, /* Spain */
-	{"ET", 0x26}, /* Ethiopia */
-	{"FI", 0x26}, /* Finland */
-	{"FJ", 0x34}, /* Fiji */
-	{"FK", 0x26}, /* Falkland Islands (Islas Malvinas) (UK) */
-	{"FM", 0x34}, /* Micronesia, Federated States of (USA) */
-	{"FO", 0x26}, /* Faroe Islands (Denmark) */
-	{"FR", 0x26}, /* France */
-	{"GA", 0x26}, /* Gabon */
-	{"GB", 0x26}, /* Great Britain (United Kingdom; England) */
-	{"GD", 0x34}, /* Grenada */
-	{"GE", 0x26}, /* Georgia */
-	{"GF", 0x26}, /* French Guiana */
-	{"GG", 0x26}, /* Guernsey (UK) */
-	{"GH", 0x26}, /* Ghana */
-	{"GI", 0x26}, /* Gibraltar (UK) */
-	{"GL", 0x26}, /* Greenland (Denmark) */
-	{"GM", 0x26}, /* Gambia */
-	{"GN", 0x26}, /* Guinea */
-	{"GP", 0x26}, /* Guadeloupe (France) */
-	{"GQ", 0x26}, /* Equatorial Guinea */
-	{"GR", 0x26}, /* Greece */
-	{"GS", 0x26}, /* South Georgia and the Sandwich Islands (UK) */
-	{"GT", 0x34}, /* Guatemala */
-	{"GU", 0x34}, /* Guam (USA) */
-	{"GW", 0x26}, /* Guinea-Bissau */
-	{"GY", 0x44}, /* Guyana */
-	{"HK", 0x26}, /* Hong Kong */
-	{"HM", 0x45}, /* Heard and McDonald Islands (Australia) */
-	{"HN", 0x32}, /* Honduras */
-	{"HR", 0x26}, /* Croatia */
-	{"HT", 0x34}, /* Haiti */
-	{"HU", 0x26}, /* Hungary */
-	{"ID", 0x54}, /* Indonesia */
-	{"IE", 0x26}, /* Ireland */
-	{"IL", 0x47}, /* Israel */
-	{"IM", 0x26}, /* Isle of Man (UK) */
-	{"IN", 0x47}, /* India */
-	{"IQ", 0x26}, /* Iraq */
-	{"IR", 0x26}, /* Iran */
-	{"IS", 0x26}, /* Iceland */
-	{"IT", 0x26}, /* Italy */
-	{"JE", 0x26}, /* Jersey (UK) */
-	{"JM", 0x51}, /* Jamaica */
-	{"JO", 0x49}, /* Jordan */
-	{"JP", 0x27}, /* Japan- Telec */
-	{"KE", 0x47}, /* Kenya */
-	{"KG", 0x26}, /* Kyrgyzstan */
-	{"KH", 0x26}, /* Cambodia */
-	{"KI", 0x26}, /* Kiribati */
-	{"KN", 0x34}, /* Saint Kitts and Nevis */
-	{"KR", 0x28}, /* South Korea */
-	{"KW", 0x47}, /* Kuwait */
-	{"KY", 0x34}, /* Cayman Islands (UK) */
-	{"KZ", 0x26}, /* Kazakhstan */
-	{"LA", 0x26}, /* Laos */
-	{"LB", 0x26}, /* Lebanon */
-	{"LC", 0x34}, /* Saint Lucia */
-	{"LI", 0x26}, /* Liechtenstein */
-	{"LK", 0x26}, /* Sri Lanka */
-	{"LR", 0x26}, /* Liberia */
-	{"LS", 0x26}, /* Lesotho */
-	{"LT", 0x26}, /* Lithuania */
-	{"LU", 0x26}, /* Luxembourg */
-	{"LV", 0x26}, /* Latvia */
-	{"LY", 0x26}, /* Libya */
-	{"MA", 0x47}, /* Morocco */
-	{"MC", 0x26}, /* Monaco */
-	{"MD", 0x26}, /* Moldova */
-	{"ME", 0x26}, /* Montenegro */
-	{"MF", 0x34}, /* Saint Martin */
-	{"MG", 0x26}, /* Madagascar */
-	{"MH", 0x34}, /* Marshall Islands (USA) */
-	{"MK", 0x26}, /* Republic of Macedonia (FYROM) */
-	{"ML", 0x26}, /* Mali */
-	{"MM", 0x26}, /* Burma (Myanmar) */
-	{"MN", 0x26}, /* Mongolia */
-	{"MO", 0x26}, /* Macau */
-	{"MP", 0x34}, /* Northern Mariana Islands (USA) */
-	{"MQ", 0x26}, /* Martinique (France) */
-	{"MR", 0x26}, /* Mauritania */
-	{"MS", 0x26}, /* Montserrat (UK) */
-	{"MT", 0x26}, /* Malta */
-	{"MU", 0x26}, /* Mauritius */
-	{"MV", 0x26}, /* Maldives */
-	{"MW", 0x26}, /* Malawi */
-	{"MX", 0x34}, /* Mexico */
-	{"MY", 0x47}, /* Malaysia */
-	{"MZ", 0x26}, /* Mozambique */
-	{"NA", 0x26}, /* Namibia */
-	{"NC", 0x26}, /* New Caledonia */
-	{"NE", 0x26}, /* Niger */
-	{"NF", 0x45}, /* Norfolk Island (Australia) */
-	{"NG", 0x50}, /* Nigeria */
-	{"NI", 0x34}, /* Nicaragua */
-	{"NL", 0x26}, /* Netherlands */
-	{"NO", 0x26}, /* Norway */
-	{"NP", 0x47}, /* Nepal */
-	{"NR", 0x26}, /* Nauru */
-	{"NU", 0x45}, /* Niue */
-	{"NZ", 0x45}, /* New Zealand */
-	{"OM", 0x26}, /* Oman */
-	{"PA", 0x34}, /* Panama */
-	{"PE", 0x34}, /* Peru */
-	{"PF", 0x26}, /* French Polynesia (France) */
-	{"PG", 0x26}, /* Papua New Guinea */
-	{"PH", 0x26}, /* Philippines */
-	{"PK", 0x51}, /* Pakistan */
-	{"PL", 0x26}, /* Poland */
-	{"PM", 0x26}, /* Saint Pierre and Miquelon (France) */
-	{"PR", 0x34}, /* Puerto Rico */
-	{"PT", 0x26}, /* Portugal */
-	{"PW", 0x34}, /* Palau */
-	{"PY", 0x34}, /* Paraguay */
-	{"QA", 0x51}, /* Qatar */
-	{"RE", 0x26}, /* Reunion (France) */
-	{"RO", 0x26}, /* Romania */
-	{"RS", 0x26}, /* Serbia */
-	{"RU", 0x59}, /* Russia, fac/gost */
-	{"RW", 0x26}, /* Rwanda */
-	{"SA", 0x26}, /* Saudi Arabia */
-	{"SB", 0x26}, /* Solomon Islands */
-	{"SC", 0x34}, /* Seychelles */
-	{"SE", 0x26}, /* Sweden */
-	{"SG", 0x47}, /* Singapore */
-	{"SH", 0x26}, /* Saint Helena (UK) */
-	{"SI", 0x26}, /* Slovenia */
-	{"SJ", 0x26}, /* Svalbard (Norway) */
-	{"SK", 0x26}, /* Slovakia */
-	{"SL", 0x26}, /* Sierra Leone */
-	{"SM", 0x26}, /* San Marino */
-	{"SN", 0x26}, /* Senegal */
-	{"SO", 0x26}, /* Somalia */
-	{"SR", 0x34}, /* Suriname */
-	{"ST", 0x34}, /* Sao Tome and Principe */
-	{"SV", 0x30}, /* El Salvador */
-	{"SX", 0x34}, /* Sint Marteen */
-	{"SZ", 0x26}, /* Swaziland */
-	{"TC", 0x26}, /* Turks and Caicos Islands (UK) */
-	{"TD", 0x26}, /* Chad */
-	{"TF", 0x26}, /* French Southern and Antarctic Lands (FR Southern Territories) */
-	{"TG", 0x26}, /* Togo */
-	{"TH", 0x26}, /* Thailand */
-	{"TJ", 0x26}, /* Tajikistan */
-	{"TK", 0x45}, /* Tokelau */
-	{"TM", 0x26}, /* Turkmenistan */
-	{"TN", 0x47}, /* Tunisia */
-	{"TO", 0x26}, /* Tonga */
-	{"TR", 0x26}, /* Turkey */
-	{"TT", 0x42}, /* Trinidad & Tobago */
-	{"TW", 0x39}, /* Taiwan */
-	{"TZ", 0x26}, /* Tanzania */
-	{"UA", 0x26}, /* Ukraine */
-	{"UG", 0x26}, /* Uganda */
-	{"US", 0x34}, /* United States of America (USA) */
-	{"UY", 0x34}, /* Uruguay */
-	{"UZ", 0x47}, /* Uzbekistan */
-	{"VA", 0x26}, /* Holy See (Vatican City) */
-	{"VC", 0x34}, /* Saint Vincent and the Grenadines */
-	{"VE", 0x30}, /* Venezuela */
-	{"VI", 0x34}, /* United States Virgin Islands (USA) */
-	{"VN", 0x26}, /* Vietnam */
-	{"VU", 0x26}, /* Vanuatu */
-	{"WF", 0x26}, /* Wallis and Futuna (France) */
-	{"WS", 0x34}, /* Samoa */
-	{"YE", 0x26}, /* Yemen */
-	{"YT", 0x26}, /* Mayotte (France) */
-	{"ZA", 0x26}, /* South Africa */
-	{"ZM", 0x26}, /* Zambia */
-	{"ZW", 0x26}, /* Zimbabwe */
+	COUNTRY_CHPLAN_ENT("AD", 0x26, 1, 0x00), /* Andorra */
+	COUNTRY_CHPLAN_ENT("AE", 0x26, 1, 0xFB), /* United Arab Emirates */
+	COUNTRY_CHPLAN_ENT("AF", 0x42, 1, 0x00), /* Afghanistan */
+	COUNTRY_CHPLAN_ENT("AG", 0x30, 1, 0x00), /* Antigua & Barbuda */
+	COUNTRY_CHPLAN_ENT("AI", 0x26, 1, 0x00), /* Anguilla(UK) */
+	COUNTRY_CHPLAN_ENT("AL", 0x26, 1, 0xF1), /* Albania */
+	COUNTRY_CHPLAN_ENT("AM", 0x26, 1, 0xB0), /* Armenia */
+	COUNTRY_CHPLAN_ENT("AO", 0x26, 1, 0xE0), /* Angola */
+	COUNTRY_CHPLAN_ENT("AQ", 0x26, 1, 0x00), /* Antarctica */
+	COUNTRY_CHPLAN_ENT("AR", 0x57, 1, 0xF3), /* Argentina */
+	COUNTRY_CHPLAN_ENT("AS", 0x34, 1, 0x00), /* American Samoa */
+	COUNTRY_CHPLAN_ENT("AT", 0x26, 1, 0xFB), /* Austria */
+	COUNTRY_CHPLAN_ENT("AU", 0x45, 1, 0xFB), /* Australia */
+	COUNTRY_CHPLAN_ENT("AW", 0x34, 1, 0xB0), /* Aruba */
+	COUNTRY_CHPLAN_ENT("AZ", 0x26, 1, 0xF1), /* Azerbaijan */
+	COUNTRY_CHPLAN_ENT("BA", 0x26, 1, 0xF1), /* Bosnia & Herzegovina */
+	COUNTRY_CHPLAN_ENT("BB", 0x34, 1, 0x50), /* Barbados */
+	COUNTRY_CHPLAN_ENT("BD", 0x26, 1, 0xF1), /* Bangladesh */
+	COUNTRY_CHPLAN_ENT("BE", 0x26, 1, 0xFB), /* Belgium */
+	COUNTRY_CHPLAN_ENT("BF", 0x26, 1, 0xB0), /* Burkina Faso */
+	COUNTRY_CHPLAN_ENT("BG", 0x26, 1, 0xF1), /* Bulgaria */
+	COUNTRY_CHPLAN_ENT("BH", 0x47, 1, 0xF1), /* Bahrain */
+	COUNTRY_CHPLAN_ENT("BI", 0x26, 1, 0xB0), /* Burundi */
+	COUNTRY_CHPLAN_ENT("BJ", 0x26, 1, 0xB0), /* Benin */
+	COUNTRY_CHPLAN_ENT("BN", 0x47, 1, 0x10), /* Brunei */
+	COUNTRY_CHPLAN_ENT("BO", 0x30, 1, 0xF1), /* Bolivia */
+	COUNTRY_CHPLAN_ENT("BR", 0x34, 1, 0xF1), /* Brazil */
+	COUNTRY_CHPLAN_ENT("BS", 0x34, 1, 0x20), /* Bahamas */
+	COUNTRY_CHPLAN_ENT("BW", 0x26, 1, 0xF1), /* Botswana */
+	COUNTRY_CHPLAN_ENT("BY", 0x26, 1, 0xF1), /* Belarus */
+	COUNTRY_CHPLAN_ENT("BZ", 0x34, 1, 0x00), /* Belize */
+	COUNTRY_CHPLAN_ENT("CA", 0x34, 1, 0xFB), /* Canada */
+	COUNTRY_CHPLAN_ENT("CC", 0x26, 1, 0x00), /* Cocos (Keeling) Islands (Australia) */
+	COUNTRY_CHPLAN_ENT("CD", 0x26, 1, 0xB0), /* Congo, Republic of the */
+	COUNTRY_CHPLAN_ENT("CF", 0x26, 1, 0xB0), /* Central African Republic */
+	COUNTRY_CHPLAN_ENT("CG", 0x26, 1, 0xB0), /* Congo, Democratic Republic of the. Zaire */
+	COUNTRY_CHPLAN_ENT("CH", 0x26, 1, 0xFB), /* Switzerland */
+	COUNTRY_CHPLAN_ENT("CI", 0x26, 1, 0xF1), /* Cote d'Ivoire */
+	COUNTRY_CHPLAN_ENT("CK", 0x26, 1, 0x00), /* Cook Islands */
+	COUNTRY_CHPLAN_ENT("CL", 0x30, 1, 0xF1), /* Chile */
+	COUNTRY_CHPLAN_ENT("CM", 0x26, 1, 0xB0), /* Cameroon */
+	COUNTRY_CHPLAN_ENT("CN", 0x48, 1, 0xFB), /* China */
+	COUNTRY_CHPLAN_ENT("CO", 0x34, 1, 0xF1), /* Colombia */
+	COUNTRY_CHPLAN_ENT("CR", 0x34, 1, 0xF1), /* Costa Rica */
+	COUNTRY_CHPLAN_ENT("CV", 0x26, 1, 0xB0), /* Cape Verde */
+	COUNTRY_CHPLAN_ENT("CX", 0x45, 1, 0x00), /* Christmas Island (Australia) */
+	COUNTRY_CHPLAN_ENT("CY", 0x26, 1, 0xFB), /* Cyprus */
+	COUNTRY_CHPLAN_ENT("CZ", 0x26, 1, 0xFB), /* Czech Republic */
+	COUNTRY_CHPLAN_ENT("DE", 0x26, 1, 0xFB), /* Germany */
+	COUNTRY_CHPLAN_ENT("DJ", 0x26, 1, 0x80), /* Djibouti */
+	COUNTRY_CHPLAN_ENT("DK", 0x26, 1, 0xFB), /* Denmark */
+	COUNTRY_CHPLAN_ENT("DM", 0x34, 1, 0x00), /* Dominica */
+	COUNTRY_CHPLAN_ENT("DO", 0x34, 1, 0xF1), /* Dominican Republic */
+	COUNTRY_CHPLAN_ENT("DZ", 0x26, 1, 0xF1), /* Algeria */
+	COUNTRY_CHPLAN_ENT("EC", 0x34, 1, 0xF1), /* Ecuador */
+	COUNTRY_CHPLAN_ENT("EE", 0x26, 1, 0xFB), /* Estonia */
+	COUNTRY_CHPLAN_ENT("EG", 0x47, 0, 0xF1), /* Egypt */
+	COUNTRY_CHPLAN_ENT("EH", 0x47, 1, 0x80), /* Western Sahara */
+	COUNTRY_CHPLAN_ENT("ER", 0x26, 1, 0x00), /* Eritrea */
+	COUNTRY_CHPLAN_ENT("ES", 0x26, 1, 0xFB), /* Spain, Canary Islands, Ceuta, Melilla */
+	COUNTRY_CHPLAN_ENT("ET", 0x26, 1, 0xB0), /* Ethiopia */
+	COUNTRY_CHPLAN_ENT("FI", 0x26, 1, 0xFB), /* Finland */
+	COUNTRY_CHPLAN_ENT("FJ", 0x34, 1, 0x00), /* Fiji */
+	COUNTRY_CHPLAN_ENT("FK", 0x26, 1, 0x00), /* Falkland Islands (Islas Malvinas) (UK) */
+	COUNTRY_CHPLAN_ENT("FM", 0x34, 1, 0x00), /* Micronesia, Federated States of (USA) */
+	COUNTRY_CHPLAN_ENT("FO", 0x26, 1, 0x00), /* Faroe Islands (Denmark) */
+	COUNTRY_CHPLAN_ENT("FR", 0x26, 1, 0xFB), /* France */
+	COUNTRY_CHPLAN_ENT("GA", 0x26, 1, 0xB0), /* Gabon */
+	COUNTRY_CHPLAN_ENT("GB", 0x26, 1, 0xFB), /* Great Britain (United Kingdom; England) */
+	COUNTRY_CHPLAN_ENT("GD", 0x34, 1, 0xB0), /* Grenada */
+	COUNTRY_CHPLAN_ENT("GE", 0x26, 1, 0x00), /* Georgia */
+	COUNTRY_CHPLAN_ENT("GF", 0x26, 1, 0x80), /* French Guiana */
+	COUNTRY_CHPLAN_ENT("GG", 0x26, 1, 0x00), /* Guernsey (UK) */
+	COUNTRY_CHPLAN_ENT("GH", 0x26, 1, 0xF1), /* Ghana */
+	COUNTRY_CHPLAN_ENT("GI", 0x26, 1, 0x00), /* Gibraltar (UK) */
+	COUNTRY_CHPLAN_ENT("GL", 0x26, 1, 0x00), /* Greenland (Denmark) */
+	COUNTRY_CHPLAN_ENT("GM", 0x26, 1, 0xB0), /* Gambia */
+	COUNTRY_CHPLAN_ENT("GN", 0x26, 1, 0x10), /* Guinea */
+	COUNTRY_CHPLAN_ENT("GP", 0x26, 1, 0x00), /* Guadeloupe (France) */
+	COUNTRY_CHPLAN_ENT("GQ", 0x26, 1, 0xB0), /* Equatorial Guinea */
+	COUNTRY_CHPLAN_ENT("GR", 0x26, 1, 0xFB), /* Greece */
+	COUNTRY_CHPLAN_ENT("GS", 0x26, 1, 0x00), /* South Georgia and the Sandwich Islands (UK) */
+	COUNTRY_CHPLAN_ENT("GT", 0x34, 1, 0xF1), /* Guatemala */
+	COUNTRY_CHPLAN_ENT("GU", 0x34, 1, 0x00), /* Guam (USA) */
+	COUNTRY_CHPLAN_ENT("GW", 0x26, 1, 0xB0), /* Guinea-Bissau */
+	COUNTRY_CHPLAN_ENT("GY", 0x44, 1, 0x00), /* Guyana */
+	COUNTRY_CHPLAN_ENT("HK", 0x26, 1, 0xFB), /* Hong Kong */
+	COUNTRY_CHPLAN_ENT("HM", 0x45, 1, 0x00), /* Heard and McDonald Islands (Australia) */
+	COUNTRY_CHPLAN_ENT("HN", 0x32, 1, 0xF1), /* Honduras */
+	COUNTRY_CHPLAN_ENT("HR", 0x26, 1, 0xF9), /* Croatia */
+	COUNTRY_CHPLAN_ENT("HT", 0x34, 1, 0x50), /* Haiti */
+	COUNTRY_CHPLAN_ENT("HU", 0x26, 1, 0xFB), /* Hungary */
+	COUNTRY_CHPLAN_ENT("ID", 0x54, 0, 0xF3), /* Indonesia */
+	COUNTRY_CHPLAN_ENT("IE", 0x26, 1, 0xFB), /* Ireland */
+	COUNTRY_CHPLAN_ENT("IL", 0x47, 1, 0xF1), /* Israel */
+	COUNTRY_CHPLAN_ENT("IM", 0x26, 1, 0x00), /* Isle of Man (UK) */
+	COUNTRY_CHPLAN_ENT("IN", 0x47, 1, 0xF1), /* India */
+	COUNTRY_CHPLAN_ENT("IQ", 0x26, 1, 0x00), /* Iraq */
+	COUNTRY_CHPLAN_ENT("IR", 0x26, 0, 0x00), /* Iran */
+	COUNTRY_CHPLAN_ENT("IS", 0x26, 1, 0xFB), /* Iceland */
+	COUNTRY_CHPLAN_ENT("IT", 0x26, 1, 0xFB), /* Italy */
+	COUNTRY_CHPLAN_ENT("JE", 0x26, 1, 0x00), /* Jersey (UK) */
+	COUNTRY_CHPLAN_ENT("JM", 0x51, 1, 0xF1), /* Jamaica */
+	COUNTRY_CHPLAN_ENT("JO", 0x49, 1, 0xFB), /* Jordan */
+	COUNTRY_CHPLAN_ENT("JP", 0x27, 1, 0xFF), /* Japan- Telec */
+	COUNTRY_CHPLAN_ENT("KE", 0x47, 1, 0xF9), /* Kenya */
+	COUNTRY_CHPLAN_ENT("KG", 0x26, 1, 0xF1), /* Kyrgyzstan */
+	COUNTRY_CHPLAN_ENT("KH", 0x26, 1, 0xF1), /* Cambodia */
+	COUNTRY_CHPLAN_ENT("KI", 0x26, 1, 0x00), /* Kiribati */
+	COUNTRY_CHPLAN_ENT("KN", 0x34, 1, 0x00), /* Saint Kitts and Nevis */
+	COUNTRY_CHPLAN_ENT("KR", 0x28, 1, 0xFB), /* South Korea */
+	COUNTRY_CHPLAN_ENT("KW", 0x47, 1, 0xFB), /* Kuwait */
+	COUNTRY_CHPLAN_ENT("KY", 0x34, 1, 0x00), /* Cayman Islands (UK) */
+	COUNTRY_CHPLAN_ENT("KZ", 0x26, 1, 0x00), /* Kazakhstan */
+	COUNTRY_CHPLAN_ENT("LA", 0x26, 1, 0x00), /* Laos */
+	COUNTRY_CHPLAN_ENT("LB", 0x26, 1, 0xF1), /* Lebanon */
+	COUNTRY_CHPLAN_ENT("LC", 0x34, 1, 0x00), /* Saint Lucia */
+	COUNTRY_CHPLAN_ENT("LI", 0x26, 1, 0xFB), /* Liechtenstein */
+	COUNTRY_CHPLAN_ENT("LK", 0x26, 1, 0xF1), /* Sri Lanka */
+	COUNTRY_CHPLAN_ENT("LR", 0x26, 1, 0xB0), /* Liberia */
+	COUNTRY_CHPLAN_ENT("LS", 0x26, 1, 0xF1), /* Lesotho */
+	COUNTRY_CHPLAN_ENT("LT", 0x26, 1, 0xFB), /* Lithuania */
+	COUNTRY_CHPLAN_ENT("LU", 0x26, 1, 0xFB), /* Luxembourg */
+	COUNTRY_CHPLAN_ENT("LV", 0x26, 1, 0xFB), /* Latvia */
+	COUNTRY_CHPLAN_ENT("LY", 0x26, 1, 0x00), /* Libya */
+	COUNTRY_CHPLAN_ENT("MA", 0x47, 1, 0xF1), /* Morocco */
+	COUNTRY_CHPLAN_ENT("MC", 0x26, 1, 0xFB), /* Monaco */
+	COUNTRY_CHPLAN_ENT("MD", 0x26, 1, 0xF1), /* Moldova */
+	COUNTRY_CHPLAN_ENT("ME", 0x26, 1, 0xF1), /* Montenegro */
+	COUNTRY_CHPLAN_ENT("MF", 0x34, 1, 0x00), /* Saint Martin */
+	COUNTRY_CHPLAN_ENT("MG", 0x26, 1, 0x20), /* Madagascar */
+	COUNTRY_CHPLAN_ENT("MH", 0x34, 1, 0x00), /* Marshall Islands (USA) */
+	COUNTRY_CHPLAN_ENT("MK", 0x26, 1, 0xF1), /* Republic of Macedonia (FYROM) */
+	COUNTRY_CHPLAN_ENT("ML", 0x26, 1, 0xB0), /* Mali */
+	COUNTRY_CHPLAN_ENT("MM", 0x26, 1, 0x00), /* Burma (Myanmar) */
+	COUNTRY_CHPLAN_ENT("MN", 0x26, 1, 0x00), /* Mongolia */
+	COUNTRY_CHPLAN_ENT("MO", 0x26, 1, 0x00), /* Macau */
+	COUNTRY_CHPLAN_ENT("MP", 0x34, 1, 0x00), /* Northern Mariana Islands (USA) */
+	COUNTRY_CHPLAN_ENT("MQ", 0x26, 1, 0x40), /* Martinique (France) */
+	COUNTRY_CHPLAN_ENT("MR", 0x26, 1, 0xA0), /* Mauritania */
+	COUNTRY_CHPLAN_ENT("MS", 0x26, 1, 0x00), /* Montserrat (UK) */
+	COUNTRY_CHPLAN_ENT("MT", 0x26, 1, 0xFB), /* Malta */
+	COUNTRY_CHPLAN_ENT("MU", 0x26, 1, 0xB0), /* Mauritius */
+	COUNTRY_CHPLAN_ENT("MV", 0x26, 1, 0x00), /* Maldives */
+	COUNTRY_CHPLAN_ENT("MW", 0x26, 1, 0xB0), /* Malawi */
+	COUNTRY_CHPLAN_ENT("MX", 0x34, 1, 0xF1), /* Mexico */
+	COUNTRY_CHPLAN_ENT("MY", 0x47, 1, 0xF1), /* Malaysia */
+	COUNTRY_CHPLAN_ENT("MZ", 0x26, 1, 0xF1), /* Mozambique */
+	COUNTRY_CHPLAN_ENT("NA", 0x26, 0, 0x00), /* Namibia */
+	COUNTRY_CHPLAN_ENT("NC", 0x26, 1, 0x00), /* New Caledonia */
+	COUNTRY_CHPLAN_ENT("NE", 0x26, 1, 0xB0), /* Niger */
+	COUNTRY_CHPLAN_ENT("NF", 0x45, 1, 0x00), /* Norfolk Island (Australia) */
+	COUNTRY_CHPLAN_ENT("NG", 0x50, 1, 0xF9), /* Nigeria */
+	COUNTRY_CHPLAN_ENT("NI", 0x34, 1, 0xF1), /* Nicaragua */
+	COUNTRY_CHPLAN_ENT("NL", 0x26, 1, 0xFB), /* Netherlands */
+	COUNTRY_CHPLAN_ENT("NO", 0x26, 1, 0xFB), /* Norway */
+	COUNTRY_CHPLAN_ENT("NP", 0x47, 1, 0xF0), /* Nepal */
+	COUNTRY_CHPLAN_ENT("NR", 0x26, 1, 0x00), /* Nauru */
+	COUNTRY_CHPLAN_ENT("NU", 0x45, 1, 0x00), /* Niue */
+	COUNTRY_CHPLAN_ENT("NZ", 0x45, 1, 0xFB), /* New Zealand */
+	COUNTRY_CHPLAN_ENT("OM", 0x26, 1, 0xF9), /* Oman */
+	COUNTRY_CHPLAN_ENT("PA", 0x34, 1, 0xF1), /* Panama */
+	COUNTRY_CHPLAN_ENT("PE", 0x34, 1, 0xF1), /* Peru */
+	COUNTRY_CHPLAN_ENT("PF", 0x26, 1, 0x00), /* French Polynesia (France) */
+	COUNTRY_CHPLAN_ENT("PG", 0x26, 1, 0xF1), /* Papua New Guinea */
+	COUNTRY_CHPLAN_ENT("PH", 0x26, 1, 0xF1), /* Philippines */
+	COUNTRY_CHPLAN_ENT("PK", 0x51, 1, 0xF1), /* Pakistan */
+	COUNTRY_CHPLAN_ENT("PL", 0x26, 1, 0xFB), /* Poland */
+	COUNTRY_CHPLAN_ENT("PM", 0x26, 1, 0x00), /* Saint Pierre and Miquelon (France) */
+	COUNTRY_CHPLAN_ENT("PR", 0x34, 1, 0xF1), /* Puerto Rico */
+	COUNTRY_CHPLAN_ENT("PT", 0x26, 1, 0xFB), /* Portugal */
+	COUNTRY_CHPLAN_ENT("PW", 0x34, 1, 0x00), /* Palau */
+	COUNTRY_CHPLAN_ENT("PY", 0x34, 1, 0xF1), /* Paraguay */
+	COUNTRY_CHPLAN_ENT("QA", 0x51, 1, 0xF9), /* Qatar */
+	COUNTRY_CHPLAN_ENT("RE", 0x26, 1, 0x00), /* Reunion (France) */
+	COUNTRY_CHPLAN_ENT("RO", 0x26, 1, 0xF1), /* Romania */
+	COUNTRY_CHPLAN_ENT("RS", 0x26, 1, 0xF1), /* Serbia, Kosovo */
+	COUNTRY_CHPLAN_ENT("RU", 0x59, 1, 0xFB), /* Russia(fac/gost), Kaliningrad */
+	COUNTRY_CHPLAN_ENT("RW", 0x26, 1, 0xB0), /* Rwanda */
+	COUNTRY_CHPLAN_ENT("SA", 0x26, 1, 0xFB), /* Saudi Arabia */
+	COUNTRY_CHPLAN_ENT("SB", 0x26, 1, 0x00), /* Solomon Islands */
+	COUNTRY_CHPLAN_ENT("SC", 0x34, 1, 0x90), /* Seychelles */
+	COUNTRY_CHPLAN_ENT("SE", 0x26, 1, 0xFB), /* Sweden */
+	COUNTRY_CHPLAN_ENT("SG", 0x47, 1, 0xFB), /* Singapore */
+	COUNTRY_CHPLAN_ENT("SH", 0x26, 1, 0x00), /* Saint Helena (UK) */
+	COUNTRY_CHPLAN_ENT("SI", 0x26, 1, 0xFB), /* Slovenia */
+	COUNTRY_CHPLAN_ENT("SJ", 0x26, 1, 0x00), /* Svalbard (Norway) */
+	COUNTRY_CHPLAN_ENT("SK", 0x26, 1, 0xFB), /* Slovakia */
+	COUNTRY_CHPLAN_ENT("SL", 0x26, 1, 0xB0), /* Sierra Leone */
+	COUNTRY_CHPLAN_ENT("SM", 0x26, 1, 0x00), /* San Marino */
+	COUNTRY_CHPLAN_ENT("SN", 0x26, 1, 0xF1), /* Senegal */
+	COUNTRY_CHPLAN_ENT("SO", 0x26, 1, 0x00), /* Somalia */
+	COUNTRY_CHPLAN_ENT("SR", 0x34, 1, 0x00), /* Suriname */
+	COUNTRY_CHPLAN_ENT("ST", 0x34, 1, 0x80), /* Sao Tome and Principe */
+	COUNTRY_CHPLAN_ENT("SV", 0x30, 1, 0xF1), /* El Salvador */
+	COUNTRY_CHPLAN_ENT("SX", 0x34, 1, 0x00), /* Sint Marteen */
+	COUNTRY_CHPLAN_ENT("SZ", 0x26, 1, 0x20), /* Swaziland */
+	COUNTRY_CHPLAN_ENT("TC", 0x26, 1, 0x00), /* Turks and Caicos Islands (UK) */
+	COUNTRY_CHPLAN_ENT("TD", 0x26, 1, 0xB0), /* Chad */
+	COUNTRY_CHPLAN_ENT("TF", 0x26, 1, 0x80), /* French Southern and Antarctic Lands (FR Southern Territories) */
+	COUNTRY_CHPLAN_ENT("TG", 0x26, 1, 0xB0), /* Togo */
+	COUNTRY_CHPLAN_ENT("TH", 0x26, 1, 0xF1), /* Thailand */
+	COUNTRY_CHPLAN_ENT("TJ", 0x26, 1, 0x40), /* Tajikistan */
+	COUNTRY_CHPLAN_ENT("TK", 0x45, 1, 0x00), /* Tokelau */
+	COUNTRY_CHPLAN_ENT("TM", 0x26, 1, 0x00), /* Turkmenistan */
+	COUNTRY_CHPLAN_ENT("TN", 0x47, 1, 0xF1), /* Tunisia */
+	COUNTRY_CHPLAN_ENT("TO", 0x26, 1, 0x00), /* Tonga */
+	COUNTRY_CHPLAN_ENT("TR", 0x26, 1, 0xF1), /* Turkey, Northern Cyprus */
+	COUNTRY_CHPLAN_ENT("TT", 0x42, 1, 0xF1), /* Trinidad & Tobago */
+	COUNTRY_CHPLAN_ENT("TW", 0x39, 1, 0xFF), /* Taiwan */
+	COUNTRY_CHPLAN_ENT("TZ", 0x26, 1, 0xF0), /* Tanzania */
+	COUNTRY_CHPLAN_ENT("UA", 0x26, 1, 0xFB), /* Ukraine */
+	COUNTRY_CHPLAN_ENT("UG", 0x26, 1, 0xF1), /* Uganda */
+	COUNTRY_CHPLAN_ENT("US", 0x34, 1, 0xFF), /* United States of America (USA) */
+	COUNTRY_CHPLAN_ENT("UY", 0x34, 1, 0xF1), /* Uruguay */
+	COUNTRY_CHPLAN_ENT("UZ", 0x47, 1, 0xF0), /* Uzbekistan */
+	COUNTRY_CHPLAN_ENT("VA", 0x26, 1, 0x00), /* Holy See (Vatican City) */
+	COUNTRY_CHPLAN_ENT("VC", 0x34, 1, 0x10), /* Saint Vincent and the Grenadines */
+	COUNTRY_CHPLAN_ENT("VE", 0x30, 1, 0xF1), /* Venezuela */
+	COUNTRY_CHPLAN_ENT("VI", 0x34, 1, 0x00), /* United States Virgin Islands (USA) */
+	COUNTRY_CHPLAN_ENT("VN", 0x26, 1, 0xF1), /* Vietnam */
+	COUNTRY_CHPLAN_ENT("VU", 0x26, 1, 0x00), /* Vanuatu */
+	COUNTRY_CHPLAN_ENT("WF", 0x26, 1, 0x00), /* Wallis and Futuna (France) */
+	COUNTRY_CHPLAN_ENT("WS", 0x34, 1, 0x00), /* Samoa */
+	COUNTRY_CHPLAN_ENT("YE", 0x26, 1, 0x40), /* Yemen */
+	COUNTRY_CHPLAN_ENT("YT", 0x26, 1, 0x80), /* Mayotte (France) */
+	COUNTRY_CHPLAN_ENT("ZA", 0x26, 1, 0xF1), /* South Africa */
+	COUNTRY_CHPLAN_ENT("ZM", 0x26, 1, 0xB0), /* Zambia */
+	COUNTRY_CHPLAN_ENT("ZW", 0x26, 1, 0xF1), /* Zimbabwe */
 };
 
-u16 country_chplan_map_sz = sizeof(country_chplan_map)/sizeof(struct country_chplan);
+u16 const country_chplan_map_sz = sizeof(country_chplan_map)/sizeof(struct country_chplan);
 
 /*
 * rtw_get_chplan_from_country -
 * @country_code: string of country code
 *
-* Return channel_plan index or -1 when unsupported country_code is given
+* Return pointer of struct country_chplan entry or NULL when unsupported country_code is given
 */
-int rtw_get_chplan_from_country(const char *country_code)
+const struct country_chplan *rtw_get_chplan_from_country(const char *country_code)
 {
-	int channel_plan = -1;
+	const struct country_chplan *ent = NULL;
+	const struct country_chplan *map = NULL;
+	u16 map_sz = 0;
+	char code[2];
 	int i;
 
-	/* TODO: should consider 3-character country code? */
+	code[0] = alpha_to_upper(country_code[0]);
+	code[1] = alpha_to_upper(country_code[1]);
 
-	for (i = 0; i < country_chplan_map_sz; i++) {
-		if (strncmp(country_code, country_chplan_map[i].alpha2, 2) == 0) {
-			channel_plan = country_chplan_map[i].chplan;
+#if !defined(CONFIG_CUSTOMIZED_COUNTRY_CHPLAN_MAP) && RTW_DEF_MODULE_REGULATORY_CERT
+	ent = rtw_def_module_get_chplan_from_country(code);
+	if (ent != NULL)
+		goto exit;
+#endif
+
+#ifdef CONFIG_CUSTOMIZED_COUNTRY_CHPLAN_MAP
+	map = CUSTOMIZED_country_chplan_map;
+	map_sz = CUSTOMIZED_country_chplan_map_sz;
+#else
+	map = country_chplan_map;
+	map_sz = country_chplan_map_sz;
+#endif
+
+	for (i = 0; i < map_sz; i++) {
+		if (strncmp(code, map[i].alpha2, 2) == 0) {
+			ent = &map[i];
 			break;
 		}
 	}
 
-	return channel_plan;
+exit:
+	#if RTW_DEF_MODULE_REGULATORY_CERT
+	if (ent && !(COUNTRY_CHPLAN_DEF_MODULE_FALGS(ent) & RTW_DEF_MODULE_REGULATORY_CERT))
+		ent = NULL;
+	#endif
+
+	return ent;
 }
 
 int rtw_ch_to_bb_gain_sel(int ch)
@@ -476,7 +628,7 @@ s8 rtw_rf_get_kfree_tx_gain_offset(_adapter *padapter, u8 path, u8 ch)
 {
 	s8 kfree_offset = 0;
 
-#ifdef CONFIG_RF_GAIN_OFFSET
+#ifdef CONFIG_RF_POWER_TRIM
 	HAL_DATA_TYPE *hal_data = GET_HAL_DATA(padapter);
 	struct kfree_data_t *kfree_data = GET_KFREE_DATA(padapter);
 	s8 bb_gain_sel = rtw_ch_to_bb_gain_sel(ch);
@@ -493,7 +645,7 @@ s8 rtw_rf_get_kfree_tx_gain_offset(_adapter *padapter, u8 path, u8 ch)
 				, __func__, path, ch, bb_gain_sel, kfree_offset);
 	}
 exit:
-#endif /* CONFIG_RF_GAIN_OFFSET */
+#endif /* CONFIG_RF_POWER_TRIM */
 	return kfree_offset;
 }
 

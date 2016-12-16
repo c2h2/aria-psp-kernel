@@ -238,6 +238,7 @@ enum rtw_drvextra_cmd_id
 	DFS_MASTER_WK_CID,
 	SESSION_TRACKER_WK_CID,
 	EN_HW_UPDATE_TSF_WK_CID,
+	MP_CMD_WK_CID,
 	MAX_WK_CID
 };
 
@@ -898,6 +899,14 @@ struct addBaReq_parm
 	u8	addr[ETH_ALEN];
 };
 
+struct addBaRsp_parm {
+	unsigned int tid;
+	unsigned int start_seq;
+	u8 addr[ETH_ALEN];
+	u8 status;
+	u8 size;
+};
+
 /*H2C Handler index: 46 */
 struct set_ch_parm {
 	u8 ch;
@@ -966,6 +975,7 @@ struct SwitchBandwidth_parm
 /*H2C Handler index: 59 */ 
 struct SetChannelPlan_param
 {
+	const struct country_chplan *country_ent;
 	u8 channel_plan;
 };
 
@@ -1057,6 +1067,7 @@ extern u8 rtw_setfwdig_cmd(_adapter*padapter, u8 type);
 extern u8 rtw_setfwra_cmd(_adapter*padapter, u8 type);
 
 extern u8 rtw_addbareq_cmd(_adapter*padapter, u8 tid, u8 *addr);
+extern u8 rtw_addbarsp_cmd(_adapter *padapter, u8 *addr, u16 tid, u8 status, u8 size, u16 start_seq);
 // add for CONFIG_IEEE80211W, none 11w also can use
 extern u8 rtw_reset_securitypriv_cmd(_adapter*padapter);
 extern u8 rtw_free_assoc_resources_cmd(_adapter *padapter);
@@ -1103,10 +1114,15 @@ u8 rtw_btinfo_cmd(PADAPTER padapter, u8 *pbuf, u16 length);
 u8 rtw_enable_hw_update_tsf_cmd(_adapter *padapter);
 
 u8 rtw_set_ch_cmd(_adapter*padapter, u8 ch, u8 bw, u8 ch_offset, u8 enqueue);
+
 u8 rtw_set_chplan_cmd(_adapter *adapter, int flags, u8 chplan, u8 swconfig);
+u8 rtw_set_country_cmd(_adapter *adapter, int flags, const char *country_code, u8 swconfig);
+
 extern u8 rtw_led_blink_cmd(_adapter*padapter, PVOID pLed);
 extern u8 rtw_set_csa_cmd(_adapter*padapter, u8 new_ch_no);
-extern u8 rtw_tdls_cmd(_adapter*padapter, u8 *addr, u8 option);
+extern u8 rtw_tdls_cmd(_adapter *padapter, const u8 *addr, u8 option);
+
+u8 rtw_mp_cmd(_adapter *adapter, u8 mp_cmd_id, u8 flags);
 
 //#ifdef CONFIG_C2H_PACKET_EN
 extern u8 rtw_c2h_packet_wk_cmd(PADAPTER padapter, u8 *pbuf, u16 length);
@@ -1216,6 +1232,7 @@ enum rtw_h2c_cmd
 	GEN_CMD_CODE(_ChkBMCSleepq), /*63*/
 
 	GEN_CMD_CODE(_RunInThreadCMD), /*64*/
+	GEN_CMD_CODE(_AddBARsp) , /*65*/
 
 	MAX_H2CCMD
 };
@@ -1303,6 +1320,7 @@ struct _cmd_callback 	rtw_cmd_callback[] =
 	{GEN_CMD_CODE(_ChkBMCSleepq), NULL}, /*63*/
 
 	{GEN_CMD_CODE(_RunInThreadCMD), NULL},/*64*/
+	{GEN_CMD_CODE(_AddBARsp), NULL}, /*65*/
 };
 #endif
 

@@ -512,7 +512,8 @@ efuse_OneByteWrite(
 		return bResult;
 	}
 
-
+	Efuse_PowerSwitch(pAdapter, _TRUE, _TRUE);
+	
 	// -----------------e-fuse reg ctrl ---------------------------------	
 	//address			
 
@@ -563,6 +564,8 @@ efuse_OneByteWrite(
 		PHY_SetMacReg(pAdapter, EFUSE_TEST, BIT(11), 0);
 	}
 
+	Efuse_PowerSwitch(pAdapter, _TRUE, _FALSE);
+	
 	return bResult;
 }
 
@@ -736,6 +739,24 @@ u8 efuse_GetCurrentSize(PADAPTER padapter, u16 *size)
 	return _SUCCESS;
 }
 //------------------------------------------------------------------------------
+u16 efuse_bt_GetMaxSize(PADAPTER padapter)
+{
+	u16	max_size;
+
+	max_size = 0;
+	EFUSE_GetEfuseDefinition(padapter, EFUSE_BT , TYPE_AVAILABLE_EFUSE_BYTES_TOTAL, (PVOID)&max_size, _FALSE);
+	return max_size;
+}
+
+u8 efuse_bt_GetCurrentSize(PADAPTER padapter, u16 *size)
+{
+	Efuse_PowerSwitch(padapter, _FALSE, _TRUE);
+	*size = Efuse_GetCurrentSize(padapter, EFUSE_BT, _FALSE);
+	Efuse_PowerSwitch(padapter, _FALSE, _FALSE);
+
+	return _SUCCESS;
+}
+
 u8 rtw_efuse_map_read(PADAPTER padapter, u16 addr, u16 cnts, u8 *data)
 {
 	u16	mapLen=0;
@@ -983,7 +1004,7 @@ u8 rtw_efuse_map_write(PADAPTER padapter, u16 addr, u16 cnts, u8 *data)
 			DBG_8192C("%s , data[%d] = %x, map[addr+i]= %x\n", __func__, i, data[i], map[addr+i]);
 		}
 	}
-	Efuse_PowerSwitch(padapter, _TRUE, _TRUE);
+	/*Efuse_PowerSwitch(padapter, _TRUE, _TRUE);*/
 
 	idx = 0;
 	offset = (addr >> 3);
@@ -1029,7 +1050,7 @@ u8 rtw_efuse_map_write(PADAPTER padapter, u16 addr, u16 cnts, u8 *data)
 		offset++;
 	}
 
-	Efuse_PowerSwitch(padapter, _TRUE, _FALSE);
+	/*Efuse_PowerSwitch(padapter, _TRUE, _FALSE);*/
 
 exit:
 
@@ -1490,6 +1511,13 @@ const u8 _mac_hidden_max_bw_to_hal_bw_cap[MAC_HIDDEN_MAX_BW_NUM] = {
 	(BW_CAP_20M|BW_CAP_10M|BW_CAP_5M),
 	(BW_CAP_40M|BW_CAP_20M|BW_CAP_10M|BW_CAP_5M),
 	(BW_CAP_80M|BW_CAP_40M|BW_CAP_20M|BW_CAP_10M|BW_CAP_5M),
+};
+
+const u8 _mac_hidden_proto_to_hal_proto_cap[MAC_HIDDEN_PROTOCOL_NUM] = {
+	0,
+	0,
+	(PROTO_CAP_11N|PROTO_CAP_11G|PROTO_CAP_11B),
+	(PROTO_CAP_11AC|PROTO_CAP_11N|PROTO_CAP_11G|PROTO_CAP_11B),
 };
 
 u8 mac_hidden_wl_func_to_hal_wl_func(u8 func)

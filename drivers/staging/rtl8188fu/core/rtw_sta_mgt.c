@@ -260,7 +260,7 @@ _func_enter_;
 		psta++;
 	}
 
-	
+	pstapriv->adhoc_expire_to = 4; /* 4 * 2 = 8 sec */
 
 #ifdef CONFIG_AP_MODE
 
@@ -454,7 +454,7 @@ _func_exit_;
 
 
 //struct	sta_info *rtw_alloc_stainfo(_queue *pfree_sta_queue, unsigned char *hwaddr)
-struct	sta_info *rtw_alloc_stainfo(struct	sta_priv *pstapriv, u8 *hwaddr) 
+struct	sta_info *rtw_alloc_stainfo(struct	sta_priv *pstapriv, const u8 *hwaddr)
 {	
 	_irqL irqL, irqL2;
 	uint tmp_aid;
@@ -858,7 +858,7 @@ _func_exit_;
 }
 
 /* any station allocated can be searched by hash list */
-struct sta_info *rtw_get_stainfo(struct sta_priv *pstapriv, u8 *hwaddr)
+struct sta_info *rtw_get_stainfo(struct sta_priv *pstapriv, const u8 *hwaddr)
 {
 
 	_irqL	 irqL;
@@ -869,23 +869,19 @@ struct sta_info *rtw_get_stainfo(struct sta_priv *pstapriv, u8 *hwaddr)
 	
 	u32	index;
 
-	u8 *addr;
+	const u8 *addr;
 
-	u8 bc_addr[ETH_ALEN] = {0xff,0xff,0xff,0xff,0xff,0xff};
+	const u8 bc_addr[ETH_ALEN] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
 
 _func_enter_;
 
 	if(hwaddr==NULL)
 		return NULL;
 		
-	if(IS_MCAST(hwaddr))
-	{
+	if (IS_MCAST((unsigned char *)hwaddr))
 		addr = bc_addr;
-	}
 	else
-	{
 		addr = hwaddr;
-	}
 
 	index = wifi_mac_hash(addr);
 

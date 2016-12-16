@@ -256,6 +256,7 @@ struct registry_priv
 
 	u8	wifi_spec;// !turbo_mode
 	u8	special_rf_path; // 0: 2T2R ,1: only turn on path A 1T1R
+	char alpha2[2];
 	u8	channel_plan;
 	u8  full_ch_in_p2p_handshake; /* 0: reply only softap channel, 1: reply full channel list*/
 #ifdef CONFIG_BT_COEXIST
@@ -327,7 +328,7 @@ struct registry_priv
 	u8	RFE_Type;
 	u8	GLNA_Type;	
 	u8  check_fw_ps;
-	u8	RegRfKFreeEnable;
+	u8	RegPwrTrimEnable;
 	
 #ifdef CONFIG_LOAD_PHY_PARA_FROM_FILE
 	u8	load_phy_file;
@@ -376,6 +377,9 @@ struct registry_priv
 #define REGSTY_BW_5G(regsty) (((regsty)->bw_mode) >> 4)
 #define REGSTY_IS_BW_2G_SUPPORT(regsty, bw) (REGSTY_BW_2G((regsty)) >= (bw))
 #define REGSTY_IS_BW_5G_SUPPORT(regsty, bw) (REGSTY_BW_5G((regsty)) >= (bw))
+
+#define REGSTY_IS_11AC_ENABLE(regsty) ((regsty)->vht_enable != 0)
+#define REGSTY_IS_11AC_AUTO(regsty) ((regsty)->vht_enable == 2)
 
 #ifdef CONFIG_SDIO_HCI
 #include <drv_types_sdio.h>
@@ -655,6 +659,7 @@ struct macid_ctl_t {
 	struct macid_bmp if_g[IFACE_ID_MAX];
 	struct macid_bmp ch_g[2]; /* 2 ch concurrency */
 	u8 h2c_msr[MACID_NUM_SW_LIMIT];
+	struct sta_info *sta[MACID_NUM_SW_LIMIT];
 };
 
 struct rf_ctl_t {
@@ -700,6 +705,7 @@ struct dvobj_priv
 	_mutex h2c_fwcmd_mutex;
 	_mutex setch_mutex;
 	_mutex setbw_mutex;
+	_mutex rf_read_reg_mutex;
 #ifdef CONFIG_SDIO_INDIRECT_ACCESS
 	_mutex sd_indirect_access_mutex;
 #endif

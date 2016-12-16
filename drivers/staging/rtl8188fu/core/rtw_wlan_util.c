@@ -819,6 +819,9 @@ void set_channel_bwmode(_adapter *padapter, unsigned char channel, unsigned char
 {
 	u8 center_ch, chnl_offset80 = HAL_PRIME_CHNL_OFFSET_DONT_CARE;
 	struct mlme_ext_priv *pmlmeext = &padapter->mlmeextpriv;
+#if (defined(CONFIG_TDLS) && defined(CONFIG_TDLS_CH_SW)) || defined(CONFIG_MCC_MODE)
+	u8 iqk_info_backup = _FALSE;
+#endif
 
 	if ( padapter->bNotifyChannelChange )
 	{
@@ -860,7 +863,24 @@ void set_channel_bwmode(_adapter *padapter, unsigned char channel, unsigned char
 	rtw_set_oper_bw(padapter, bwmode);
 	rtw_set_oper_choffset(padapter, channel_offset);
 
+#if (defined(CONFIG_TDLS) && defined(CONFIG_TDLS_CH_SW)) || defined(CONFIG_MCC_MODE)
+	/* To check if we need to backup iqk info after switch chnl & bw */
+	{
+		u8 take_care_iqk, do_iqk;
+	
+		rtw_hal_get_hwreg(padapter, HW_VAR_CH_SW_NEED_TO_TAKE_CARE_IQK_INFO, &take_care_iqk);
+		rtw_hal_get_hwreg(padapter, HW_VAR_DO_IQK, &do_iqk);
+		if ((take_care_iqk == _TRUE) && (do_iqk == _TRUE))
+			iqk_info_backup = _TRUE;
+	}
+#endif
+
 	rtw_hal_set_chnl_bw(padapter, center_ch, bwmode, channel_offset, chnl_offset80); // set center channel
+	
+#if (defined(CONFIG_TDLS) && defined(CONFIG_TDLS_CH_SW)) || defined(CONFIG_MCC_MODE)
+	if (iqk_info_backup == _TRUE)
+		rtw_hal_ch_sw_iqk_info_backup(padapter);
+#endif
 
 #ifdef CONFIG_DFS_MASTER
 	if (ori_overlap_radar_detect_ch && !new_overlap_radar_detect_ch) {
@@ -943,20 +963,21 @@ int is_client_associated_to_ibss(_adapter *padapter)
 
 int is_IBSS_empty(_adapter *padapter)
 {
-	unsigned int i;
-	struct mlme_ext_priv	*pmlmeext = &padapter->mlmeextpriv;
-	struct mlme_ext_info	*pmlmeinfo = &(pmlmeext->mlmext_info);
-	
-	for (i = IBSS_START_MAC_ID; i < NUM_STA; i++)
-	{
-		if (pmlmeinfo->FW_sta_info[i].status == 1)
-		{
+	int i;
+	struct macid_ctl_t *macid_ctl = &padapter->dvobj->macid_ctl;
+
+	for (i = 0; i < macid_ctl->num; i++) {
+		if (!rtw_macid_is_used(macid_ctl, i))
+			continue;
+		if (rtw_macid_get_if_g(macid_ctl, i) != padapter->iface_id)
+			continue;
+		if (!GET_H2CCMD_MSRRPT_PARM_OPMODE(&macid_ctl->h2c_msr[i]))
+			continue;
+		if (GET_H2CCMD_MSRRPT_PARM_ROLE(&macid_ctl->h2c_msr[i]) == H2C_MSR_ROLE_ADHOC)
 			return _FAIL;
-		}
 	}
-	
+
 	return _TRUE;
-	
 }
 
 unsigned int decide_wait_for_beacon_timeout(unsigned int bcn_interval)
@@ -1527,25 +1548,6 @@ void rtw_camid_free(_adapter *adapter, u8 cam_id)
 	_exit_critical_bh(&cam_ctl->lock, &irqL);
 }
 
-int allocate_fw_sta_entry(_adapter *padapter)
-{
-	unsigned int mac_id;
-	struct mlme_ext_priv	*pmlmeext = &padapter->mlmeextpriv;
-	struct mlme_ext_info	*pmlmeinfo = &(pmlmeext->mlmext_info);
-	
-	for (mac_id = IBSS_START_MAC_ID; mac_id < NUM_STA; mac_id++)
-	{
-		if (pmlmeinfo->FW_sta_info[mac_id].status == 0)
-		{
-			pmlmeinfo->FW_sta_info[mac_id].status = 1;
-			pmlmeinfo->FW_sta_info[mac_id].retry = 0;
-			break;
-		}
-	}
-	
-	return mac_id;
-}
-
 void flush_all_cam_entry(_adapter *padapter)
 {
 	struct mlme_ext_priv *pmlmeext = &padapter->mlmeextpriv;
@@ -1600,9 +1602,6 @@ void flush_all_cam_entry(_adapter *padapter)
 		rtw_hal_set_hwreg(padapter, HW_VAR_SEC_DK_CFG, (u8*)_FALSE);
 		#endif
 	}
-
-	_rtw_memset((u8 *)(pmlmeinfo->FW_sta_info), 0, sizeof(pmlmeinfo->FW_sta_info));
-	
 }
 
 #if defined(CONFIG_P2P) && defined(CONFIG_WFD)
@@ -1896,8 +1895,9 @@ static void bwmode_update_check(_adapter *padapter, PNDIS_802_11_VARIABLE_IEs pI
 	}	
 
 	
-	if((new_bwmode!= pmlmeext->cur_bwmode) || (new_ch_offset!=pmlmeext->cur_ch_offset))
-	{
+	if ((new_bwmode != pmlmeext->cur_bwmode || new_ch_offset != pmlmeext->cur_ch_offset)
+		&& new_bwmode < pmlmeext->cur_bwmode
+	) {
 		pmlmeinfo->bwmode_updated = _TRUE;
 		
 		pmlmeext->cur_bwmode = new_bwmode;
@@ -3113,7 +3113,7 @@ unsigned char get_highest_mcs_rate(struct HT_caps_element *pHT_caps)
 
 void Update_RA_Entry(_adapter *padapter, struct sta_info *psta)
 {
-	rtw_hal_update_ra_mask(psta, 0);
+	rtw_hal_update_ra_mask(psta, psta->rssi_level);
 }
 
 void enable_rate_adaptive(_adapter *padapter, struct sta_info *psta);
@@ -3454,43 +3454,52 @@ void update_sta_basic_rate(struct sta_info *psta, u8 wireless_mode)
 	}
 }
 
-int update_sta_support_rate(_adapter *padapter, u8* pvar_ie, uint var_ie_len, int cam_idx)
+int rtw_ies_get_supported_rate(u8 *ies, uint ies_len, u8 *rate_set, u8 *rate_num)
 {
-	unsigned int	ie_len;
-	PNDIS_802_11_VARIABLE_IEs	pIE;
-	int	supportRateNum = 0;
-	struct mlme_ext_priv	*pmlmeext = &(padapter->mlmeextpriv);
-	struct mlme_ext_info	*pmlmeinfo = &(pmlmeext->mlmext_info);
-	
-	pIE = (PNDIS_802_11_VARIABLE_IEs)rtw_get_ie(pvar_ie, _SUPPORTEDRATES_IE_, &ie_len, var_ie_len);
-	if (pIE == NULL)
-	{
-		return _FAIL;
+	u8 *ie;
+	unsigned int ie_len;
+
+	if (!rate_set || !rate_num)
+		return _FALSE;
+
+	*rate_num = 0;
+
+	ie = rtw_get_ie(ies, _SUPPORTEDRATES_IE_, &ie_len, ies_len);
+	if (ie == NULL)
+		goto ext_rate;
+
+	_rtw_memcpy(rate_set, ie + 2, ie_len);
+	*rate_num = ie_len;
+
+ext_rate:
+	ie = rtw_get_ie(ies, _EXT_SUPPORTEDRATES_IE_, &ie_len, ies_len);
+	if (ie) {
+		_rtw_memcpy(rate_set + *rate_num, ie + 2, ie_len);
+		*rate_num += ie_len;
 	}
-	
-	_rtw_memcpy(pmlmeinfo->FW_sta_info[cam_idx].SupportedRates, pIE->data, ie_len);
-	supportRateNum = ie_len;
-				
-	pIE = (PNDIS_802_11_VARIABLE_IEs)rtw_get_ie(pvar_ie, _EXT_SUPPORTEDRATES_IE_, &ie_len, var_ie_len);
-	if (pIE)
-	{
-		_rtw_memcpy((pmlmeinfo->FW_sta_info[cam_idx].SupportedRates + supportRateNum), pIE->data, ie_len);
+
+	if (*rate_num == 0)
+		return _FAIL;
+
+	if (0) {
+		int i;
+
+		for (i = 0; i < *rate_num; i++)
+			DBG_871X("rate:0x%02x\n", *(rate_set + i));
 	}
 
 	return _SUCCESS;
-	
 }
 
 void process_addba_req(_adapter *padapter, u8 *paddba_req, u8 *addr)
 {
 	struct sta_info *psta;
 	u16 tid, start_seq, param;	
-	struct recv_reorder_ctrl *preorder_ctrl;
 	struct sta_priv *pstapriv = &padapter->stapriv;	
 	struct ADDBA_request	*preq = (struct ADDBA_request*)paddba_req;
 	struct mlme_ext_priv	*pmlmeext = &padapter->mlmeextpriv;
 	struct mlme_ext_info	*pmlmeinfo = &(pmlmeext->mlmext_info);
-	u8 size;
+	u8 size, accept = _FALSE;
 
 	psta = rtw_get_stainfo(pstapriv, addr);
 	if (!psta)
@@ -3501,27 +3510,14 @@ void process_addba_req(_adapter *padapter, u8 *paddba_req, u8 *addr)
 	param = le16_to_cpu(preq->BA_para_set);
 	tid = (param>>2)&0x0f;
 
-	preorder_ctrl = &psta->recvreorder_ctrl[tid];
 
-	#ifdef CONFIG_UPDATE_INDICATE_SEQ_WHILE_PROCESS_ADDBA_REQ
-	preorder_ctrl->indicate_seq = start_seq;
-	#ifdef DBG_RX_SEQ
-	DBG_871X("DBG_RX_SEQ %s:%d IndicateSeq: %d, start_seq: %d\n", __func__, __LINE__,
-		preorder_ctrl->indicate_seq, start_seq);
-	#endif
-	#else
-	preorder_ctrl->indicate_seq = 0xffff;
-	#endif
-
-	preorder_ctrl->enable = rtw_rx_ampdu_is_accept(padapter);
+	accept = rtw_rx_ampdu_is_accept(padapter);
 	size = rtw_rx_ampdu_size(padapter);
 
-	if (preorder_ctrl->enable == _TRUE) {
-		preorder_ctrl->ampdu_size = size;
-		issue_addba_rsp(padapter, addr, tid, 0, size);
-	} else {
-		issue_addba_rsp(padapter, addr, tid, 37, size); /* reject ADDBA Req */
-	}
+	if (accept == _TRUE)
+		rtw_addbarsp_cmd(padapter, addr, tid, 0, size, start_seq);
+	else
+		rtw_addbarsp_cmd(padapter, addr, tid, 37, size, start_seq); /* reject ADDBA Req */
 
 exit:
 	return;
@@ -3792,6 +3788,7 @@ void rtw_alloc_macid(_adapter *padapter, struct sta_info *psta)
 		rtw_macid_map_set(&macid_ctl->bmc, 1);
 		for (i=0;i<IFACE_ID_MAX;i++)
 			rtw_macid_map_set(&macid_ctl->if_g[padapter->iface_id], 1);
+		macid_ctl->sta[1] = psta;
 		/* TODO ch_g? */
 		_exit_critical_bh(&macid_ctl->lock, &irqL);
 		i = 1;
@@ -3818,6 +3815,7 @@ void rtw_alloc_macid(_adapter *padapter, struct sta_info *psta)
 			rtw_macid_map_set(&macid_ctl->bmc, i);
 
 		rtw_macid_map_set(&macid_ctl->if_g[padapter->iface_id], i);
+		macid_ctl->sta[i] = psta;
 
 		/* TODO ch_g? */
 
@@ -3885,6 +3883,7 @@ void rtw_release_macid(_adapter *padapter, struct sta_info *psta)
 			rtw_macid_map_clr(&macid_ctl->if_g[i], psta->mac_id);
 		for (i=0;i<2;i++)
 			rtw_macid_map_clr(&macid_ctl->ch_g[i], psta->mac_id);
+		macid_ctl->sta[psta->mac_id] = NULL;
 	}
 
 	_exit_critical_bh(&macid_ctl->lock, &irqL);
@@ -4085,15 +4084,17 @@ bool rtw_check_pattern_valid(u8 *input, u8 len)
 {
 	int i = 0;
 	bool res = _FALSE;
-	
-	for (i = 0 ; i < len ; i++) {
-		if ((input[i] <= '9' && input[i] >= '0') ||
-		    (input[i] <= 'F' && input[i] >= 'A') ||
-		    (input[i] <= 'f' && input[i] >= 'a'))
-			res = _TRUE;
-		else
-			res = _FALSE;
-	}
+
+	if (len != 2)
+		goto exit;
+
+	for (i = 0 ; i < len ; i++)
+		if (IsHexDigit(input[i]) == _FALSE)
+			goto exit;
+
+	res = _SUCCESS;
+
+exit:
 	return res;
 }
 

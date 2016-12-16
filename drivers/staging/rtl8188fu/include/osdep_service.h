@@ -258,7 +258,7 @@ extern void	rtw_mfree2d(void *pbuf, int h, int w, int size);
 
 extern void	_rtw_memcpy(void *dec, const void *sour, u32 sz);
 extern void _rtw_memmove(void *dst, const void *src, u32 sz);
-extern int	_rtw_memcmp(void *dst, void *src, u32 sz);
+extern int	_rtw_memcmp(void *dst, const void *src, u32 sz);
 extern void	_rtw_memset(void *pbuf, int c, u32 sz);
 
 extern void	_rtw_init_listhead(_list *list);
@@ -615,6 +615,11 @@ struct rtw_cbuf *rtw_cbuf_alloc(u32 size);
 void rtw_cbuf_free(struct rtw_cbuf *cbuf);
 
 // String handler
+
+BOOLEAN IsHexDigit(char chTmp);
+BOOLEAN is_alpha(char chTmp);
+char alpha_to_upper(char c);
+
 /*
  * Write formatted output to sized buffer
  */
