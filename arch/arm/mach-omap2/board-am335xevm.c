@@ -1706,7 +1706,7 @@ static struct i2c_board_info am335x_i2c2_boardinfo[] = {
 static void i2c2_init(int evm_id, int profile)
 {
 	setup_pin_mux(i2c2_pin_mux);
-	omap_register_i2c_bus(3, 100, am335x_i2c2_boardinfo,
+	omap_register_i2c_bus(3, 200, am335x_i2c2_boardinfo,
 			ARRAY_SIZE(am335x_i2c2_boardinfo));
 	return;
 }
@@ -2388,17 +2388,17 @@ static struct evm_dev_cfg aria_cfg[] = {
 	//{mfd_tscadc_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{lcdc_init,	DEV_ON_BASEBOARD, PROFILE_NONE },
 	//{aria_gpio_led_init,  DEV_ON_BASEBOARD, PROFILE_ALL},
-	{asclepius_gpio_init,  DEV_ON_BASEBOARD, PROFILE_ALL},
+	{asclepius_gpio_init,  DEV_ON_BASEBOARD, PROFILE_ALL}, //no gpio
 	//{tps65217_init, DEV_ON_BASEBOARD, PROFILE_NONE},
 	{mcasp1_init, DEV_ON_BASEBOARD, PROFILE_NONE},
-	{aria_mii1_init, DEV_ON_BASEBOARD, PROFILE_NONE},
+	//{aria_mii1_init, DEV_ON_BASEBOARD, PROFILE_NONE}, //no eth
 	{usb0_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{usb1_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	//{evm_nand_init, DEV_ON_BASEBOARD, PROFILE_ALL},
 	{mmc1_emmc_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{mmc0_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	//{i2c1_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
-	{i2c2_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
+	//{i2c2_init,	DEV_ON_BASEBOARD, PROFILE_NONE}, //no i2c2 dev
 	{spi0_init,     DEV_ON_BASEBOARD, PROFILE_ALL},
         //{uart2_init,     DEV_ON_BASEBOARD, PROFILE_ALL},
         {uart1_init, DEV_ON_BASEBOARD, PROFILE_ALL},
