@@ -879,56 +879,6 @@ static void matrix_keypad_init(int evm_id, int profile)
 }
 
 
-/* pinmux for keypad device */
-static struct pinmux_config volume_keys_pin_mux[] = {
-	{"spi0_sclk.gpio0_2",  OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
-	{"spi0_d0.gpio0_3",    OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
-	{NULL, 0},
-};
-
-/* Configure GPIOs for Volume Keys */
-static struct gpio_keys_button am335x_evm_volume_gpio_buttons[] = {
-	{
-		.code                   = KEY_VOLUMEUP,
-		.gpio                   = GPIO_TO_PIN(0, 2),
-		.active_low             = true,
-		.desc                   = "volume-up",
-		.type                   = EV_KEY,
-		.wakeup                 = 1,
-	},
-	{
-		.code                   = KEY_VOLUMEDOWN,
-		.gpio                   = GPIO_TO_PIN(0, 3),
-		.active_low             = true,
-		.desc                   = "volume-down",
-		.type                   = EV_KEY,
-		.wakeup                 = 1,
-	},
-};
-
-static struct gpio_keys_platform_data am335x_evm_volume_gpio_key_info = {
-	.buttons        = am335x_evm_volume_gpio_buttons,
-	.nbuttons       = ARRAY_SIZE(am335x_evm_volume_gpio_buttons),
-};
-
-static struct platform_device am335x_evm_volume_keys = {
-	.name   = "gpio-keys",
-	.id     = -1,
-	.dev    = {
-		.platform_data  = &am335x_evm_volume_gpio_key_info,
-	},
-};
-
-static void volume_keys_init(int evm_id, int profile)
-{
-	int err;
-
-	setup_pin_mux(volume_keys_pin_mux);
-	err = platform_device_register(&am335x_evm_volume_keys);
-	if (err)
-		pr_err("failed to register matrix keypad (2x3) device\n");
-}
-
 /*
 * @evm_id - evm id which needs to be configured
 * @dev_cfg - single evm structure which includes
@@ -2157,7 +2107,7 @@ static void spi0_init(int evm_id, int profile)
 	gpio_direction_output(g_spi_lcd_rst_gpio, 0);
 	mdelay(20);
 	gpio_direction_output(g_spi_lcd_rst_gpio, 1);
-	mdelay(120);
+	mdelay(100);
 
 	spi_register_board_info(paigo_lcd_spi0_info,
 		ARRAY_SIZE(paigo_lcd_spi0_info));
@@ -2286,6 +2236,7 @@ static void sgx_init(int evm_id, int profile)
 	}
 }
 /* General Purpose EVM */
+/*
 static struct evm_dev_cfg gen_purp_evm_dev_cfg[] = {
 	{am335x_rtc_init, DEV_ON_BASEBOARD, PROFILE_ALL},
 	{clkout2_enable, DEV_ON_BASEBOARD, PROFILE_ALL},
@@ -2316,13 +2267,12 @@ static struct evm_dev_cfg gen_purp_evm_dev_cfg[] = {
 	{wl12xx_init,	DEV_ON_BASEBOARD, (PROFILE_0 | PROFILE_3 | PROFILE_5)},
 	{d_can_init,	DEV_ON_DGHTR_BRD, PROFILE_1},
 	{matrix_keypad_init, DEV_ON_DGHTR_BRD, PROFILE_0},
-	{volume_keys_init,  DEV_ON_DGHTR_BRD, PROFILE_0},
 	{uart2_init,	DEV_ON_DGHTR_BRD, PROFILE_3},
 	{haptics_init,	DEV_ON_DGHTR_BRD, (PROFILE_4)},
 	{sgx_init,	DEV_ON_BASEBOARD, PROFILE_ALL},
 	{NULL, 0, 0},
 };
-
+*/
 /* Industrial Auto Motor Control EVM */
 static struct evm_dev_cfg ind_auto_mtrl_evm_dev_cfg[] = {
 	{am335x_rtc_init, DEV_ON_BASEBOARD, PROFILE_ALL},
@@ -2386,9 +2336,9 @@ static struct evm_dev_cfg aria_cfg[] = {
 	{am335x_rtc_init, DEV_ON_BASEBOARD, PROFILE_NONE},
 	{enable_ecap2,     DEV_ON_BASEBOARD, PROFILE_ALL},
 	//{mfd_tscadc_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
-	{lcdc_init,	DEV_ON_BASEBOARD, PROFILE_NONE },
+	//{lcdc_init,	DEV_ON_BASEBOARD, PROFILE_NONE },
 	//{aria_gpio_led_init,  DEV_ON_BASEBOARD, PROFILE_ALL},
-	{asclepius_gpio_init,  DEV_ON_BASEBOARD, PROFILE_ALL}, //no gpio
+	{asclepius_gpio_init,  DEV_ON_BASEBOARD, PROFILE_ALL}, 
 	//{tps65217_init, DEV_ON_BASEBOARD, PROFILE_NONE},
 	{mcasp1_init, DEV_ON_BASEBOARD, PROFILE_NONE},
 	//{aria_mii1_init, DEV_ON_BASEBOARD, PROFILE_NONE}, //no eth
@@ -2399,7 +2349,7 @@ static struct evm_dev_cfg aria_cfg[] = {
 	{mmc0_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	//{i2c1_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	//{i2c2_init,	DEV_ON_BASEBOARD, PROFILE_NONE}, //no i2c2 dev
-	{spi0_init,     DEV_ON_BASEBOARD, PROFILE_ALL},
+	{spi0_init,     DEV_ON_BASEBOARD, PROFILE_ALL},  //round lcd drive
         //{uart2_init,     DEV_ON_BASEBOARD, PROFILE_ALL},
         {uart1_init, DEV_ON_BASEBOARD, PROFILE_ALL},
         {uart4_init, DEV_ON_BASEBOARD, PROFILE_ALL},
@@ -2544,7 +2494,7 @@ static void setup_general_purpose_evm(void)
 			((boardid == GEN_PURP_DDR3_EVM) ? "with DDR3 " : ""),
 			prof_sel);
 
-	_configure_device(boardid, gen_purp_evm_dev_cfg, (1L << prof_sel));
+	//_configure_device(boardid, gen_purp_evm_dev_cfg, (1L << prof_sel));
 
 	am33xx_cpsw_init(AM33XX_CPSW_MODE_RGMII, NULL, NULL);
 	/* Atheros Tx Clk delay Phy fixup */
@@ -2633,7 +2583,7 @@ static void setup_aria(void){
 	/* TPS65217 regulator has full constraints */
 	//regulator_has_full_constraints();  //this may cause net or audio fail, plz invstigate.
 
-	am33xx_cpsw_init(AM33XX_CPSW_MODE_MII, NULL, NULL);
+	//am33xx_cpsw_init(AM33XX_CPSW_MODE_MII, NULL, NULL);
 }
 
 
