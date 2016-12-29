@@ -76,6 +76,17 @@
 #include "cm33xx.h"
 
 
+
+/* Convert GPIO signal to GPIO pin number */
+#define GPIO_TO_PIN(bank, gpio) (32 * (bank) + (gpio))
+
+static int g_usb_hub_rst_gpio=	GPIO_TO_PIN(3, 19);
+static int g_usb_hub_en_gpio=	GPIO_TO_PIN(2, 0);
+static int g_4g_rst_gpio=	GPIO_TO_PIN(3, 14);
+static int g_4g_wakeup_gpio=	GPIO_TO_PIN(3, 16);
+static int g_4g_interrupt_gpio=	GPIO_TO_PIN(3, 15);
+
+
 /* Descriptor for Spread Spectrum Clocking */
 struct ssc_data {
     const  char* name;          /* Name of the clock */
@@ -825,8 +836,8 @@ static struct pinmux_config aria_gpio_led_mux[] = {
 	{NULL, 0},
 };
 
-/* pinmux for gpio asclepius  */
-static struct pinmux_config asclepius_gpio_mux[] = {
+/* pinmux for gpio slyx  */
+static struct pinmux_config slyx_gpio_mux[] = {
 	{"uart1_ctsn.gpio0_12", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{"gpmc_a0.gpio1_16", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{"gpmc_a1.gpio1_17", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
@@ -2199,9 +2210,22 @@ static void aria_gpio_led_init(int evm_id, int profile)
 }
 
 
-static void asclepius_gpio_init(int evm_id, int profile)
+static void slyx_gpio_init(int evm_id, int profile)
 {
-        setup_pin_mux(asclepius_gpio_mux);
+        setup_pin_mux(slyx_gpio_mux);
+	gpio_request(g_usb_hub_rst_gpio, "usb_hub_rst");
+	gpio_request(g_usb_hub_en_gpio, "usb_hub_en");
+  	gpio_direction_output(g_usb_hub_rst_gpio, 1);
+  	gpio_direction_output(g_usb_hub_en_gpio, 1);
+
+	gpio_request(g_4g_rst_gpio, "4g_rst");
+	gpio_request(g_4g_interrupt_gpio, "4g_interrupt");
+
+  	gpio_direction_output(g_4g_rst_gpio, 1);
+  	gpio_direction_output(g_4g_wakeup_gpio, 1);
+
+
+	//gpio_request(
 }
 
 
@@ -2523,9 +2547,9 @@ static struct evm_dev_cfg aria_cfg[] = {
 	{am335x_rtc_init, DEV_ON_BASEBOARD, PROFILE_NONE},
 	{enable_ecap2,     DEV_ON_BASEBOARD, PROFILE_ALL},
 	//{mfd_tscadc_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
-	{lcdc_init,	DEV_ON_BASEBOARD, PROFILE_NONE },
+	//{lcdc_init,	DEV_ON_BASEBOARD, PROFILE_NONE },
 	//{aria_gpio_led_init,  DEV_ON_BASEBOARD, PROFILE_ALL},
-	{asclepius_gpio_init,  DEV_ON_BASEBOARD, PROFILE_ALL},
+	{slyx_gpio_init,  DEV_ON_BASEBOARD, PROFILE_ALL},
 	//{tps65217_init, DEV_ON_BASEBOARD, PROFILE_NONE},
 	{mcasp1_init, DEV_ON_BASEBOARD, PROFILE_NONE},
 	{aria_mii1_init, DEV_ON_BASEBOARD, PROFILE_NONE},
@@ -2534,12 +2558,12 @@ static struct evm_dev_cfg aria_cfg[] = {
 	//{evm_nand_init, DEV_ON_BASEBOARD, PROFILE_ALL},
 	{mmc1_emmc_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{mmc0_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
-	{i2c1_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
-	{i2c2_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
+	//{i2c1_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
+	//{i2c2_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	//{spi0_init,     DEV_ON_BASEBOARD, PROFILE_ALL},
         //{uart2_init,     DEV_ON_BASEBOARD, PROFILE_ALL},
         {uart1_init, DEV_ON_BASEBOARD, PROFILE_ALL},
-        {uart4_init, DEV_ON_BASEBOARD, PROFILE_ALL},
+        //{uart4_init, DEV_ON_BASEBOARD, PROFILE_ALL},
 	{NULL, 0, 0},
 };
 	
