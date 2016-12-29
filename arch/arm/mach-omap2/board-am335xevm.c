@@ -768,8 +768,8 @@ static struct pinmux_config aria_gpio_led_mux[] = {
 	{NULL, 0},
 };
 
-/* pinmux for gpio asclepius  */
-static struct pinmux_config asclepius_gpio_mux[] = {
+/* pinmux for gpio paigo  */
+static struct pinmux_config paigo_gpio_mux[] = {
 	{"uart1_ctsn.gpio0_12", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{"gpmc_a0.gpio1_16", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{"gpmc_a1.gpio1_17", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
@@ -789,7 +789,7 @@ static struct pinmux_config asclepius_gpio_mux[] = {
 	{"mcasp0_aclkr.gpio3_18", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{"mcasp0_fsr.gpio3_19", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{"gpmc_csn3.gpio2_0", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
-	//{"mcasp0_ahclkr.gpio3_17", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+	{"mcasp0_ahclkr.gpio3_17", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{"mcasp0_axr1.gpio3_20", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{NULL, 0},
 };
@@ -2082,9 +2082,9 @@ static void aria_gpio_led_init(int evm_id, int profile)
 }
 
 
-static void asclepius_gpio_init(int evm_id, int profile)
+static void paigo_gpio_init(int evm_id, int profile)
 {
-        setup_pin_mux(asclepius_gpio_mux);
+        setup_pin_mux(paigo_gpio_mux);
 }
 
 
@@ -2093,26 +2093,28 @@ static void spi0_init(int evm_id, int profile)
 {
 	setup_pin_mux(spi0_pin_mux);
 
+	spi_register_board_info(paigo_lcd_spi0_info, ARRAY_SIZE(paigo_lcd_spi0_info));
+	return;
+}
+
+static void lcd_early_init(int evm_id, int profile){
 	gpio_request(g_spi_lcd_pwr_gpio, "spi-lcd-pwr");
 	gpio_direction_output(g_spi_lcd_pwr_gpio, 1);
 
-/*
 	gpio_request(g_spi_lcd_pwm_gpio, "spi-lcd-pwm");
 	gpio_direction_output(g_spi_lcd_pwm_gpio, 1);
-*/
 
 	gpio_request(g_spi_lcd_rst_gpio, "spi-lcd-rst");
 	gpio_direction_output(g_spi_lcd_rst_gpio, 1);
-	mdelay(10);
+	mdelay(1);
 	gpio_direction_output(g_spi_lcd_rst_gpio, 0);
-	mdelay(20);
+	mdelay(1);
 	gpio_direction_output(g_spi_lcd_rst_gpio, 1);
-	mdelay(100);
-
-	spi_register_board_info(paigo_lcd_spi0_info,
-		ARRAY_SIZE(paigo_lcd_spi0_info));
+        //mdelay(120);
+	pr_info("lcd_early_init: reest done!");
 	return;
 }
+
 
 /* setup spi1 */
 static void spi1_init(int evm_id, int profile)
@@ -2333,12 +2335,13 @@ static struct evm_dev_cfg beagleboneblack_dev_cfg[] = {
 
 
 static struct evm_dev_cfg aria_cfg[] = {
+	{paigo_gpio_init,  DEV_ON_BASEBOARD, PROFILE_ALL}, 
+	{lcd_early_init,  DEV_ON_BASEBOARD, PROFILE_ALL}, 
 	{am335x_rtc_init, DEV_ON_BASEBOARD, PROFILE_NONE},
 	{enable_ecap2,     DEV_ON_BASEBOARD, PROFILE_ALL},
 	//{mfd_tscadc_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	//{lcdc_init,	DEV_ON_BASEBOARD, PROFILE_NONE },
 	//{aria_gpio_led_init,  DEV_ON_BASEBOARD, PROFILE_ALL},
-	{asclepius_gpio_init,  DEV_ON_BASEBOARD, PROFILE_ALL}, 
 	//{tps65217_init, DEV_ON_BASEBOARD, PROFILE_NONE},
 	{mcasp1_init, DEV_ON_BASEBOARD, PROFILE_NONE},
 	//{aria_mii1_init, DEV_ON_BASEBOARD, PROFILE_NONE}, //no eth
@@ -2349,10 +2352,10 @@ static struct evm_dev_cfg aria_cfg[] = {
 	{mmc0_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	//{i2c1_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	//{i2c2_init,	DEV_ON_BASEBOARD, PROFILE_NONE}, //no i2c2 dev
-	{spi0_init,     DEV_ON_BASEBOARD, PROFILE_ALL},  //round lcd drive
         //{uart2_init,     DEV_ON_BASEBOARD, PROFILE_ALL},
         {uart1_init, DEV_ON_BASEBOARD, PROFILE_ALL},
         {uart4_init, DEV_ON_BASEBOARD, PROFILE_ALL},
+	{spi0_init,     DEV_ON_BASEBOARD, PROFILE_ALL},  //round lcd drive
 	{NULL, 0, 0},
 };
 	
