@@ -35,8 +35,8 @@
 #include <linux/delay.h>
 #include <linux/spi/spi.h>
 
-#define VRAM_LEN	(240*204*2)
-#define TXBUF_LEN	(240*204*2*2)	/* SPI transactions require 16 bits */
+#define VRAM_LEN	(240*320*2)
+#define TXBUF_LEN	(240*320*2*2)	/* SPI transactions require 16 bits */
 
 #define SPI_BLOCK_SIZE 32768
 
@@ -484,7 +484,7 @@ static void init_lcd(struct st7789_data *dd)
 	st7789_send_cmd(dd, 0x29);   //Display ON 
 	//Delayms(120);  
 
-	for (i = 0; i < 240*204; i++)
+	for (i = 0; i < 240*320; i++)
 	{
 		dd->txbuf[i*2] = 0x100;
 		dd->txbuf[i*2+1] = 0x100;
@@ -504,15 +504,15 @@ static void init_lcd(struct st7789_data *dd)
 
 	st7789_send_cmd(dd, 0x2c);
 
-	for(i=0;i<240*204*2*2;i+=16384)
+	for(i=0;i<240*320*2*2;i+=16384)
 	{
-		if(240*204*2*2 - i >= 16384)
+		if(240*320*2*2 - i >= 16384)
 		{
 			size = 16384;
 		}
 		else
 		{
-			size = 240*204*2*2 - i;
+			size = 240*320*2*2 - i;
 		}
 		spi_write(dd->spi, (u8 *) dd->txbuf+ i , size);
 	}
