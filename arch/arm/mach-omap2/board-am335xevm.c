@@ -2562,6 +2562,7 @@ static struct evm_dev_cfg aria_cfg[] = {
 	//{i2c2_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	//{spi0_init,     DEV_ON_BASEBOARD, PROFILE_ALL},
         //{uart2_init,     DEV_ON_BASEBOARD, PROFILE_ALL},
+        {uart4_init,     DEV_ON_BASEBOARD, PROFILE_ALL},
         {uart1_init, DEV_ON_BASEBOARD, PROFILE_ALL},
         //{uart4_init, DEV_ON_BASEBOARD, PROFILE_ALL},
 	{NULL, 0, 0},
