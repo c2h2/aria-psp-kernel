@@ -929,7 +929,7 @@ static void matrix_keypad_init(int evm_id, int profile)
 static struct gpio_wdt_platform_data imp706_watchdog_platform_data = {
 	.gpio = GPIO_TO_PIN(3, 17),
 	.gpio_enable = GPIO_TO_PIN(3, 18),
-	.interval = 5 * HZ,
+	.interval = HZ,
 	.first_interval = 0,
 };
 
