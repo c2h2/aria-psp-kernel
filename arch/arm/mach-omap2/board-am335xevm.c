@@ -75,6 +75,7 @@
 /*SSC test*/
 #include "cm33xx.h"
 
+#include <linux/gpio_wdt.h>
 
 /* Descriptor for Spread Spectrum Clocking */
 struct ssc_data {
@@ -827,25 +828,19 @@ static struct pinmux_config aria_gpio_led_mux[] = {
 
 /* pinmux for gpio asclepius  */
 static struct pinmux_config asclepius_gpio_mux[] = {
-	{"uart1_ctsn.gpio0_12", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
-	{"gpmc_a0.gpio1_16", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+	{"gpmc_a0.gpio1_16", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
 	{"gpmc_a1.gpio1_17", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
-	{"gpmc_a2.gpio1_18", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+	{"gpmc_a2.gpio1_18", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
 	{"gpmc_a3.gpio1_19", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
-	{"gpmc_a4.gpio1_20", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+	{"gpmc_a4.gpio1_20", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
 	{"gpmc_a5.gpio1_21", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
 	{"gpmc_a6.gpio1_22", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
-	{"gpmc_a7.gpio1_23", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
-	{"gpmc_a8.gpio1_24", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
-	{"gpmc_a9.gpio1_25", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
-	{"gpmc_a10.gpio1_26", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
-	{"gpmc_a11.gpio1_27", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{"gpmc_clk.gpio2_1", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
-	{"mcasp0_aclkx.gpio3_14", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
-	{"mcasp0_axr0.gpio3_16", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
+
 	{"mcasp0_aclkr.gpio3_18", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
-	{"ecap0_in_pwm0_out.gpio0_7", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
-	{"gpmc_csn3.gpio2_0", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+
+	{"mcasp0_ahclkx.gpio3_21", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
+	{"mcasp0_axr1.gpio3_20", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
 	{NULL, 0},
 };
 
@@ -933,6 +928,35 @@ static void matrix_keypad_init(int evm_id, int profile)
 	}
 }
 
+static struct gpio_wdt_platform_data imp706_watchdog_platform_data = {
+	.gpio = GPIO_TO_PIN(3, 17),
+	.interval = 5 * HZ,
+	.first_interval = 0,
+};
+
+static struct platform_device imp706_watchdog = {
+	.name  = "gpio-wdt",
+	.id    = 0,
+	.dev   = {
+		.platform_data = &imp706_watchdog_platform_data,
+	},
+};
+
+static struct pinmux_config imp706_watchdog_pin_mux[] = {
+	{"mcasp0_ahclkr.gpio3_17", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+	{NULL, 0},
+};
+
+static void imp706_watchdog_init(int evm_id, int profile)
+{
+	int err;
+
+	setup_pin_mux(imp706_watchdog_pin_mux);
+	err = platform_device_register(&imp706_watchdog);
+	if (err) {
+		pr_err("failed to register IMP706 watchdog device\n");
+	}
+}
 
 /* pinmux for keypad device */
 static struct pinmux_config volume_keys_pin_mux[] = {
@@ -1115,12 +1139,6 @@ static struct pinmux_config wl12xx_pin_mux_sk[] = {
 	{"gpmc_csn0.gpio1_29", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT_PULLUP},
 	{"mcasp0_ahclkx.gpio3_21", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{NULL, 0},
-};
-
-static struct pinmux_config cap_touch_pin_mux[] = {
-	{"mcasp0_ahclkx.gpio3_21", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP }, /* interrupt */
-	{"mcasp0_axr1.gpio3_20", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT_PULLUP }, /* RESET maybe choose something */
- 	{NULL, 0 },
 };
 
 static bool backlight_enable;
@@ -1764,15 +1782,11 @@ static struct i2c_board_info am335x_i2c2_boardinfo[] = {
 	{
 		I2C_BOARD_INFO("rx8025", 0x32),
 	},
-	{
-		I2C_BOARD_INFO("GDIX1001:00", 0x5D),
-	},
 };
 
 static void i2c2_init(int evm_id, int profile)
 {
 	setup_pin_mux(i2c2_pin_mux);
-	setup_pin_mux(cap_touch_pin_mux);
 	omap_register_i2c_bus(3, 400, am335x_i2c2_boardinfo,
 			ARRAY_SIZE(am335x_i2c2_boardinfo));
 	return;
@@ -2521,7 +2535,7 @@ static struct evm_dev_cfg beagleboneblack_dev_cfg[] = {
 
 static struct evm_dev_cfg aria_cfg[] = {
 	{am335x_rtc_init, DEV_ON_BASEBOARD, PROFILE_NONE},
-	{enable_ecap2,     DEV_ON_BASEBOARD, PROFILE_ALL},
+	//{enable_ecap2,     DEV_ON_BASEBOARD, PROFILE_ALL},
 	//{mfd_tscadc_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{lcdc_init,	DEV_ON_BASEBOARD, PROFILE_NONE },
 	//{aria_gpio_led_init,  DEV_ON_BASEBOARD, PROFILE_ALL},
@@ -2540,6 +2554,7 @@ static struct evm_dev_cfg aria_cfg[] = {
         //{uart2_init,     DEV_ON_BASEBOARD, PROFILE_ALL},
         {uart1_init, DEV_ON_BASEBOARD, PROFILE_ALL},
         {uart4_init, DEV_ON_BASEBOARD, PROFILE_ALL},
+	{imp706_watchdog_init, DEV_ON_BASEBOARD, PROFILE_ALL},
 	{NULL, 0, 0},
 };
 	
