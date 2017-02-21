@@ -74,6 +74,7 @@ static struct {
 	unsigned int gstate;
 	int interval;
 	int first_interval;
+	unsigned gpio_enable;
 } gpio_wdt_device;
 
 static void gpio_wdt_trigger(unsigned long unused)
@@ -103,6 +104,11 @@ static void gpio_wdt_start(void)
 {
 	unsigned long flags;
 
+	if(gpio_wdt_device.gpio_enable>0)
+	{
+		gpio_set_value(gpio_wdt_device.gpio_enable, 1);
+	}
+
 	spin_lock_irqsave(&gpio_wdt_device.lock, flags);
 	if (!gpio_wdt_device.queue) {
 		gpio_wdt_device.queue = 1;
@@ -126,6 +132,12 @@ static int gpio_wdt_stop(void)
 	}
 	ticks = gpio_wdt_device.default_ticks;
 	spin_unlock_irqrestore(&gpio_wdt_device.lock, flags);
+
+	if(gpio_wdt_device.gpio_enable>0)
+	{
+		gpio_set_value(gpio_wdt_device.gpio_enable, 0);
+	}
+
 	return 0;
 }
 
@@ -219,6 +231,7 @@ static int __devinit gpio_wdt_probe(struct platform_device *pdev)
 	gpio_wdt_device.gpio = gpio_wdt_data->gpio;
 	gpio_wdt_device.interval = gpio_wdt_data->interval;
 	gpio_wdt_device.first_interval = gpio_wdt_data->first_interval;
+	gpio_wdt_device.gpio_enable = gpio_wdt_data->gpio_enable;
 	if (gpio_wdt_device.first_interval <= 0) {
 		gpio_wdt_device.first_interval = gpio_wdt_device.interval;
 	}
@@ -227,6 +240,12 @@ static int __devinit gpio_wdt_probe(struct platform_device *pdev)
 	if (ret < 0) {
 		dev_err(&pdev->dev, "failed to request gpio");
 		return ret;
+	}
+
+	ret = gpio_request(gpio_wdt_device.gpio_enable, "gpio-wdt-enable");
+	if (ret < 0) {
+		dev_err(&pdev->dev, "failed to request gpio for enable wdt");
+		gpio_wdt_device.gpio_enable = 0;
 	}
 
 	spin_lock_init(&gpio_wdt_device.lock);
@@ -251,6 +270,10 @@ static int __devexit gpio_wdt_remove(struct platform_device *pdev)
 	}
 
 	gpio_free(gpio_wdt_device.gpio);
+	if(gpio_wdt_device.gpio>0)
+	{
+		gpio_free(gpio_wdt_device.gpio);
+	}
 	misc_deregister(&gpio_wdt_misc);
 	return 0;
 }

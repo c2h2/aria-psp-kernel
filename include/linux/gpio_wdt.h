@@ -14,6 +14,7 @@
 
 struct gpio_wdt_platform_data {
 	int	gpio;		/* GPIO line number */
+	int	gpio_enable;
 	int	interval;	/* watchdog reset interval in system ticks */
 	int	first_interval;	/* first wd reset interval in system ticks */
 };

@@ -837,8 +837,6 @@ static struct pinmux_config asclepius_gpio_mux[] = {
 	{"gpmc_a6.gpio1_22", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
 	{"gpmc_clk.gpio2_1", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
 
-	{"mcasp0_aclkr.gpio3_18", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
-
 	{"mcasp0_ahclkx.gpio3_21", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
 	{"mcasp0_axr1.gpio3_20", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
 	{NULL, 0},
@@ -930,6 +928,7 @@ static void matrix_keypad_init(int evm_id, int profile)
 
 static struct gpio_wdt_platform_data imp706_watchdog_platform_data = {
 	.gpio = GPIO_TO_PIN(3, 17),
+	.gpio_enable = GPIO_TO_PIN(3, 18),
 	.interval = 5 * HZ,
 	.first_interval = 0,
 };
@@ -944,6 +943,7 @@ static struct platform_device imp706_watchdog = {
 
 static struct pinmux_config imp706_watchdog_pin_mux[] = {
 	{"mcasp0_ahclkr.gpio3_17", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+	{"mcasp0_aclkr.gpio3_18", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{NULL, 0},
 };
 
