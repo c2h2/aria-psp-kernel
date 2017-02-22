@@ -2202,6 +2202,26 @@ static void aria_gpio_led_init(int evm_id, int profile)
 static void asclepius_gpio_init(int evm_id, int profile)
 {
         setup_pin_mux(asclepius_gpio_mux);
+
+	gpio_request_one(GPIO_TO_PIN(1, 16),
+		GPIOF_OUT_INIT_HIGH, "gpio_1_16");
+	gpio_free(GPIO_TO_PIN(1, 16));
+
+	gpio_request_one(GPIO_TO_PIN(1, 18),
+		GPIOF_OUT_INIT_HIGH, "gpio_1_18");
+	gpio_free(GPIO_TO_PIN(1, 18));
+
+	gpio_request_one(GPIO_TO_PIN(1, 24),
+		GPIOF_OUT_INIT_HIGH, "gpio_1_24");
+	gpio_free(GPIO_TO_PIN(1, 24));
+
+	gpio_request_one(GPIO_TO_PIN(0, 20),
+		GPIOF_OUT_INIT_HIGH, "gpio_0_20");
+	gpio_free(GPIO_TO_PIN(0, 20));
+
+	gpio_request_one(GPIO_TO_PIN(2, 0),
+		GPIOF_OUT_INIT_HIGH, "gpio_2_0");
+	gpio_free(GPIO_TO_PIN(2, 0));
 }
 
 
