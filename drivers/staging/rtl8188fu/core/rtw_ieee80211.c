@@ -482,18 +482,19 @@ _func_enter_;
 	ie = rtw_set_ie(ie, _SSID_IE_, pdev_network->Ssid.SsidLength, pdev_network->Ssid.Ssid, &sz);
 	
 	//supported rates
-	if(pregistrypriv->wireless_mode == WIRELESS_11ABGN)
-	{
+	if (pregistrypriv->wireless_mode == WIRELESS_11ABGN) {
 		if(pdev_network->Configuration.DSConfig > 14)
 			wireless_mode = WIRELESS_11A_5N;
 		else
 			wireless_mode = WIRELESS_11BG_24N;
-	}
-	else
-	{
+	} else if (pregistrypriv->wireless_mode == WIRELESS_MODE_MAX) { /* WIRELESS_11ABGN | WIRELESS_11AC */
+		if (pdev_network->Configuration.DSConfig > 14)
+			wireless_mode = WIRELESS_11_5AC;
+		else
+			wireless_mode = WIRELESS_11BG_24N;
+	} else
 		wireless_mode = pregistrypriv->wireless_mode;
-	}
-	
+
 	rtw_set_supported_rate(pdev_network->SupportedRates, wireless_mode) ;
 	
 	rateLen = rtw_get_rateset_len(pdev_network->SupportedRates);
@@ -2142,7 +2143,7 @@ uint rtw_del_p2p_attr(u8 *ie, uint ielen_ori, u8 attr_id)
 
 inline u8 *rtw_bss_ex_get_p2p_ie(WLAN_BSSID_EX *bss_ex, u8 *p2p_ie, uint *p2p_ielen)
 {
-	return rtw_get_wfd_ie(BSS_EX_TLV_IES(bss_ex), BSS_EX_TLV_IES_LEN(bss_ex), p2p_ie, p2p_ielen);
+	return rtw_get_p2p_ie(BSS_EX_TLV_IES(bss_ex), BSS_EX_TLV_IES_LEN(bss_ex), p2p_ie, p2p_ielen);
 }
 
 void rtw_bss_ex_del_p2p_ie(WLAN_BSSID_EX *bss_ex)

@@ -166,6 +166,8 @@ extern void rtl871x_cedbg(const char *fmt, ...);
 	#define MSG_8192C(x, ...) do {} while(0)
 	#define DBG_8192C(x,...) do {} while(0)
 	#define DBG_871X_LEVEL(x,...) do {} while(0)
+	#define RTW_WARN(x, ...) do {} while(0)
+	#define RTW_INFO(x, ...) do {} while(0)
 #endif
 
 #undef _dbgdump
@@ -229,7 +231,7 @@ extern void rtl871x_cedbg(const char *fmt, ...);
 		if (sel == RTW_DBGDUMP)\
 			_DBG_871X_LEVEL(_drv_always_, fmt, ##arg); \
 		else {\
-			if(_seqdump(sel, fmt, ##arg)) /*rtw_warn_on(1)*/; \
+			_seqdump(sel, fmt, ##arg); \
 		} \
 	}while(0)
 
@@ -239,10 +241,12 @@ extern void rtl871x_cedbg(const char *fmt, ...);
 		if (sel == RTW_DBGDUMP)\
 			DBG_871X_LEVEL(_drv_always_, fmt, ##arg); \
 		else {\
-			if(_seqdump(sel, fmt, ##arg)) /*rtw_warn_on(1)*/; \
+			_seqdump(sel, fmt, ##arg) /*rtw_warn_on(1)*/; \
 		} \
 	}while(0)
 
+#define RTW_PRINT_SEL DBG_871X_SEL_NL
+#define _RTW_PRINT_SEL DBG_871X_SEL
 #endif /* defined(_seqdump) */
 
 #endif /* defined(_dbgdump) */
@@ -263,6 +267,45 @@ extern void rtl871x_cedbg(const char *fmt, ...);
 	#define DBG_8192C(...)     do {\
 		_dbgdump(DRIVER_PREFIX __VA_ARGS__);\
 	}while(0)
+
+	#undef RTW_WARN
+	#define RTW_WARN(...)	  do {\
+		_dbgdump(DRIVER_PREFIX"WARN " __VA_ARGS__);\
+	}while(0)
+
+	#undef RTW_INFO
+	#define RTW_INFO DBG_871X
+
+	#undef RTW_INFO_DUMP
+	#define RTW_INFO_DUMP(_TitleString, _HexData, _HexDataLen)			\
+		do {\
+			int __i;								\
+			u8	*ptr = (u8 *)_HexData;				\
+			_dbgdump("%s", DRIVER_PREFIX);						\
+			_dbgdump(_TitleString);						\
+			for (__i = 0; __i < (int)_HexDataLen; __i++) {				\
+				_dbgdump("%02X%s", ptr[__i], (((__i + 1) % 4) == 0) ? "  " : " ");	\
+				if (((__i + 1) % 16) == 0)	\
+					_dbgdump("\n");			\
+			}								\
+			_dbgdump("\n");							\
+		} while (0)
+
+	#undef RTW_PRINT_DUMP
+	#define RTW_PRINT_DUMP(_TitleString, _HexData, _HexDataLen)			\
+		do {\
+			int __i;								\
+			u8	*ptr = (u8 *)_HexData;				\
+			_dbgdump("%s", DRIVER_PREFIX);						\
+			_dbgdump(_TitleString); 					\
+			for (__i = 0; __i < (int)_HexDataLen; __i++) {				\
+				_dbgdump("%02X%s", ptr[__i], (((__i + 1) % 4) == 0) ? "  " : " ");	\
+				if (((__i + 1) % 16) == 0)	\
+					_dbgdump("\n"); 		\
+			}								\
+			_dbgdump("\n"); 						\
+		} while (0)
+
 #endif /* defined(_dbgdump) */
 #endif /* CONFIG_DEBUG */
 
@@ -420,6 +463,8 @@ int proc_get_malloc_cnt(struct seq_file *m, void *v);
 int proc_get_best_channel(struct seq_file *m, void *v);
 ssize_t proc_set_best_channel(struct file *file, const char __user *buffer, size_t count, loff_t *pos, void *data);
 #endif /* CONFIG_FIND_BEST_CHANNEL */
+
+int proc_get_trx_info_debug(struct seq_file *m, void *v);
 
 int proc_get_rx_signal(struct seq_file *m, void *v);
 ssize_t proc_set_rx_signal(struct file *file, const char __user *buffer, size_t count, loff_t *pos, void *data);

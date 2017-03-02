@@ -139,7 +139,11 @@ typedef struct _RT_8188E_FIRMWARE_HDR
 
 
 //#define MAX_RX_DMA_BUFFER_SIZE_88E	      0x2400 //9k for 88E nornal chip , //MaxRxBuff=10k-max(TxReportSize(64*8), WOLPattern(16*24))
-#define RX_DMA_SIZE_88E(__Adapter) ((!IS_VENDOR_8188E_I_CUT_SERIES(__Adapter))?0x2800:0x4000)
+#ifdef CONFIG_USB_HCI
+	#define RX_DMA_SIZE_88E(__Adapter) 0x2800
+#else
+	#define RX_DMA_SIZE_88E(__Adapter) ((!IS_VENDOR_8188E_I_CUT_SERIES(__Adapter))?0x2800:0x4000)
+#endif
 
 #ifdef CONFIG_WOWLAN
 #define RESV_FMWF	WKFMCAM_SIZE*MAX_WKFM_NUM /* 16 entries, for each is 24 bytes*/
@@ -172,7 +176,11 @@ Tx FIFO Size : previous CUT:22K /I_CUT after:32KB
 Tx page Size : 128B
 Total page numbers : 176(0xB0) / 256(0x100)
 */
-#define TOTAL_PAGE_NUMBER_88E(_Adapter)	((IS_VENDOR_8188E_I_CUT_SERIES(_Adapter)?0x100:0xB0) - 1)/* must reserved 1 page for dma issue */
+#ifdef CONFIG_USB_HCI
+	#define TOTAL_PAGE_NUMBER_88E(_Adapter) (0xB0 - 1)
+#else
+	#define TOTAL_PAGE_NUMBER_88E(_Adapter)	((IS_VENDOR_8188E_I_CUT_SERIES(_Adapter)?0x100:0xB0) - 1)/* must reserved 1 page for dma issue */
+#endif
 #define TX_TOTAL_PAGE_NUMBER_88E(_Adapter)	(TOTAL_PAGE_NUMBER_88E(_Adapter) - BCNQ_PAGE_NUM_88E - WOWLAN_PAGE_NUM_88E)
 #define TX_PAGE_BOUNDARY_88E(_Adapter)		(TX_TOTAL_PAGE_NUMBER_88E(_Adapter) + 1) /* beacon header start address */
 
@@ -278,6 +286,9 @@ void Hal_ReadThermalMeter_88E(PADAPTER	Adapter,u8* PROMContent,BOOLEAN 	Autoload
 void Hal_EfuseParseXtal_8188E(PADAPTER pAdapter,u8* hwinfo,BOOLEAN AutoLoadFail);
 void Hal_EfuseParseBoardType88E(PADAPTER pAdapter,u8* hwinfo,BOOLEAN AutoLoadFail);
 void Hal_ReadPowerSavingMode88E(PADAPTER pAdapter,u8* hwinfo,BOOLEAN AutoLoadFail);
+void Hal_ReadPAType_8188E(PADAPTER Adapter, u8 *PROMContent, BOOLEAN AutoloadFail);
+void Hal_ReadAmplifierType_8188E(PADAPTER Adapter, u8 *PROMContent, BOOLEAN AutoloadFail);
+void Hal_ReadRFEType_8188E(PADAPTER Adapter, u8 *PROMContent, BOOLEAN AutoloadFail);
 
 BOOLEAN HalDetectPwrDownMode88E(PADAPTER Adapter);
 	
@@ -286,9 +297,9 @@ void Hal_DetectWoWMode(PADAPTER pAdapter);
 #endif //CONFIG_WOWLAN
 
 
-#ifdef CONFIG_RF_GAIN_OFFSET
+#ifdef CONFIG_RF_POWER_TRIM
 void Hal_ReadRFGainOffset(PADAPTER pAdapter,u8* hwinfo,BOOLEAN AutoLoadFail);
-#endif //CONFIG_RF_GAIN_OFFSET
+#endif /*CONFIG_RF_POWER_TRIM*/
 
 void rtl8188e_init_default_value(_adapter *adapter);
 

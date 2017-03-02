@@ -208,6 +208,11 @@ typedef enum _FIRMWARE_SOURCE {
 	FW_SOURCE_HEADER_FILE = 1,		//from header file
 } FIRMWARE_SOURCE, *PFIRMWARE_SOURCE;
 
+typedef enum _CH_SW_USE_CASE{
+	CH_SW_USE_CASE_TDLS		= 0,
+	CH_SW_USE_CASE_MCC		= 1
+} CH_SW_USE_CASE;
+
 //
 // Queue Select Value in TxDesc
 //
@@ -246,6 +251,7 @@ void rtw_dump_mac_rx_counters(_adapter* padapter,struct dbg_rx_counter *rx_count
 void rtw_dump_phy_rx_counters(_adapter* padapter,struct dbg_rx_counter *rx_counter);
 void rtw_reset_mac_rx_counters(_adapter* padapter);
 void rtw_reset_phy_rx_counters(_adapter* padapter);
+void rtw_reset_phy_trx_ok_counters(_adapter *padapter);
 
 #ifdef DBG_RX_COUNTER_DUMP
 #define DUMP_DRV_RX_COUNTER	BIT0
@@ -273,6 +279,12 @@ void rtw_hal_config_rftype(PADAPTER  padapter);
 #define BW_CAP_80_80M	BIT6
 #define BW_CAP_BIT_NUM	7
 
+#define PROTO_CAP_11B		BIT0
+#define PROTO_CAP_11G		BIT1
+#define PROTO_CAP_11N		BIT2
+#define PROTO_CAP_11AC		BIT3
+#define PROTO_CAP_BIT_NUM	4
+
 #define WL_FUNC_P2P			BIT0
 #define WL_FUNC_MIRACAST	BIT1
 #define WL_FUNC_TDLS		BIT2
@@ -284,19 +296,22 @@ void dump_hal_spec(void *sel, _adapter *adapter);
 
 bool hal_chk_band_cap(_adapter *adapter, u8 cap);
 bool hal_chk_bw_cap(_adapter *adapter, u8 cap);
+bool hal_chk_proto_cap(_adapter *adapter, u8 cap);
 bool hal_is_band_support(_adapter *adapter, u8 band);
 bool hal_is_bw_support(_adapter *adapter, u8 bw);
+bool hal_is_wireless_mode_support(_adapter *adapter, u8 mode);
 u8 hal_largest_bw(_adapter *adapter, u8 in_bw);
 
 bool hal_chk_wl_func(_adapter *adapter, u8 func);
 
-u8	//return the final channel plan decision
-hal_com_config_channel_plan(
-	IN	PADAPTER	padapter,
-	IN	u8			hw_channel_plan,	//channel plan from HW (efuse/eeprom)
-	IN	u8			sw_channel_plan,	//channel plan from SW (registry/module param)
-	IN	u8			def_channel_plan,	//channel plan used when the former two is invalid
-	IN	BOOLEAN		AutoLoadFail
+u8 hal_com_config_channel_plan(
+	IN	PADAPTER padapter,
+	IN	char *hw_alpha2,
+	IN	u8 hw_chplan,
+	IN	char *sw_alpha2,
+	IN	u8 sw_chplan,
+	IN	u8 def_chplan,
+	IN	BOOLEAN AutoLoadFail
 	);
 
 int hal_config_macaddr(_adapter *adapter, bool autoload_fail);
@@ -357,11 +372,6 @@ eqNByte(
 	u32	num
 	);
 
-BOOLEAN 
-IsHexDigit(
-	IN	char	chTmp
-	);
-
 u32
 MapCharToHexDigit(
 	IN	char	chTmp
@@ -412,7 +422,7 @@ void linked_info_dump(_adapter *padapter,u8 benable);
 #ifdef DBG_RX_SIGNAL_DISPLAY_RAW_DATA
 void rtw_get_raw_rssi_info(void *sel, _adapter *padapter);
 void rtw_store_phy_info(_adapter *padapter, union recv_frame *prframe);
-void rtw_dump_raw_rssi_info(_adapter *padapter);
+void rtw_dump_raw_rssi_info(_adapter *padapter, void *sel);
 #endif
 
 #define		HWSET_MAX_SIZE			512
@@ -426,9 +436,9 @@ int check_phy_efuse_tx_power_info_valid(PADAPTER padapter);
 int hal_efuse_macaddr_offset(_adapter *adapter);
 int Hal_GetPhyEfuseMACAddr(PADAPTER padapter, u8 *mac_addr);
 
-#ifdef CONFIG_RF_GAIN_OFFSET
+#ifdef CONFIG_RF_POWER_TRIM
 void rtw_bb_rf_gain_offset(_adapter *padapter);
-#endif //CONFIG_RF_GAIN_OFFSET
+#endif /*CONFIG_RF_POWER_TRIM*/
 
 void dm_DynamicUsbTxAgg(_adapter *padapter, u8 from_timer);
 u8 rtw_hal_busagg_qsel_check(_adapter *padapter,u8 pre_qsel,u8 next_qsel);
@@ -454,8 +464,14 @@ struct noise_info
 #endif
 
 void rtw_get_noise(_adapter* padapter);
-
+u8 rtw_get_current_tx_rate(_adapter *padapter, u8 macid);
 void rtw_hal_set_fw_rsvd_page(_adapter* adapter, bool finished);
+
+#ifdef CONFIG_TDLS
+#ifdef CONFIG_TDLS_CH_SW
+s32 rtw_hal_ch_sw_oper_offload(_adapter *padapter, u8 channel, u8 channel_offset, u16 bwmode);
+#endif
+#endif
 
 #ifdef CONFIG_GPIO_API
 u8 rtw_hal_get_gpio(_adapter* adapter, u8 gpio_num);
@@ -465,7 +481,12 @@ int rtw_hal_register_gpio_interrupt(_adapter* adapter, int gpio_num, void(*callb
 int rtw_hal_disable_gpio_interrupt(_adapter* adapter, int gpio_num);
 #endif
 
+s8 rtw_hal_ch_sw_iqk_info_search(_adapter* padapter, u8 central_chnl, u8 bw_mode);
+void rtw_hal_ch_sw_iqk_info_backup(_adapter* adapter);
+void rtw_hal_ch_sw_iqk_info_restore(_adapter* padapter, u8 ch_sw_use_case);
+
 #ifdef CONFIG_GPIO_WAKEUP
+void rtw_hal_switch_gpio_wl_ctrl(_adapter *padapter, u8 index, u8 enable);
 void rtw_hal_set_output_gpio(_adapter *padapter, u8 index, u8 outputval);
 #endif
 
@@ -515,7 +536,7 @@ static inline u32 rtw_phydm_ability_get(_adapter *adapter)
 
 #ifdef CONFIG_LOAD_PHY_PARA_FROM_FILE
 extern char *rtw_phy_file_path;
-extern char file_path[PATH_LENGTH_MAX];
+extern char rtw_phy_para_file_path[PATH_LENGTH_MAX];
 #define GetLineFromBuffer(buffer)   strsep(&buffer, "\r\n")
 #endif
 
@@ -531,6 +552,11 @@ void rtw_acs_start(_adapter *padapter, bool bStart);
 #endif
 
 void hal_set_crystal_cap(_adapter *adapter, u8 crystal_cap);
+
+#ifdef CONFIG_ANTENNA_DIVERSITY
+u8	rtw_hal_antdiv_before_linked(_adapter *padapter);
+void	rtw_hal_antdiv_rssi_compared(_adapter *padapter, WLAN_BSSID_EX *dst, WLAN_BSSID_EX *src);
+#endif
 
 #endif //__HAL_COMMON_H__
 

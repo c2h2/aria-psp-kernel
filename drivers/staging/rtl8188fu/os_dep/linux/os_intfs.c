@@ -87,6 +87,12 @@ int rtw_ack_policy = NORMAL_ACK;
 
 int rtw_mp_mode = 0;
 
+#if defined(CONFIG_MP_INCLUDED) && defined(CONFIG_RTW_CUSTOMER_STR)
+uint rtw_mp_customer_str = 0;
+module_param(rtw_mp_customer_str, uint, 0644);
+MODULE_PARM_DESC(rtw_mp_customer_str, "Whether or not to enable customer str support on MP mode");
+#endif
+
 int rtw_software_encrypt = 0;
 int rtw_software_decrypt = 0;
 
@@ -100,17 +106,17 @@ int rtw_uapsd_acbe_en = 0;
 int rtw_uapsd_acvi_en = 0;
 int rtw_uapsd_acvo_en = 0;
 #ifdef CONFIG_RTL8814A
-int rtw_rfkfree_enable = 2; /* disable kfree */
+int rtw_pwrtrim_enable = 2; /* disable kfree , rename to power trim disable */
 #else
-int rtw_rfkfree_enable = 0; /* Default Enalbe kfree by efuse config */
+int rtw_pwrtrim_enable = 0; /* Default Enalbe  power trim by efuse config */
 #endif
 #ifdef CONFIG_80211N_HT
-int rtw_ht_enable = 0;
+int rtw_ht_enable = 1;
 // 0: 20 MHz, 1: 40 MHz, 2: 80 MHz, 3: 160MHz, 4: 80+80MHz
 // 2.4G use bit 0 ~ 3, 5G use bit 4 ~ 7
 // 0x21 means enable 2.4G 40MHz & 5G 80MHz
 int rtw_bw_mode = 0x21;
-int rtw_ampdu_enable = 1;//for enable tx_ampdu ,// 0: disable, 0x1:enable (but wifi_spec should be 0), 0x2: force enable (don't care wifi_spec)
+int rtw_ampdu_enable = 1;//for enable tx_ampdu ,// 0: disable, 0x1:enable
 int rtw_rx_stbc = 1;// 0: disable, bit(0):enable 2.4g, bit(1):enable 5g, default is set to enable 2.4GHZ for IOT issue with bufflao's AP at 5GHZ
 int rtw_ampdu_amsdu = 0;// 0: disabled, 1:enabled, 2:auto . There is an IOT issu with DLINK DIR-629 when the flag turn on
 // Short GI support Bit Map
@@ -131,7 +137,7 @@ int rtw_bfee_rf_number = 0; /*BeamformeeCapRfNum  Rf path number, 0 for auto, ot
 #endif //CONFIG_80211N_HT
 
 #ifdef CONFIG_80211AC_VHT
-int rtw_vht_enable = 0; //0:disable, 1:enable, 2:force auto enable
+int rtw_vht_enable = 1; //0:disable, 1:enable, 2:force auto enable
 int rtw_ampdu_factor = 7;
 int rtw_vht_rate_sel = 0;
 #endif //CONFIG_80211AC_VHT
@@ -150,7 +156,14 @@ int rtw_wifi_spec = 0;
 
 int rtw_special_rf_path = 0; //0: 2T2R ,1: only turn on path A 1T1R
 
+char rtw_country_unspecified[] = {0xFF, 0xFF, 0x00};
+char *rtw_country_code = rtw_country_unspecified;
+module_param(rtw_country_code, charp, 0644);
+MODULE_PARM_DESC(rtw_country_code, "The default country code (in alpha2)");
+
 int rtw_channel_plan = RTW_CHPLAN_MAX;
+module_param(rtw_channel_plan, int, 0644);
+MODULE_PARM_DESC(rtw_channel_plan, "The default chplan ID when rtw_alpha2 is not specified or valid");
 
 /*if concurrent softap + p2p(GO) is needed, this param lets p2p response full channel list.
 But Softap must be SHUT DOWN once P2P decide to set up connection and become a GO.*/
@@ -249,9 +262,8 @@ int rtw_ext_iface_num  = 1;//primary/secondary iface is excluded
 module_param(rtw_ext_iface_num, int, 0644);
 #endif //CONFIG_MULTI_VIR_IFACES
 
-module_param(rtw_rfkfree_enable, int, 0644);
+module_param(rtw_pwrtrim_enable, int, 0644);
 module_param(rtw_initmac, charp, 0644);
-module_param(rtw_channel_plan, int, 0644);
 module_param(rtw_special_rf_path, int, 0644);
 module_param(rtw_chip_version, int, 0644);
 module_param(rtw_rfintfs, int, 0644);
@@ -406,10 +418,6 @@ MODULE_PARM_DESC(rtw_OffEfuseMask, "default open Efuse Mask value:0");
 uint rtw_FileMaskEfuse = 0;
 module_param(rtw_FileMaskEfuse, uint, 0644);
 MODULE_PARM_DESC(rtw_FileMaskEfuse, "default drv Mask Efuse value:0");
-
-uint rtw_kfree = 0;
-module_param(rtw_kfree, uint, 0644);
-MODULE_PARM_DESC(rtw_kfree, "default kfree config value:0");
 
 uint rtw_pll_ref_clk_sel = CONFIG_RTW_PLL_REF_CLK_SEL;
 module_param(rtw_pll_ref_clk_sel, uint, 0644);
@@ -589,6 +597,9 @@ _func_enter_;
   	//registry_par->qos_enable = (u8)rtw_qos_enable;
 	registry_par->ack_policy = (u8)rtw_ack_policy;
 	registry_par->mp_mode = (u8)rtw_mp_mode;
+#if defined(CONFIG_MP_INCLUDED) && defined(CONFIG_RTW_CUSTOMER_STR)
+	registry_par->mp_customer_str = (u8)rtw_mp_customer_str;
+#endif
 	registry_par->software_encrypt = (u8)rtw_software_encrypt;
 	registry_par->software_decrypt = (u8)rtw_software_decrypt;
 
@@ -604,7 +615,7 @@ _func_enter_;
 	registry_par->uapsd_acvi_en = (u8)rtw_uapsd_acvi_en;
 	registry_par->uapsd_acvo_en = (u8)rtw_uapsd_acvo_en;
 
-	registry_par->RegRfKFreeEnable = (u8)rtw_rfkfree_enable;
+	registry_par->RegPwrTrimEnable = (u8)rtw_pwrtrim_enable;
 	
 #ifdef CONFIG_80211N_HT
 	registry_par->ht_enable = (u8)rtw_ht_enable;
@@ -635,6 +646,16 @@ _func_enter_;
 
 
 	registry_par->wifi_spec = (u8)rtw_wifi_spec;
+
+	if (strlen(rtw_country_code) != 2
+		|| is_alpha(rtw_country_code[0]) == _FALSE
+		|| is_alpha(rtw_country_code[1]) == _FALSE
+	) {
+		if (rtw_country_code != rtw_country_unspecified)
+			DBG_871X_LEVEL(_drv_err_, "%s discard rtw_country_code not in alpha2\n", __func__);
+		_rtw_memset(registry_par->alpha2, 0xFF, 2);
+	} else
+		_rtw_memcpy(registry_par->alpha2, rtw_country_code, 2);
 
 	registry_par->channel_plan = (u8)rtw_channel_plan;
 	registry_par->special_rf_path = (u8)rtw_special_rf_path;
@@ -917,7 +938,13 @@ static int rtw_ndev_notifier_call(struct notifier_block * nb, unsigned long stat
 	struct net_device *dev = ptr;
 #endif
 
+	if (dev == NULL)
+		return NOTIFY_DONE;
+
 #if (LINUX_VERSION_CODE>=KERNEL_VERSION(2,6,29))
+	if (dev->netdev_ops == NULL)
+		return NOTIFY_DONE;
+
 	if (dev->netdev_ops->ndo_do_ioctl == NULL)
 		return NOTIFY_DONE;
 
@@ -1502,8 +1529,14 @@ struct dvobj_priv *devobj_init(void)
 	_rtw_mutex_init(&pdvobj->h2c_fwcmd_mutex);
 	_rtw_mutex_init(&pdvobj->setch_mutex);
 	_rtw_mutex_init(&pdvobj->setbw_mutex);
+	_rtw_mutex_init(&pdvobj->rf_read_reg_mutex);
 #ifdef CONFIG_SDIO_INDIRECT_ACCESS
 	_rtw_mutex_init(&pdvobj->sd_indirect_access_mutex);
+#endif
+
+#ifdef CONFIG_RTW_CUSTOMER_STR
+	_rtw_mutex_init(&pdvobj->customer_str_mutex);
+	_rtw_memset(pdvobj->customer_str, 0xFF, RTW_CUSTOMER_STR_LEN);
 #endif
 
 	pdvobj->processing_dev_remove = _FALSE;
@@ -1530,8 +1563,14 @@ void devobj_deinit(struct dvobj_priv *pdvobj)
 
 	_rtw_mutex_free(&pdvobj->hw_init_mutex);
 	_rtw_mutex_free(&pdvobj->h2c_fwcmd_mutex);
+
+#ifdef CONFIG_RTW_CUSTOMER_STR
+	_rtw_mutex_free(&pdvobj->customer_str_mutex);
+#endif
+
 	_rtw_mutex_free(&pdvobj->setch_mutex);
 	_rtw_mutex_free(&pdvobj->setbw_mutex);
+	_rtw_mutex_free(&pdvobj->rf_read_reg_mutex);
 #ifdef CONFIG_SDIO_INDIRECT_ACCESS
 	_rtw_mutex_free(&pdvobj->sd_indirect_access_mutex);
 #endif
@@ -1708,8 +1747,9 @@ _func_enter_;
 #endif
 
 	rtw_hal_dm_init(padapter);
+#ifdef CONFIG_SW_LED
 	rtw_hal_sw_led_init(padapter);
-
+#endif
 #ifdef DBG_CONFIG_ERROR_DETECT
 	rtw_hal_sreset_init(padapter);
 #endif
@@ -2104,7 +2144,6 @@ void rtw_drv_stop_vir_if(_adapter *padapter)
 
 	pnetdev = padapter->pnetdev;
 
-	rtw_cancel_all_timer(padapter);
 
 	if (padapter->bup == _TRUE)
 	{
@@ -2122,6 +2161,9 @@ void rtw_drv_stop_vir_if(_adapter *padapter)
 
 		padapter->bup = _FALSE;
 	}
+
+	/* cancel timer after thread stop */
+	rtw_cancel_all_timer(padapter);
 }
 
 void rtw_drv_free_vir_if(_adapter *padapter)
@@ -2447,7 +2489,6 @@ void rtw_drv_if2_stop(_adapter *if2)
 	if (padapter == NULL)
 		return;
 
-	rtw_cancel_all_timer(padapter);
 
 	if (padapter->bup == _TRUE) {
 		#ifdef CONFIG_XMIT_ACK
@@ -2464,6 +2505,9 @@ void rtw_drv_if2_stop(_adapter *if2)
 
 		padapter->bup = _FALSE;
 	}
+
+	/* cancel timer after thread stop */
+	rtw_cancel_all_timer(padapter);
 }
 #endif //end of CONFIG_CONCURRENT_MODE
 
@@ -2964,7 +3008,7 @@ static int netdev_close(struct net_device *pnetdev)
 		LeaveAllPowerSaveMode(padapter);
 		rtw_disassoc_cmd(padapter, 500, _FALSE);
 		//s2-2.  indicate disconnect to os
-		rtw_indicate_disconnect(padapter);
+		rtw_indicate_disconnect(padapter, 0, _FALSE);
 		//s2-3.
 		rtw_free_assoc_resources(padapter, 1);
 		//s2-4.
@@ -3432,7 +3476,9 @@ void rtw_dev_unload(PADAPTER padapter)
 		RT_TRACE(_module_hci_intfs_c_, _drv_notice_, ("%s: bup==_FALSE\n",__FUNCTION__));
 		DBG_871X("%s: bup==_FALSE\n",__FUNCTION__);
 	}
-	
+
+	/* cancel timer after thread stop */
+	rtw_cancel_all_timer(padapter);
 	RT_TRACE(_module_hci_intfs_c_, _drv_notice_, ("-%s\n",__FUNCTION__));
 }
 
@@ -3467,7 +3513,7 @@ int rtw_suspend_free_assoc_resource(_adapter *padapter)
 	{	
 		rtw_disassoc_cmd(padapter, 0, _FALSE);	
 		//s2-2.  indicate disconnect to os
-		rtw_indicate_disconnect(padapter);
+		rtw_indicate_disconnect(padapter, 0, _FALSE);
 	}
 	#ifdef CONFIG_AP_MODE
 	else if(check_fwstate(pmlmepriv, WIFI_AP_STATE))	
@@ -3494,7 +3540,7 @@ int rtw_suspend_free_assoc_resource(_adapter *padapter)
 	if (check_fwstate(pmlmepriv, _FW_UNDER_LINKING) == _TRUE)
 	{
 		DBG_871X_LEVEL(_drv_always_, "%s: fw_under_linking\n", __FUNCTION__);
-		rtw_indicate_disconnect(padapter);
+		rtw_indicate_disconnect(padapter, 0, _FALSE);
 	}
 	
 	DBG_871X("<== "FUNC_ADPT_FMT" exit....\n", FUNC_ADPT_ARG(padapter));
@@ -4065,7 +4111,7 @@ _func_enter_;
 
 			DBG_871X("%s: disconnect reason: %02x\n", __func__,
 						pwrpriv->wowlan_wake_reason);
-			rtw_indicate_disconnect(padapter);
+			rtw_indicate_disconnect(padapter, 0, _FALSE);
 
 			rtw_sta_media_status_rpt(padapter,
 				rtw_get_stainfo(&padapter->stapriv,
@@ -4091,10 +4137,15 @@ _func_enter_;
 	}
 
 	if (pwrpriv->wowlan_wake_reason == RX_PNOWakeUp) {
-#ifdef CONFIG_IOCTL_CFG80211	
-		cfg80211_disconnected(padapter->pnetdev, 0, NULL, 0,
-				GFP_ATOMIC);
+#ifdef CONFIG_IOCTL_CFG80211
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 2, 0))
+			u8 locally_generated = 1;
+
+			cfg80211_disconnected(padapter->pnetdev, 0, NULL, 0, locally_generated, GFP_ATOMIC);
+#else
+			cfg80211_disconnected(padapter->pnetdev, 0, NULL, 0, GFP_ATOMIC);
 #endif
+#endif /* CONFIG_IOCTL_CFG80211 */
 		rtw_lock_ext_suspend_timeout(10000);
 	}
 
@@ -4111,14 +4162,14 @@ _func_enter_;
 	pwrpriv->wowlan_mode =_FALSE;
 
 	// Power On LED
-	rtw_hal_sw_led_init(padapter);
+#ifdef CONFIG_SW_LED
 	if(pwrpriv->wowlan_wake_reason == Rx_DisAssoc ||
 		pwrpriv->wowlan_wake_reason == Rx_DeAuth ||
 		pwrpriv->wowlan_wake_reason == FWDecisionDisconnect)
 		rtw_led_control(padapter, LED_CTL_NO_LINK);
 	else
 		rtw_led_control(padapter, LED_CTL_LINK);
-
+#endif
 	//clean driver side wake up reason.
 	pwrpriv->wowlan_wake_reason = 0;
 
@@ -4255,8 +4306,9 @@ _func_enter_;
 	pwrpriv->wowlan_wake_reason = 0;
 
 	// Power On LED
-	rtw_hal_sw_led_init(padapter);
+#ifdef CONFIG_SW_LED
 	rtw_led_control(padapter, LED_CTL_LINK);
+#endif
 exit:
 	DBG_871X("<== "FUNC_ADPT_FMT" exit....\n", FUNC_ADPT_ARG(padapter));
 _func_exit_;

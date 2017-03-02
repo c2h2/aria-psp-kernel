@@ -395,14 +395,14 @@
 //----------------------------------------------------------------------------
 #define BIT_BCN_PORT_SEL		BIT5
 
-#ifdef CONFIG_RF_GAIN_OFFSET
+#ifdef CONFIG_RF_POWER_TRIM
 
 #ifdef CONFIG_RTL8703B
 #define EEPROM_RF_GAIN_OFFSET			0xC1
 #endif
 
 #define EEPROM_RF_GAIN_VAL				0x1F6
-#endif //CONFIG_RF_GAIN_OFFSET
+#endif /*CONFIG_RF_POWER_TRIM*/
 
 
 //----------------------------------------------------------------------------
@@ -474,6 +474,7 @@
 #define NSS_NUM_8703B 1
 #define BAND_CAP_8703B (BAND_CAP_2G)
 #define BW_CAP_8703B (BW_CAP_20M | BW_CAP_40M)
+#define PROTO_CAP_8703B (PROTO_CAP_11B|PROTO_CAP_11G|PROTO_CAP_11N)
 
 #endif /* __RTL8703B_SPEC_H__ */
 

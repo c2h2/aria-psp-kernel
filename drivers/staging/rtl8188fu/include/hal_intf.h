@@ -42,6 +42,9 @@ enum _CHIP_TYPE {
 	MAX_CHIP_TYPE
 };
 
+extern const u32 _chip_type_to_odm_ic_type[];
+#define chip_type_to_odm_ic_type(chip_type) (((chip_type) >= MAX_CHIP_TYPE) ? _chip_type_to_odm_ic_type[MAX_CHIP_TYPE] : _chip_type_to_odm_ic_type[(chip_type)])
+
 typedef enum _HAL_HW_TIMER_TYPE {
 	HAL_TIMER_NONE = 0,
 	HAL_TIMER_TXBF = 1,
@@ -92,13 +95,9 @@ typedef enum _HW_VARIABLES{
 	HW_VAR_H2C_FW_JOINBSSRPT,
 	HW_VAR_FWLPS_RF_ON,
 	HW_VAR_H2C_FW_P2P_PS_OFFLOAD,
-	HW_VAR_TDLS_WRCR,
-	HW_VAR_TDLS_RS_RCR,
 	HW_VAR_TRIGGER_GPIO_0,
 	HW_VAR_BT_SET_COEXIST,
 	HW_VAR_BT_ISSUE_DELBA,	
-	HW_VAR_CURRENT_ANTENNA,
-	HW_VAR_ANTENNA_DIVERSITY_SELECT,
 	HW_VAR_SWITCH_EPHY_WoWLAN,
 	HW_VAR_EFUSE_USAGE,
 	HW_VAR_EFUSE_BYTES,
@@ -155,12 +154,21 @@ typedef enum _HW_VARIABLES{
 	HW_VAR_DUMP_MAC_QUEUE_INFO,
 	HW_VAR_ASIX_IOT,
 	HW_VAR_EN_HW_UPDATE_TSF,
+	HW_VAR_CH_SW_NEED_TO_TAKE_CARE_IQK_INFO,
+	HW_VAR_CH_SW_IQK_INFO_BACKUP,
+	HW_VAR_CH_SW_IQK_INFO_RESTORE,
+#ifdef CONFIG_TDLS	
+	HW_VAR_TDLS_WRCR,
+	HW_VAR_TDLS_RS_RCR,
+#ifdef CONFIG_TDLS_CH_SW	
+	HW_VAR_TDLS_BCN_EARLY_C2H_RPT
+#endif
+#endif
 }HW_VARIABLES;
 
 typedef enum _HAL_DEF_VARIABLE{
 	HAL_DEF_UNDERCORATEDSMOOTHEDPWDB,
 	HAL_DEF_IS_SUPPORT_ANT_DIV,
-	HAL_DEF_CURRENT_ANTENNA,
 	HAL_DEF_DRVINFO_SZ,
 	HAL_DEF_MAX_RECVBUF_SZ,
 	HAL_DEF_RX_PACKET_OFFSET,
@@ -208,9 +216,11 @@ typedef enum _HAL_ODM_VARIABLE{
 	HAL_ODM_DBG_FLAG,
 	HAL_ODM_DBG_LEVEL,
 	HAL_ODM_RX_INFO_DUMP,
-
 #ifdef CONFIG_AUTO_CHNL_SEL_NHM
 	HAL_ODM_AUTO_CHNL_SEL,
+#endif
+#ifdef CONFIG_ANTENNA_DIVERSITY
+	HAL_ODM_ANTDIV_SELECT
 #endif
 }HAL_ODM_VARIABLE;
 
@@ -307,14 +317,7 @@ struct hal_ops {
 	void	(*SetBeaconRelatedRegistersHandler)(_adapter *padapter);
 
 	void	(*Add_RateATid)(_adapter *padapter, u64 bitmap, u8 *arg, u8 rssi_level);
-
-
-#ifdef CONFIG_ANTENNA_DIVERSITY
-	u8	(*AntDivBeforeLinkHandler)(_adapter *padapter);
-	void	(*AntDivCompareHandler)(_adapter *padapter, WLAN_BSSID_EX *dst, WLAN_BSSID_EX *src);
-#endif
 	u8	(*interface_ps_func)(_adapter *padapter,HAL_INTF_PS_FUNC efunc_id, u8* val);
-
 
 	u32	(*read_bbreg)(_adapter *padapter, u32 RegAddr, u32 BitMask);
 	void	(*write_bbreg)(_adapter *padapter, u32 RegAddr, u32 BitMask, u32 Data);
@@ -355,9 +358,9 @@ struct hal_ops {
 	s32 (*fill_h2c_cmd)(PADAPTER, u8 ElementID, u32 CmdLen, u8 *pCmdBuffer);
 	void (*fill_fake_txdesc)(PADAPTER, u8 *pDesc, u32 BufferLen,
 			u8 IsPsPoll, u8 IsBTQosNull, u8 bDataFrame);
-	
+	s32 (*fw_dl)(_adapter *adapter, u8 wowlan);
+
 #if defined(CONFIG_WOWLAN) || defined(CONFIG_AP_WOWLAN)
-	void (*hal_set_wowlan_fw)(_adapter *adapter, u8 sleep);
 	void (*clear_interrupt)(_adapter *padapter);
 #endif	
 	u8 (*hal_get_tx_buff_rsvd_page_num)(_adapter *adapter, bool wowlan);
@@ -626,11 +629,6 @@ void	rtw_hal_dm_watchdog_in_lps(_adapter *padapter);
 void	rtw_hal_set_tx_power_level(_adapter *padapter, u8 channel);
 void	rtw_hal_get_tx_power_level(_adapter *padapter, s32 *powerlevel);
 
-#ifdef CONFIG_ANTENNA_DIVERSITY
-u8	rtw_hal_antdiv_before_linked(_adapter *padapter);
-void	rtw_hal_antdiv_rssi_compared(_adapter *padapter, WLAN_BSSID_EX *dst, WLAN_BSSID_EX *src);
-#endif
-
 #ifdef CONFIG_HOSTAPD_MLME
 s32	rtw_hal_hostap_mgnt_xmit_entry(_adapter *padapter, _pkt *pkt);
 #endif
@@ -675,10 +673,10 @@ void rtw_hal_update_hisr_hsisr_ind(_adapter *padapter, u32 flag);
 #endif
 
 void rtw_hal_fw_correct_bcn(_adapter *padapter);
+s32 rtw_hal_fw_dl(_adapter *padapter, u8 wowlan);
 
 #if defined(CONFIG_WOWLAN) || defined(CONFIG_AP_WOWLAN)
 void rtw_hal_clear_interrupt(_adapter *padapter);
-void rtw_hal_set_wowlan_fw(_adapter *padapter, u8 sleep);
 #endif
 u8 rtw_hal_ops_check(_adapter *padapter);
 

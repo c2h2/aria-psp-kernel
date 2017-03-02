@@ -1038,7 +1038,7 @@ sint OnTDLS(_adapter *adapter, union recv_frame *precv_frame)
 			+ PAYLOAD_TYPE_LEN 
 			+ category_field;
 
-	DBG_871X("[TDLS] Recv %s from "MAC_FMT"\n", rtw_tdls_action_txt(*paction), MAC_ARG(pattrib->src));
+	DBG_871X("[TDLS] Recv %s from "MAC_FMT" with SeqNum = %d \n", rtw_tdls_action_txt(*paction), MAC_ARG(pattrib->src), GetSequence(get_recvframe_data(precv_frame)));
 
 	if (hal_chk_wl_func(adapter, WL_FUNC_TDLS) == _FALSE) {
 		DBG_871X("Ignore tdls frame since hal doesn't support tdls\n");
@@ -1263,13 +1263,11 @@ _func_enter_;
 				}
 
 #ifdef CONFIG_TDLS_CH_SW
-				pchsw_info->ch_sw_state |= TDLS_PEER_AT_OFF_STATE;
-
 				if(ATOMIC_READ(&pchsw_info->chsw_on) == _TRUE) {
-					if (!(pchsw_info->ch_sw_state & TDLS_PEER_AT_OFF_STATE)) {
-						DBG_871X("%s %d\n", __FUNCTION__, __LINE__);
-						issue_nulldata_to_TDLS_peer_STA(adapter, ptdls_sta->hwaddr, 0, 0, 0);
+					if (adapter->mlmeextpriv.cur_channel != rtw_get_oper_ch(adapter)) {
 						pchsw_info->ch_sw_state |= TDLS_PEER_AT_OFF_STATE;
+						if (!(pchsw_info->ch_sw_state & TDLS_CH_SW_INITIATOR_STATE))
+							_cancel_timer_ex(&ptdls_sta->ch_sw_timer);
 						/* On_TDLS_Peer_Traffic_Rsp(adapter, precv_frame); */
 					}
 				}
@@ -2325,7 +2323,8 @@ _func_enter_;
 
 #if 1 //Dump rx packets
 {
-	u8 bDumpRxPkt;
+	u8 bDumpRxPkt = 0;
+
 	rtw_hal_get_def_var(adapter, HAL_DEF_DBG_DUMP_RXPKT, &(bDumpRxPkt));
 	if (bDumpRxPkt == 1) //dump all rx packets
 		dump_rx_packet(ptr);
@@ -3556,11 +3555,15 @@ int recv_indicatepkt_reorder(_adapter *padapter, union recv_frame *prframe)
 	//recv_indicatepkts_in_order(padapter, preorder_ctrl, _TRUE);
 	if(recv_indicatepkts_in_order(padapter, preorder_ctrl, _FALSE)==_TRUE)
 	{
+		if (!preorder_ctrl->bReorderWaiting) {
+			preorder_ctrl->bReorderWaiting = _TRUE;
 		_set_timer(&preorder_ctrl->reordering_ctrl_timer, REORDER_WAIT_TIME);
+		}
 		_exit_critical_bh(&ppending_recvframe_queue->lock, &irql);
 	}
 	else
 	{
+		preorder_ctrl->bReorderWaiting = _FALSE;
 		_exit_critical_bh(&ppending_recvframe_queue->lock, &irql);
 		_cancel_timer_ex(&preorder_ctrl->reordering_ctrl_timer);
 	}
@@ -3592,6 +3595,10 @@ void rtw_reordering_ctrl_timeout_handler(void *pcontext)
 	//DBG_871X("+rtw_reordering_ctrl_timeout_handler()=>\n");
 
 	_enter_critical_bh(&ppending_recvframe_queue->lock, &irql);
+
+	if (preorder_ctrl) {
+		preorder_ctrl->bReorderWaiting = _FALSE;
+	}
 
 	if(recv_indicatepkts_in_order(padapter, preorder_ctrl, _TRUE)==_TRUE)
 	{
@@ -3683,9 +3690,11 @@ int validate_mp_recv_frame(_adapter *adapter, union recv_frame *precv_frame)
 	int ret = _SUCCESS;
 	u8 *ptr = precv_frame->u.hdr.rx_data;	
 	u8 type,subtype;
+	struct mp_priv *pmppriv = &adapter->mppriv;
+	struct mp_tx		*pmptx;
 
-	if(!adapter->mppriv.bmac_filter)	
-		return ret;
+	pmptx = &pmppriv->tx;
+
 #if 0	
 	if (1){
 		u8 bDumpRxPkt;
@@ -3700,10 +3709,19 @@ int validate_mp_recv_frame(_adapter *adapter, union recv_frame *precv_frame)
 			for(i=0; i<64;i=i+8)
 				DBG_871X("%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:\n", *(ptr+i),
 				*(ptr+i+1), *(ptr+i+2) ,*(ptr+i+3) ,*(ptr+i+4),*(ptr+i+5), *(ptr+i+6), *(ptr+i+7));
-			DBG_871X("############################# \n");
+			DBG_871X("#############################\n");
 		}
 	}
-#endif		
+#endif
+	if (pmppriv->bloopback) {
+		if (_rtw_memcmp(ptr + 24, pmptx->buf + 24, precv_frame->u.hdr.len - 24) == _FALSE) {
+			DBG_871X("Compare payload content Fail !!!\n");
+			ret = _FAIL;
+		}
+	}
+
+	if (!adapter->mppriv.bmac_filter)
+		return ret;
 
 	if(_rtw_memcmp( GetAddr2Ptr(ptr), adapter->mppriv.mac_filter, ETH_ALEN) == _FALSE )
 		ret = _FAIL;
