@@ -1212,6 +1212,89 @@ error_exit:
 extern void rtd2885_wlan_netlink_sendMsg(char *action_string, char *name);
 #endif
 
+
+int rtw_mp_efuse_repair_2(_adapter *padapter)
+{
+#define EFUSE_REPAIR_1	0x03
+#define EFUSE_REPAIR_2	0x0D
+#define EFUSE_REPAIR_3	0x130
+#define EFUSE_REPAIR_4	0x131
+#define EFUSE_REPAIR_5	0x13A
+#define EFUSE_REPAIR_6	0x13B
+    u8 r_map[16] = {0};
+    u8 repair_map[6] = {0xFC, 0x07, 0xC1, 0xB6, 0x00, 0x11};
+    int ret;
+    
+	ret = rtw_efuse_map_read(padapter, EFUSE_REPAIR_1, 1 , &r_map[0]);
+	if(_FAIL == ret)
+	{
+	    DBG_871X("rtw_efuse_map_read1 fail\n");
+	}
+	ret = rtw_efuse_map_read(padapter, EFUSE_REPAIR_2, 1 , &r_map[1]);
+	if(_FAIL == ret)
+	{
+	    DBG_871X("rtw_efuse_map_read2 fail\n");
+	}
+	ret = rtw_efuse_map_read(padapter, EFUSE_REPAIR_3, 1 , &r_map[2]);
+	if(_FAIL == ret)
+	{
+	    DBG_871X("rtw_efuse_map_read3 fail\n");
+	}
+	ret = rtw_efuse_map_read(padapter, EFUSE_REPAIR_4, 1 , &r_map[3]);
+	if(_FAIL == ret)
+	{
+	    DBG_871X("rtw_efuse_map_read4 fail\n");
+	}
+	ret = rtw_efuse_map_read(padapter, EFUSE_REPAIR_5, 1 , &r_map[4]);
+	if(_FAIL == ret)
+	{
+	    DBG_871X("rtw_efuse_map_read5 fail\n");
+	}
+	ret = rtw_efuse_map_read(padapter, EFUSE_REPAIR_6, 1 , &r_map[5]);
+	if(_FAIL == ret)
+	{
+	    DBG_871X("rtw_efuse_map_read6 fail\n");
+	}
+	
+	DBG_871X("repair pre: %02X %02X %02X %02X %02X %02X\r\n", 
+    		r_map[0],r_map[1],r_map[2],
+    		r_map[3],r_map[4],r_map[5]);
+	
+	if( (r_map[0] != repair_map[0]) || (r_map[1] != repair_map[1])
+        || (r_map[2] != repair_map[2]) || (r_map[3] != repair_map[3])
+        || (r_map[4] != repair_map[4]) || (r_map[5] != repair_map[5]) )
+    {
+    	DBG_871X("repair start...\r\n");
+    	if(r_map[0] != repair_map[0])
+    	{
+//    	    efuse_OneByteWrite(padapter, 0x18, repair_map[0], _FALSE);
+            rtw_efuse_map_write(padapter, EFUSE_REPAIR_1, 1, &repair_map[0]);
+    	}
+    	if(r_map[1] != repair_map[1])
+    	{
+    	    rtw_efuse_map_write(padapter, EFUSE_REPAIR_2, 1, &repair_map[1]);
+    	}
+    	if(r_map[2] != repair_map[2])
+    	{
+    	    rtw_efuse_map_write(padapter, EFUSE_REPAIR_3, 1, &repair_map[2]);
+    	}
+    	if(r_map[3] != repair_map[3])
+    	{
+	    rtw_efuse_map_write(padapter, EFUSE_REPAIR_4, 1, &repair_map[3]);
+    	}
+    	if(r_map[4] != repair_map[4])
+    	{
+    	    rtw_efuse_map_write(padapter, EFUSE_REPAIR_5, 1, &repair_map[4]);
+    	}
+    	if(r_map[5] != repair_map[5])
+    	{
+	    rtw_efuse_map_write(padapter, EFUSE_REPAIR_6, 1, &repair_map[5]);
+    	}
+    }
+    
+    return 0;
+}
+
 /*
  * drv_init() - a device potentially for us
  *
@@ -1278,6 +1361,8 @@ _adapter *rtw_usb_if1_init(struct dvobj_priv *dvobj,
 
 	//step read efuse/eeprom data and get mac_addr
 	rtw_hal_read_chip_info(padapter);
+	rtw_mp_efuse_repair_2(padapter);
+
 
 	//step 5.
 	if(rtw_init_drv_sw(padapter) ==_FAIL) {

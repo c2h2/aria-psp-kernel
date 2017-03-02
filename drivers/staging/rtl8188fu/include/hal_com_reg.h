@@ -186,6 +186,7 @@
 #define REG_RXDMA_AGG_PG_TH			0x0280
 #define REG_RXPKT_NUM					0x0284 
 #define REG_RXDMA_STATUS				0x0288
+#define REG_RXDMA_MODE					0x0290
 
 //-----------------------------------------------------
 //
@@ -1753,8 +1754,11 @@ Current IOREG MAP
 //========================================================
 // General definitions
 //========================================================
-
-#define LAST_ENTRY_OF_TX_PKT_BUFFER_8188E(__Adapter)	   ( IS_VENDOR_8188E_I_CUT_SERIES(__Adapter) ? 255 : 175 )
+#ifdef CONFIG_USB_HCI
+	#define LAST_ENTRY_OF_TX_PKT_BUFFER_8188E(__Adapter)	(175)
+#else
+	#define LAST_ENTRY_OF_TX_PKT_BUFFER_8188E(__Adapter)	( IS_VENDOR_8188E_I_CUT_SERIES(__Adapter) ? 255 : 175 )
+#endif
 #define LAST_ENTRY_OF_TX_PKT_BUFFER_8812			255
 #define LAST_ENTRY_OF_TX_PKT_BUFFER_8723B		255
 #define LAST_ENTRY_OF_TX_PKT_BUFFER_8192C		255

@@ -728,7 +728,7 @@ static void usb_AggSettingRxUpdate(PADAPTER padapter)
 {
 	PHAL_DATA_TYPE pHalData;
 	u8 aggctrl;
-	u32 aggrx;
+	u32 aggrx, rxdmamode;
 
 
 	pHalData = GET_HAL_DATA(padapter);
@@ -740,6 +740,8 @@ static void usb_AggSettingRxUpdate(PADAPTER padapter)
 	aggrx &= ~BIT_USB_RXDMA_AGG_EN;
 	aggrx &= ~0xFF0F; /* reset agg size and timeout */
 
+	rxdmamode = rtw_read8(padapter, REG_RXDMA_MODE);
+
 #ifdef CONFIG_USB_RX_AGGREGATION
 	switch (pHalData->UsbRxAggMode) {
 	case USB_RX_AGG_DMA:
@@ -747,6 +749,7 @@ static void usb_AggSettingRxUpdate(PADAPTER padapter)
 		aggrx |= BIT_USB_RXDMA_AGG_EN;
 		aggrx |= (pHalData->UsbRxAggPageCount & 0xF);
 		aggrx |= (pHalData->UsbRxAggPageTimeout << 8);
+		rxdmamode |= BIT_DMA_MODE;
 		DBG_8192C("%s: RX Aggregation DMA mode, size=%dKB, timeout=%dus\n",
 				  __func__, pHalData->UsbRxAggPageCount & 0xF, pHalData->UsbRxAggPageTimeout * 32);
 		break;
@@ -757,11 +760,15 @@ static void usb_AggSettingRxUpdate(PADAPTER padapter)
 		aggrx &= ~BIT_USB_RXDMA_AGG_EN;
 		aggrx |= (pHalData->UsbRxAggBlockCount & 0xF);
 		aggrx |= (pHalData->UsbRxAggBlockTimeout << 8);
+		rxdmamode |= BIT_DMA_MODE;
 		DBG_8192C("%s: RX Aggregation USB mode, size=%dKB, timeout=%dus\n",
 				  __func__, (pHalData->UsbRxAggBlockCount & 0xF) * 4, pHalData->UsbRxAggBlockTimeout * 32);
 		break;
 
 	case USB_RX_AGG_DISABLE:
+		aggctrl &= ~RXDMA_AGG_EN;
+		aggrx &= ~BIT_USB_RXDMA_AGG_EN;
+		rxdmamode &= ~BIT_DMA_MODE;
 	default:
 		DBG_8192C("%s: RX Aggregation Disable!\n", __func__);
 		break;
@@ -770,6 +777,7 @@ static void usb_AggSettingRxUpdate(PADAPTER padapter)
 
 	rtw_write8(padapter, REG_TRXDMA_CTRL, aggctrl);
 	rtw_write32(padapter, REG_RXDMA_AGG_PG_TH, aggrx);
+	rtw_write8(padapter, REG_RXDMA_MODE, rxdmamode);
 }
 
 static VOID
@@ -1209,7 +1217,11 @@ u32 rtl8188fu_hal_init(PADAPTER padapter)
 	/*InitHalDm(Adapter); */
 
 	HAL_INIT_PROFILE_TAG(HAL_INIT_STAGES_DOWNLOAD_FW);
-	if (padapter->registrypriv.mp_mode == 0) {
+	if (padapter->registrypriv.mp_mode == 0
+		#if defined(CONFIG_MP_INCLUDED) && defined(CONFIG_RTW_CUSTOMER_STR)
+		|| padapter->registrypriv.mp_customer_str
+		#endif
+	) {
 		status = rtl8188f_FirmwareDownload(padapter, _FALSE);
 		if (status != _SUCCESS) {
 			padapter->bFWReady = _FALSE;

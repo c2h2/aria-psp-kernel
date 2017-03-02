@@ -198,6 +198,7 @@
 //-----------------------------------------------------
 #define BIT_USB_RXDMA_AGG_EN	BIT(31)
 #define RXDMA_AGG_MODE_EN		BIT(1)
+#define BIT_DMA_MODE			BIT(1)
 
 #ifdef CONFIG_WOWLAN
 #define RXPKT_RELEASE_POLL		BIT(16)

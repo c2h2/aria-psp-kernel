@@ -1,7 +1,7 @@
 /******************************************************************************
  *
- * Copyright(c) 2007 - 2011 Realtek Corporation. All rights reserved.
- *                                        
+ * Copyright(c) 2013 Realtek Corporation. All rights reserved.
+ *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of version 2 of the GNU General Public License as
  * published by the Free Software Foundation.
@@ -17,47 +17,13 @@
  *
  *
  ******************************************************************************/
- 
-#ifndef	__PHYDMDYNAMICBBPOWERSAVING_H__
-#define    __PHYDMDYNAMICBBPOWERSAVING_H__
 
-#define DYNAMIC_BBPWRSAV_VERSION	"1.0"
+#error "You have defined CONFIG_CUSTOMIZED_COUNTRY_CHPLAN_MAP to use a customized map of your own instead of the default one"
+#error "Before removing these error notifications, please make sure regulatory certification requirements of your target markets"
 
-typedef struct _Dynamic_Power_Saving_
-{
-	u1Byte		PreCCAState;
-	u1Byte		CurCCAState;
+static const struct country_chplan CUSTOMIZED_country_chplan_map[] = {
+	COUNTRY_CHPLAN_ENT("TW", 0x39, 1, 0xFF), /* Taiwan */
+};
 
-	u1Byte		PreRFState;
-	u1Byte		CurRFState;
+static const u16 CUSTOMIZED_country_chplan_map_sz = sizeof(CUSTOMIZED_country_chplan_map)/sizeof(struct country_chplan);
 
-	int		    Rssi_val_min;
-	
-	u1Byte		initialize;
-	u4Byte		Reg874,RegC70,Reg85C,RegA74;
-	
-}PS_T,*pPS_T;
-
-#define dm_RF_Saving	ODM_RF_Saving
-
-void ODM_RF_Saving(
-	IN		PVOID					pDM_VOID,
-	IN	u1Byte		bForceInNormal
-);
-
-VOID 
-odm_DynamicBBPowerSavingInit(
-	IN		PVOID					pDM_VOID
-	);
-
-VOID 
-odm_DynamicBBPowerSaving(
-	IN		PVOID					pDM_VOID
-	);
-
-VOID
-odm_1R_CCA(
-	IN		PVOID					pDM_VOID
-	);
-
-#endif

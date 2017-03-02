@@ -339,7 +339,7 @@ ODM_ReadAndConfig_MP_8188F_RadioA(
 u4Byte
 ODM_GetVersion_MP_8188F_RadioA(void)
 {
-	   return 28;
+	   return 31;
 }
 
 /******************************************************************************

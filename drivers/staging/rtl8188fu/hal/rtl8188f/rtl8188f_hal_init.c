@@ -1192,11 +1192,12 @@ s32 rtl8188f_FirmwareDownload(PADAPTER padapter, BOOLEAN  bUsedWoWLANFw)
 #endif /* CONFIG_WOWLAN */
 		{
 			ODM_ConfigFWWithHeaderFile(&pHalData->odmpriv
-				, CONFIG_FW_WoWLAN /* functions of CONFIG_FW_NIC is included in CONFIG_FW_WoWLAN */
+				/*, CONFIG_FW_WoWLAN  functions of CONFIG_FW_NIC is included in CONFIG_FW_WoWLAN */
+				, CONFIG_FW_NIC /* functions of NIC is separated from WoWLAN starting from V0200 */
 				, (u8 *)&pFirmware->szFwBuffer
 				, &pFirmware->ulFwLength
 			);
-			DBG_8192C("%s fw: %s, size: %d\n", __func__, "FW_WoWLAN", pFirmware->ulFwLength);
+			DBG_8192C("%s fw: %s, size: %d\n", __func__, "FW_NIC", pFirmware->ulFwLength);
 		}
 		break;
 	}
@@ -1655,6 +1656,47 @@ Hal_EfusePowerSwitch(
 	}
 }
 
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+
+
+
+
+
+int rtw_mp_efuse_repair(_adapter *padapter, u8 *r_map)
+{
+#define EFUSE_REPAIR_1	0x03
+#define EFUSE_REPAIR_2	0x0D
+#define EFUSE_REPAIR_3	0x130
+#define EFUSE_REPAIR_4	0x131
+#define EFUSE_REPAIR_5	0x13A
+#define EFUSE_REPAIR_6	0x13B
+    u8 repair_map[6] = {0xFC, 0x07, 0xC1, 0xB6, 0x00, 0x11};
+
+    
+    if( (r_map[EFUSE_REPAIR_1] == 0xFF) && (r_map[EFUSE_REPAIR_2] == 0xFF)
+        && (r_map[EFUSE_REPAIR_3] == 0xFF) && (r_map[EFUSE_REPAIR_4] == 0xFF)
+        && (r_map[EFUSE_REPAIR_5] == 0xFF) && (r_map[EFUSE_REPAIR_6] == 0xFF) )
+    {
+    	while(1)
+    	{
+    	    DBG_871X("chiper power fail\r\n");
+    	    rtw_mdelay_os(5000);
+    	}
+    }
+    
+    			
+    return 0;
+}
+
+
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+
 static void
 hal_ReadEFuse_WiFi(
 	PADAPTER	padapter,
@@ -1702,7 +1744,7 @@ hal_ReadEFuse_WiFi(
 			printk("%02X%s", efuseTbl[i], (((i + 1) % 16) == 0)?"\n":" ");
 	}
 #endif
-
+	
 
 	/* switch bank back to bank 0 for later BT and wifi use. */
 	hal_EfuseSwitchToBank(padapter, 0, bPseudoTest);
@@ -1775,6 +1817,9 @@ hal_ReadEFuse_WiFi(
 			printk("%02X%s", pbuf[i], (((i + 1) % 16) == 0)?"\n":" ");
 	}
 #endif
+	rtw_mp_efuse_repair(padapter,pbuf);
+
+
 	/* Calculate Efuse utilization */
 	total = 0;
 	EFUSE_GetEfuseDefinition(padapter, EFUSE_WIFI, TYPE_AVAILABLE_EFUSE_BYTES_TOTAL, &total, bPseudoTest);
@@ -2805,7 +2850,7 @@ hal_EfusePgPacketWriteData(
 	efuse_addr = *pAddr;
 	badworden = Efuse_WordEnableDataWrite(pAdapter, efuse_addr + 1, pTargetPkt->word_en, pTargetPkt->data, bPseudoTest);
 	if (badworden == 0x0F) {
-			DBG_8192C("%s: Fail!!\n", __FUNCTION__);
+			DBG_8192C("%s: OK!!\n", __FUNCTION__);
 			return _TRUE;
 		} else {	/* Reorganize other pg packet */
 			DBG_8192C ("Error, efuse_PgPacketWriteData(), wirte data fail!!\n");
@@ -5832,6 +5877,15 @@ s32 c2h_handler_8188f(PADAPTER padapter, u8 *buf)
 		break;
 #endif
 
+#ifdef CONFIG_RTW_CUSTOMER_STR
+	case C2H_CUSTOMER_STR_RPT:
+		c2h_customer_str_rpt_hdl(padapter, pC2hEvent->payload, pC2hEvent->plen);
+		break;
+	case C2H_CUSTOMER_STR_RPT_2:
+		c2h_customer_str_rpt_2_hdl(padapter, pC2hEvent->payload, pC2hEvent->plen);
+		break;
+#endif
+
 /*
 #ifdef CONFIG_MP_INCLUDED
 	case C2H_BT_MP_INFO:
@@ -5870,6 +5924,7 @@ static void process_c2h_event(PADAPTER padapter, PC2H_EVT_HDR pC2hEvent, u8 *c2h
 	case C2H_CCX_TX_RPT:
 		CCX_FwC2HTxRpt_8188f(padapter, c2hBuf, pC2hEvent->CmdLen);
 		break;
+		
 
 #ifdef CONFIG_BT_COEXIST
 	case C2H_BT_INFO:
@@ -5889,6 +5944,15 @@ static void process_c2h_event(PADAPTER padapter, PC2H_EVT_HDR pC2hEvent, u8 *c2h
 		Debug_FwC2H_8188f(padapter, c2hBuf, pC2hEvent->CmdLen);
 	break;
 #endif /* CONFIG_FW_C2H_DEBUG */
+
+#ifdef CONFIG_RTW_CUSTOMER_STR
+	case C2H_CUSTOMER_STR_RPT:
+		c2h_customer_str_rpt_hdl(padapter, c2hBuf, pC2hEvent->CmdLen);
+		break;
+	case C2H_CUSTOMER_STR_RPT_2:
+		c2h_customer_str_rpt_2_hdl(padapter, c2hBuf, pC2hEvent->CmdLen);
+		break;
+#endif
 
 	default:
 		if (!(phydm_c2H_content_parsing(pDM_Odm, pC2hEvent->CmdID, pC2hEvent->CmdLen, c2hBuf))) 
