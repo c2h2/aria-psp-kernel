@@ -271,7 +271,7 @@
 	(LE_P2BYTE_TO_HOST_2BYTE(__pStart) & (~BIT_OFFSET_LEN_MASK_16(__BitOffset, __BitLen)))
 
 #define LE_BITS_CLEARED_TO_1BYTE(__pStart, __BitOffset, __BitLen) \
-	(LE_P1BYTE_TO_HOST_1BYTE(__pStart) & (~BIT_OFFSET_LEN_MASK_8(__BitOffset, __BitLen)))
+	(LE_P1BYTE_TO_HOST_1BYTE(__pStart) & ((u8)(~BIT_OFFSET_LEN_MASK_8(__BitOffset, __BitLen))))
 
 /*
 * Mask subfield (continuous bits in big-endian) of 4-byte value in BE byte oredering

@@ -175,6 +175,9 @@ struct auto_chan_sel {
 #define KFREE_FLAG_ON				BIT0
 #define KFREE_FLAG_THERMAL_K_ON		BIT1
 
+#define MAX_IQK_INFO_BACKUP_CHNL_NUM 	5		
+#define MAX_IQK_INFO_BACKUP_REG_NUM		10		
+
 struct kfree_data_t {
 		u8 flag;
 		s8 bb_gain[BB_GAIN_NUM][RF_PATH_MAX];
@@ -189,6 +192,7 @@ struct kfree_data_t {
 bool kfree_data_is_bb_gain_empty(struct kfree_data_t *data);
 
 struct hal_spec_t {
+	char *ic_name;
 	u8 macid_num;
 
 	u8 sec_cam_ent_num;
@@ -197,8 +201,15 @@ struct hal_spec_t {
 	u8 nss_num;
 	u8 band_cap;	/* value of BAND_CAP_XXX */
 	u8 bw_cap;		/* value of BW_CAP_XXX */
+	u8 proto_cap;	/* value of PROTO_CAP_XXX */
 
 	u8 wl_func;		/* value of WL_FUNC_XXX */
+};
+
+struct hal_iqk_reg_backup {
+	u8 central_chnl;
+	u8 bw_mode;
+	u32 reg_backup[MAX_RF_PATH][MAX_IQK_INFO_BACKUP_REG_NUM];
 };
 
 typedef struct hal_com_data
@@ -284,11 +295,11 @@ typedef struct hal_com_data
 	u8	bTXPowerDataReadFromEEPORM;
 	u8	EEPROMMACAddr[ETH_ALEN];
 	
-#ifdef CONFIG_RF_GAIN_OFFSET
+#ifdef CONFIG_RF_POWER_TRIM
 	u8	EEPROMRFGainOffset;
 	u8	EEPROMRFGainVal;
 	struct kfree_data_t kfree_data;
-#endif /*CONFIG_RF_GAIN_OFFSET*/
+#endif /*CONFIG_RF_POWER_TRIM*/
 
 #if defined(CONFIG_RTL8723B) || defined(CONFIG_RTL8703B)
 	u8	adjuseVoltageVal;
@@ -430,13 +441,13 @@ typedef struct hal_com_data
 	u16	RegRRSR;
 	
 	/****** antenna diversity ******/
-	u8	CurAntenna;
 	u8	AntDivCfg;
 	u8	AntDetection;
 	u8	TRxAntDivType;
 	u8	ant_path; //for 8723B s0/s1 selection	
 	u32	AntennaTxPath;					/* Antenna path Tx */
 	u32	AntennaRxPath;					/* Antenna path Rx */
+	u8 sw_antdiv_bl_state;
 
 	/******** PHY DM & DM Section **********/
 	u8			DM_Type;
@@ -618,6 +629,7 @@ typedef struct hal_com_data
 	BOOLEAN bCorrectBCN;
 #endif
 
+	struct hal_iqk_reg_backup iqk_reg_backup[MAX_IQK_INFO_BACKUP_CHNL_NUM];
 } HAL_DATA_COMMON, *PHAL_DATA_COMMON;
 
 
@@ -625,6 +637,7 @@ typedef struct hal_com_data
 typedef struct hal_com_data HAL_DATA_TYPE, *PHAL_DATA_TYPE;
 #define GET_HAL_DATA(__pAdapter)			((HAL_DATA_TYPE *)((__pAdapter)->HalData))
 #define GET_HAL_SPEC(__pAdapter)			(&(GET_HAL_DATA((__pAdapter))->hal_spec))
+#define GET_ODM(__pAdapter)				(&(GET_HAL_DATA((__pAdapter))->odmpriv))
 
 #define GET_HAL_RFPATH_NUM(__pAdapter)		(((HAL_DATA_TYPE *)((__pAdapter)->HalData))->NumTotalRFPath )
 #define RT_GetInterfaceSelection(_Adapter) 		(GET_HAL_DATA(_Adapter)->InterfaceSel)

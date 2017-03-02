@@ -20,6 +20,7 @@
 #define _RTW_TDLS_C_
 
 #include <drv_types.h>
+#include <hal_data.h>
 
 #ifdef CONFIG_TDLS
 #define ONE_SEC 	1000 /* 1000 ms */
@@ -52,7 +53,7 @@ void rtw_reset_tdls_info(_adapter* padapter)
 	ptdlsinfo->chsw_info.ch_sw_state = TDLS_STATE_NONE;
 	ATOMIC_SET(&ptdlsinfo->chsw_info.chsw_on, _FALSE);
 	ptdlsinfo->chsw_info.off_ch_num = 0;
-	ptdlsinfo->chsw_info.ch_offset = 0;
+	ptdlsinfo->chsw_info.ch_offset = HAL_PRIME_CHNL_OFFSET_DONT_CARE;
 	ptdlsinfo->chsw_info.cur_time = 0;
 	ptdlsinfo->chsw_info.delay_switch_back = _FALSE;
 	ptdlsinfo->chsw_info.dump_stack = _FALSE;
@@ -126,6 +127,31 @@ int check_ap_tdls_ch_switching_prohibited(u8 *pframe, u8 pkt_len)
 
 	return _FALSE;
 }
+
+u8 rtw_tdls_is_setup_allowed(_adapter *padapter)
+{
+	struct tdls_info *ptdlsinfo = &padapter->tdlsinfo;
+
+	if (ptdlsinfo->ap_prohibited == _TRUE)
+		return _FALSE;
+
+	return _TRUE;
+}
+
+#ifdef CONFIG_TDLS_CH_SW
+u8 rtw_tdls_is_chsw_allowed(_adapter *padapter)
+{
+	struct tdls_info *ptdlsinfo = &padapter->tdlsinfo;
+
+	if (ptdlsinfo->ch_switch_prohibited == _TRUE)
+		return _FALSE;
+
+	if (padapter->registrypriv.wifi_spec == 0)
+		return _FALSE;
+
+	return _TRUE;
+}
+#endif
 
 int _issue_nulldata_to_TDLS_peer_STA(_adapter *padapter, unsigned char *da, unsigned int power_mode, int wait_ack)
 {
@@ -431,7 +457,9 @@ void rtw_tdls_process_vht_cap(_adapter *padapter, struct sta_info *ptdls_sta, u8
 		ptdls_sta->flags &= ~WLAN_STA_VHT;
 
 	if (ptdls_sta->flags & WLAN_STA_VHT) {
-		if (padapter->registrypriv.vht_enable == _TRUE)
+		if (REGSTY_IS_11AC_ENABLE(&padapter->registrypriv)
+			&& hal_chk_proto_cap(padapter, PROTO_CAP_11AC)
+			&& (!pmlmepriv->country_ent || COUNTRY_CHPLAN_EN_11AC(pmlmepriv->country_ent)))
 			ptdls_sta->vhtpriv.vht_option = _TRUE;
 		else 
 			ptdls_sta->vhtpriv.vht_option = _FALSE;
@@ -597,7 +625,7 @@ u8 *rtw_tdls_set_ftie(struct tdls_txmgmt *ptxmgmt, u8 *pframe, struct pkt_attrib
 u8 *rtw_tdls_set_timeout_interval(struct tdls_txmgmt *ptxmgmt, u8 *pframe, struct pkt_attrib *pattrib, int init, struct sta_info *ptdls_sta)
 {
 	u8 timeout_itvl[5];	/* set timeout interval to maximum value */
-	u32 timeout_interval= TPK_RESEND_COUNT;
+	u32 timeout_interval= TDLS_TPK_RESEND_COUNT;
 	u8 *p = NULL;
 	int len = 0;
 
@@ -662,8 +690,13 @@ u8 *rtw_tdls_set_dialog(u8 *pframe, struct pkt_attrib *pattrib, struct tdls_txmg
 
 u8 *rtw_tdls_set_reg_class(u8 *pframe, struct pkt_attrib *pattrib, struct sta_info *ptdls_sta)
 {
-	u8 reg_class = 1;
+	u8 reg_class = 22;
 	return rtw_set_fixed_ie(pframe, 1, &(reg_class), &(pattrib->pktlen));
+}
+
+u8 *rtw_tdls_set_second_channel_offset(u8 *pframe, struct pkt_attrib *pattrib, u8 ch_offset)
+{
+	return rtw_set_ie(pframe, EID_SecondaryChnlOffset , 1, &ch_offset, &(pattrib->pktlen));
 }
 
 u8 *rtw_tdls_set_capability(_adapter *padapter, u8 *pframe, struct pkt_attrib *pattrib)
@@ -734,15 +767,133 @@ u8 *rtw_tdls_set_target_ch(_adapter *padapter, u8 *pframe, struct pkt_attrib *pa
 u8 *rtw_tdls_set_ch_sw(u8 *pframe, struct pkt_attrib *pattrib, struct sta_info *ptdls_sta)
 {
 	u8 ch_switch_timing[4] = {0};
-	u16 switch_time = (ptdls_sta->ch_switch_time >= CH_SWITCH_TIME * 1000) ? 
-		ptdls_sta->ch_switch_time : CH_SWITCH_TIME;
-	u16 switch_timeout = (ptdls_sta->ch_switch_timeout >= CH_SWITCH_TIMEOUT * 1000) ? 
-		ptdls_sta->ch_switch_timeout : CH_SWITCH_TIMEOUT;
+	u16 switch_time = (ptdls_sta->ch_switch_time >= TDLS_CH_SWITCH_TIME * 1000) ? 
+		ptdls_sta->ch_switch_time : TDLS_CH_SWITCH_TIME;
+	u16 switch_timeout = (ptdls_sta->ch_switch_timeout >= TDLS_CH_SWITCH_TIMEOUT * 1000) ? 
+		ptdls_sta->ch_switch_timeout : TDLS_CH_SWITCH_TIMEOUT;
 
 	_rtw_memcpy(ch_switch_timing, &switch_time, 2);
 	_rtw_memcpy(ch_switch_timing + 2, &switch_timeout, 2);
 
 	return rtw_set_ie(pframe, _CH_SWITCH_TIMING_,  4, ch_switch_timing, &(pattrib->pktlen));
+}
+
+void rtw_tdls_set_ch_sw_oper_control(_adapter *padapter, u8 enable)
+{
+	if (ATOMIC_READ(&padapter->tdlsinfo.chsw_info.chsw_on) != enable)
+		ATOMIC_SET(&padapter->tdlsinfo.chsw_info.chsw_on, enable);
+
+	rtw_hal_set_hwreg(padapter, HW_VAR_TDLS_BCN_EARLY_C2H_RPT, &enable);
+	DBG_871X("[TDLS] %s Bcn Early C2H Report\n", (enable == _TRUE) ? "Start" : "Stop");
+}
+
+void rtw_tdls_ch_sw_back_to_base_chnl(_adapter *padapter)
+{
+	struct mlme_priv *pmlmepriv;
+	struct tdls_ch_switch *pchsw_info = &padapter->tdlsinfo.chsw_info;
+
+	pmlmepriv = &padapter->mlmepriv;
+
+	if ((ATOMIC_READ(&pchsw_info->chsw_on) == _TRUE) &&
+	/* Sometimes we receive multiple interrupts in very little time period, use the follow condition test to filter */
+	//(pchsw_info->cur_time - last_time > padapter->mlmeextpriv.mlmext_info.bcn_interval - 5) &&
+	(padapter->mlmeextpriv.cur_channel != rtw_get_oper_ch(padapter))) {
+		//if(pchsw_info->ch_sw_state & TDLS_CH_SW_INITIATOR_STATE)				
+		rtw_tdls_cmd(padapter, pchsw_info->addr, TDLS_CH_SW_TO_BASE_CHNL_UNSOLICITED);
+	}			
+}
+
+static void rtw_tdls_chsw_oper_init(_adapter* padapter, u32 timeout_ms)
+{
+	struct submit_ctx	*chsw_sctx = &padapter->tdlsinfo.chsw_info.chsw_sctx;
+	
+	rtw_sctx_init(chsw_sctx, timeout_ms);
+}
+
+static int rtw_tdls_chsw_oper_wait(_adapter* padapter)
+{
+	struct submit_ctx	*chsw_sctx = &padapter->tdlsinfo.chsw_info.chsw_sctx;
+
+	return rtw_sctx_wait(chsw_sctx, __func__);
+}
+
+void rtw_tdls_chsw_oper_done(_adapter* padapter)
+{
+	struct submit_ctx	*chsw_sctx = &padapter->tdlsinfo.chsw_info.chsw_sctx;
+	
+	rtw_sctx_done(&chsw_sctx);
+}
+
+s32 rtw_tdls_do_ch_sw(_adapter *padapter, struct sta_info *ptdls_sta, u8 chnl_type, u8 channel, u8 channel_offset, u16 bwmode, u16 ch_switch_time)
+{
+	HAL_DATA_TYPE *pHalData = GET_HAL_DATA(padapter);
+	u8 center_ch, chnl_offset80 = HAL_PRIME_CHNL_OFFSET_DONT_CARE;
+	u32 ch_sw_time_start, ch_sw_time_spent, wait_time;
+	u8 take_care_iqk;
+	s32 ret = _FAIL;
+
+	ch_sw_time_start = rtw_systime_to_ms(rtw_get_current_time());
+
+	rtw_tdls_chsw_oper_init(padapter, TDLS_CH_SWITCH_OPER_OFFLOAD_TIMEOUT);
+
+	/* set mac_id sleep before channel switch */
+	rtw_hal_macid_sleep(padapter, ptdls_sta->mac_id);
+	
+	/* channel switch IOs offload to FW */
+	if (rtw_hal_ch_sw_oper_offload(padapter, channel, channel_offset, bwmode) == _SUCCESS) {
+		if (rtw_tdls_chsw_oper_wait(padapter) == _SUCCESS) {
+			/* set channel and bw related variables in driver */
+			_enter_critical_mutex(&(adapter_to_dvobj(padapter)->setch_mutex), NULL);
+
+			rtw_set_oper_ch(padapter, channel);	
+			rtw_set_oper_choffset(padapter, channel_offset);
+			rtw_set_oper_bw(padapter, bwmode);	
+
+			center_ch = rtw_get_center_ch(channel, bwmode, channel_offset);
+			pHalData->CurrentChannel = center_ch;
+			pHalData->CurrentCenterFrequencyIndex1 = center_ch;
+			pHalData->CurrentChannelBW = bwmode;
+			pHalData->nCur40MhzPrimeSC = channel_offset;
+
+			if (bwmode == CHANNEL_WIDTH_80) {
+				if (center_ch > channel)
+					chnl_offset80 = HAL_PRIME_CHNL_OFFSET_LOWER;
+				else if (center_ch < channel)
+					chnl_offset80 = HAL_PRIME_CHNL_OFFSET_UPPER;
+				else
+					chnl_offset80 = HAL_PRIME_CHNL_OFFSET_DONT_CARE;
+			}
+			pHalData->nCur80MhzPrimeSC = chnl_offset80;
+
+			pHalData->CurrentCenterFrequencyIndex1 = center_ch;
+			
+			_exit_critical_mutex(&(adapter_to_dvobj(padapter)->setch_mutex), NULL);
+
+			rtw_hal_get_hwreg(padapter, HW_VAR_CH_SW_NEED_TO_TAKE_CARE_IQK_INFO, &take_care_iqk);
+			if (take_care_iqk == _TRUE)
+				rtw_hal_ch_sw_iqk_info_restore(padapter, CH_SW_USE_CASE_TDLS);
+
+			ch_sw_time_spent = rtw_systime_to_ms(rtw_get_current_time()) - ch_sw_time_start;
+
+			if (chnl_type == TDLS_CH_SW_OFF_CHNL) {
+				if ((u32)ch_switch_time /1000 > ch_sw_time_spent)
+					wait_time = (u32)ch_switch_time /1000 - ch_sw_time_spent;
+				else
+					wait_time = 0;
+
+				if (wait_time > 0)
+					rtw_msleep_os(wait_time);
+			}
+
+			ret = _SUCCESS;
+		} else
+			DBG_871X("[TDLS] chsw oper wait fail !!\n");
+	}		
+
+	/* set mac_id wakeup after channel switch */
+	rtw_hal_macid_wakeup(padapter, ptdls_sta->mac_id);
+
+	return ret;
 }
 #endif
 
@@ -897,12 +1048,12 @@ int issue_tdls_setup_req(_adapter *padapter, struct tdls_txmgmt *ptxmgmt, int wa
 	_irqL irqL;
 	int ret = _FAIL;
 	/* Retry timer should be set at least 301 sec, using TPK_count counting 301 times. */
-	u32 timeout_interval= TPK_RESEND_COUNT;
+	u32 timeout_interval= TDLS_TPK_RESEND_COUNT;
 
 	DBG_871X("[TDLS] %s\n", __FUNCTION__);
 
 	ptxmgmt->action_code = TDLS_SETUP_REQUEST;
-	if (ptdlsinfo->ap_prohibited == _TRUE)
+	if (rtw_tdls_is_setup_allowed(padapter) == _FALSE)
 		goto exit;
 
 	if ((pmgntframe = alloc_mgtxmitframe(pxmitpriv)) == NULL)
@@ -1025,8 +1176,8 @@ int _issue_tdls_teardown(_adapter *padapter, struct tdls_txmgmt *ptxmgmt, u8 wai
 		ret = _SUCCESS;
 	}
 
-	if (ret == _SUCCESS && rtw_tdls_is_driver_setup(padapter))
-		rtw_tdls_cmd(padapter, ptxmgmt->peer, TDLS_TEAR_STA);
+	if (rtw_tdls_is_driver_setup(padapter))
+		rtw_tdls_cmd(padapter, ptxmgmt->peer, TDLS_TEARDOWN_STA_LOCALLY);
 
 exit:
 
@@ -1308,6 +1459,7 @@ exit:
 	return ret;
 }
 
+#ifdef CONFIG_TDLS_CH_SW
 int issue_tdls_ch_switch_req(_adapter *padapter, struct sta_info *ptdls_sta)
 {
 	struct xmit_frame	*pmgntframe;
@@ -1319,8 +1471,8 @@ int issue_tdls_ch_switch_req(_adapter *padapter, struct sta_info *ptdls_sta)
 
 	DBG_871X("[TDLS] %s\n", __FUNCTION__);
 
-	if (padapter->tdlsinfo.ch_switch_prohibited == _TRUE)
-	{	DBG_871X("[TDLS] Ignore %s since ch_switch_prohibited = _TRUE\n", __FUNCTION__);
+	if (rtw_tdls_is_chsw_allowed(padapter) == _FALSE)
+	{	DBG_871X("[TDLS] Ignore %s since channel switch is not allowed\n", __FUNCTION__);
 		goto exit;
 	}
 
@@ -1365,8 +1517,8 @@ int issue_tdls_ch_switch_rsp(_adapter *padapter, struct tdls_txmgmt *ptxmgmt, in
 
 	DBG_871X("[TDLS] %s\n", __FUNCTION__);
 
-	if (padapter->tdlsinfo.ch_switch_prohibited == _TRUE)
-	{	DBG_871X("[TDLS] Ignore %s since ch_switch_prohibited = _TRUE\n", __FUNCTION__);
+	if (rtw_tdls_is_chsw_allowed(padapter) == _FALSE)
+	{	DBG_871X("[TDLS] Ignore %s since channel switch is not allowed\n", __FUNCTION__);
 		goto exit;
 	}
 
@@ -1382,7 +1534,7 @@ int issue_tdls_ch_switch_rsp(_adapter *padapter, struct tdls_txmgmt *ptxmgmt, in
 
 	_rtw_memcpy(pattrib->dst, ptxmgmt->peer, ETH_ALEN);
 	_rtw_memcpy(pattrib->src, adapter_mac_addr(padapter), ETH_ALEN);
-	_rtw_memcpy(pattrib->ra, get_bssid(pmlmepriv), ETH_ALEN);
+	_rtw_memcpy(pattrib->ra, ptxmgmt->peer, ETH_ALEN);
 	_rtw_memcpy(pattrib->ta, pattrib->src, ETH_ALEN);
 
 	update_tdls_attrib(padapter, pattrib);
@@ -1401,16 +1553,16 @@ int issue_tdls_ch_switch_rsp(_adapter *padapter, struct tdls_txmgmt *ptxmgmt, in
 	}
 
 	if (wait_ack) {
-		ret = dump_mgntframe_and_wait_ack(padapter, pmgntframe);
+		ret = dump_mgntframe_and_wait_ack_timeout(padapter, pmgntframe, 10);
 	} else {
 		dump_mgntframe(padapter, pmgntframe);
 		ret = _SUCCESS;
 	}
-	ret = _SUCCESS;
 exit:
 
 	return ret;
 }
+#endif
 
 int On_TDLS_Dis_Rsp(_adapter *padapter, union recv_frame *precv_frame)
 {
@@ -1495,7 +1647,7 @@ sint On_TDLS_Setup_Req(_adapter *padapter, union recv_frame *precv_frame)
 	u8 ccmp_included=0, rsnie_included=0;
 	u16 j, pairwise_count;
 	u8 SNonce[32];
-	u32 timeout_interval = TPK_RESEND_COUNT;
+	u32 timeout_interval = TDLS_TPK_RESEND_COUNT;
 	sint parsing_length;	/* Frame body length, without icv_len */
 	PNDIS_802_11_VARIABLE_IEs	pIE;
 	u8 FIXED_IE = 5;
@@ -1503,7 +1655,7 @@ sint On_TDLS_Setup_Req(_adapter *padapter, union recv_frame *precv_frame)
 	int				supportRateNum = 0;
 	struct tdls_txmgmt txmgmt;
 
-	if (ptdlsinfo->ap_prohibited == _TRUE)
+	if (rtw_tdls_is_setup_allowed(padapter) == _FALSE)
 		goto exit;
 
 	_rtw_memset(&txmgmt, 0x00, sizeof(struct tdls_txmgmt));
@@ -1653,7 +1805,7 @@ sint On_TDLS_Setup_Req(_adapter *padapter, union recv_frame *precv_frame)
 			_rtw_memcpy(ptdls_sta->SNonce, SNonce, 32);
 
 			if (timeout_interval <= 300) 
-				ptdls_sta->TDLS_PeerKey_Lifetime = TPK_RESEND_COUNT;
+				ptdls_sta->TDLS_PeerKey_Lifetime = TDLS_TPK_RESEND_COUNT;
 			else
 				ptdls_sta->TDLS_PeerKey_Lifetime = timeout_interval;
 		}
@@ -1669,7 +1821,7 @@ sint On_TDLS_Setup_Req(_adapter *padapter, union recv_frame *precv_frame)
 			ptdlsinfo->sta_maximum = _TRUE;
 
 #ifdef CONFIG_WFD
-		rtw_tdls_process_wfd_ie(ptdlsinfo, ptr + FIXED_IE, parsing_length - FIXED_IE);
+		rtw_tdls_process_wfd_ie(ptdlsinfo, ptr + FIXED_IE, parsing_length);
 #endif
 
 	}else {
@@ -1715,13 +1867,14 @@ int On_TDLS_Setup_Rsp(_adapter *padapter, union recv_frame *precv_frame)
 	int				supportRateNum = 0;
 	struct tdls_txmgmt txmgmt;
 	int ret = _SUCCESS;
-	u32 timeout_interval = TPK_RESEND_COUNT;
+	u32 timeout_interval = TDLS_TPK_RESEND_COUNT;
 
 	_rtw_memset(&txmgmt, 0x00, sizeof(struct tdls_txmgmt));
 	psa = get_sa(ptr);
 	ptdls_sta = rtw_get_stainfo(pstapriv, psa);
 
-	if (NULL == ptdls_sta) {
+	if (ptdls_sta == NULL) {
+		DBG_871X("[%s] Direct Link Peer = "MAC_FMT" not found\n", __FUNCTION__, MAC_ARG(psa));
 		ret = _FAIL;
 		goto exit;
 	}
@@ -1828,7 +1981,7 @@ int On_TDLS_Setup_Rsp(_adapter *padapter, union recv_frame *precv_frame)
 	_rtw_memcpy(ptdls_sta->ANonce, ANonce, 32);
 
 #ifdef CONFIG_WFD
-	rtw_tdls_process_wfd_ie(ptdlsinfo, ptr + FIXED_IE, parsing_length - FIXED_IE);
+	rtw_tdls_process_wfd_ie(ptdlsinfo, ptr + FIXED_IE, parsing_length);
 #endif
 
 	if (status_code != _STATS_SUCCESSFUL_) {
@@ -2089,7 +2242,7 @@ int On_TDLS_Teardown(_adapter *padapter, union recv_frame *precv_frame)
 	ptdls_sta = rtw_get_stainfo(pstapriv, psa);
 	if (ptdls_sta != NULL) {
 		if (rtw_tdls_is_driver_setup(padapter))
-			rtw_tdls_cmd(padapter, ptdls_sta->hwaddr, TDLS_TEAR_STA);
+			rtw_tdls_cmd(padapter, ptdls_sta->hwaddr, TDLS_TEARDOWN_STA_LOCALLY);
 	}
 
 	return _SUCCESS;
@@ -2214,17 +2367,24 @@ sint On_TDLS_Ch_Switch_Req(_adapter *padapter, union recv_frame *precv_frame)
 	u16 j;
 	struct mlme_ext_priv *pmlmeext = &padapter->mlmeextpriv;
 	struct tdls_txmgmt txmgmt;
-	u16 switch_time= CH_SWITCH_TIME * 1000, switch_timeout=CH_SWITCH_TIMEOUT * 1000;
+	u8 zaddr[ETH_ALEN] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+	u16 switch_time= TDLS_CH_SWITCH_TIME * 1000, switch_timeout=TDLS_CH_SWITCH_TIMEOUT * 1000;
+	u8 take_care_iqk;
 
-	if (padapter->tdlsinfo.ch_switch_prohibited == _TRUE)
-	{	DBG_871X("[TDLS] Ignore %s since ch_switch_prohibited = _TRUE\n", __FUNCTION__);
-		return _SUCCESS;
+	if (rtw_tdls_is_chsw_allowed(padapter) == _FALSE)
+	{	DBG_871X("[TDLS] Ignore %s since channel switch is not allowed\n", __FUNCTION__);
+		return _FAIL;
 	}
 	
 	_rtw_memset(&txmgmt, 0x00, sizeof(struct tdls_txmgmt));
 	psa = get_sa(ptr);
 	ptdls_sta = rtw_get_stainfo(pstapriv, psa);
 
+	if (ptdls_sta == NULL) {
+		DBG_871X("[%s] Direct Link Peer = "MAC_FMT" not found\n", __FUNCTION__, MAC_ARG(psa));
+		return _FAIL;
+	}
+		
 	ptdls_sta->ch_switch_time=switch_time;
 	ptdls_sta->ch_switch_timeout=switch_timeout;
 
@@ -2240,8 +2400,8 @@ sint On_TDLS_Ch_Switch_Req(_adapter *padapter, union recv_frame *precv_frame)
 
 	pchsw_info->off_ch_num = *(ptr + 2);
 
-	if (*(ptr + 2) == 2) {
-		pchsw_info->off_ch_num = 11;
+	if ((*(ptr + 2) == 2) && (hal_is_band_support(padapter, BAND_ON_5G))) {
+		pchsw_info->off_ch_num = 44;
 	}
 
 	if (pchsw_info->off_ch_num != pmlmeext->cur_channel) {
@@ -2254,16 +2414,29 @@ sint On_TDLS_Ch_Switch_Req(_adapter *padapter, union recv_frame *precv_frame)
 
 		switch (pIE->ElementID) {
 		case EID_SecondaryChnlOffset:
-			padapter->tdlsinfo.chsw_info.ch_offset = *(pIE->data);
+			switch (*(pIE->data))
+			{
+				case EXTCHNL_OFFSET_UPPER:
+					pchsw_info->ch_offset = HAL_PRIME_CHNL_OFFSET_LOWER;
+					break;
+				
+				case EXTCHNL_OFFSET_LOWER:
+					pchsw_info->ch_offset = HAL_PRIME_CHNL_OFFSET_UPPER;
+					break;
+					
+				default:
+					pchsw_info->ch_offset = HAL_PRIME_CHNL_OFFSET_DONT_CARE;
+					break;
+			}
 			break;
 		case _LINK_ID_IE_:
 			break;
 		case _CH_SWITCH_TIMING_:
-			ptdls_sta->ch_switch_time = (RTW_GET_LE16(pIE->data) >= CH_SWITCH_TIME * 1000) ?
-				RTW_GET_LE16(pIE->data) : CH_SWITCH_TIME * 1000;
-			ptdls_sta->ch_switch_timeout = (RTW_GET_LE16(pIE->data + 2) >= CH_SWITCH_TIMEOUT * 1000) ?
-				RTW_GET_LE16(pIE->data + 2) : CH_SWITCH_TIMEOUT * 1000;
-			DBG_871X("%s ch_switch_time:%d, ch_switch_timeout:%d\n"
+			ptdls_sta->ch_switch_time = (RTW_GET_LE16(pIE->data) >= TDLS_CH_SWITCH_TIME * 1000) ?
+				RTW_GET_LE16(pIE->data) : TDLS_CH_SWITCH_TIME * 1000;
+			ptdls_sta->ch_switch_timeout = (RTW_GET_LE16(pIE->data + 2) >= TDLS_CH_SWITCH_TIMEOUT * 1000) ?
+				RTW_GET_LE16(pIE->data + 2) : TDLS_CH_SWITCH_TIMEOUT * 1000;
+			DBG_871X("[TDLS] %s ch_switch_time:%d, ch_switch_timeout:%d\n"
 				, __FUNCTION__, RTW_GET_LE16(pIE->data), RTW_GET_LE16(pIE->data + 2));
 		default:
 			break;
@@ -2272,12 +2445,35 @@ sint On_TDLS_Ch_Switch_Req(_adapter *padapter, union recv_frame *precv_frame)
 		j += (pIE->Length + 2);
 	}
 
+	rtw_hal_get_hwreg(padapter, HW_VAR_CH_SW_NEED_TO_TAKE_CARE_IQK_INFO, &take_care_iqk);
+	if (take_care_iqk == _TRUE) {
+		u8 central_chnl;
+		u8 bw_mode;
+
+		bw_mode = (pchsw_info->ch_offset) ? CHANNEL_WIDTH_40 : CHANNEL_WIDTH_20;
+		central_chnl = rtw_get_center_ch(pchsw_info->off_ch_num, bw_mode, pchsw_info->ch_offset);
+		if (rtw_hal_ch_sw_iqk_info_search(padapter, central_chnl, bw_mode) < 0) {
+			if (!(pchsw_info->ch_sw_state & TDLS_CH_SWITCH_PREPARE_STATE))
+				rtw_tdls_cmd(padapter, ptdls_sta->hwaddr, TDLS_CH_SW_PREPARE);
+
+			return _FAIL;
+		}
+	}
+
+	/* cancel ch sw monitor timer for responder */
+	if (!(pchsw_info->ch_sw_state & TDLS_CH_SW_INITIATOR_STATE))
+		_cancel_timer_ex(&ptdls_sta->ch_sw_monitor_timer);
+
 	/* Todo: check status */
 	txmgmt.status_code = 0;
 	_rtw_memcpy(txmgmt.peer, psa, ETH_ALEN);
-	
-	ATOMIC_SET(&pchsw_info->chsw_on, _TRUE);
 
+	if (_rtw_memcmp(pchsw_info->addr, zaddr, ETH_ALEN) == _TRUE)
+		_rtw_memcpy(pchsw_info->addr, ptdls_sta->hwaddr, ETH_ALEN);
+
+	if (ATOMIC_READ(&pchsw_info->chsw_on) == _FALSE)
+		rtw_tdls_cmd(padapter, ptdls_sta->hwaddr, TDLS_CH_SW_START);
+	
 	rtw_tdls_cmd(padapter, ptdls_sta->hwaddr, TDLS_CH_SW_RESP);
 
 	return _SUCCESS;
@@ -2298,20 +2494,25 @@ sint On_TDLS_Ch_Switch_Rsp(_adapter *padapter, union recv_frame *precv_frame)
 	struct mlme_ext_priv *pmlmeext = &padapter->mlmeextpriv;
 	int ret = _SUCCESS;
 
-	if (padapter->tdlsinfo.ch_switch_prohibited == _TRUE)
-	{	DBG_871X("[TDLS] Ignore %s since ch_switch_prohibited = _TRUE\n", __FUNCTION__);
+	if (rtw_tdls_is_chsw_allowed(padapter) == _FALSE)
+	{	DBG_871X("[TDLS] Ignore %s since channel switch is not allowed\n", __FUNCTION__);
 		return _SUCCESS;
 	}
 
 	psa = get_sa(ptr);
 	ptdls_sta = rtw_get_stainfo(pstapriv, psa);
 
+	if (ptdls_sta == NULL) {
+		DBG_871X("[%s] Direct Link Peer = "MAC_FMT" not found\n", __FUNCTION__, MAC_ARG(psa));
+		return _FAIL;
+	}
+
 	/* If we receive Unsolicited TDLS Channel Switch Response when channel switch is running, */
 	/* we will go back to base channel and terminate this channel switch procedure */
 	if (ATOMIC_READ(&pchsw_info->chsw_on) == _TRUE) {
 		if (pmlmeext->cur_channel != rtw_get_oper_ch(padapter)) {
-			DBG_871X("receive unsolicited channel switch response \n");
-			rtw_tdls_cmd(padapter, NULL, TDLS_CH_SW_BACK);
+			DBG_871X("[TDLS] Rx unsolicited channel switch response \n");
+			rtw_tdls_cmd(padapter, ptdls_sta->hwaddr, TDLS_CH_SW_TO_BASE_CHNL);
 			goto exit;
 		}
 	}
@@ -2329,9 +2530,9 @@ sint On_TDLS_Ch_Switch_Rsp(_adapter *padapter, union recv_frame *precv_frame)
 	_rtw_memcpy(&status_code, ptr+2, 2);
 
 	if (status_code != 0) {
-		DBG_871X("[%s] status_code:%d\n", __FUNCTION__, status_code);
+		DBG_871X("[TDLS] %s status_code:%d\n", __FUNCTION__, status_code);
 		pchsw_info->ch_sw_state &= ~(TDLS_CH_SW_INITIATOR_STATE);
-		ATOMIC_SET(&pchsw_info->chsw_on, _FALSE);
+		rtw_tdls_cmd(padapter, ptdls_sta->hwaddr, TDLS_CH_SW_END);
 		ret = _FAIL;
 		goto exit;
 	}
@@ -2361,8 +2562,8 @@ sint On_TDLS_Ch_Switch_Rsp(_adapter *padapter, union recv_frame *precv_frame)
 
 	if ((pmlmeext->cur_channel == rtw_get_oper_ch(padapter)) &&
 		(pchsw_info->ch_sw_state & TDLS_WAIT_CH_RSP_STATE)) {
-		ATOMIC_SET(&pchsw_info->chsw_on, _TRUE);
-		rtw_tdls_cmd(padapter, ptdls_sta->hwaddr, TDLS_CH_SW);
+		if (ATOMIC_READ(&pchsw_info->chsw_on) == _TRUE)
+			rtw_tdls_cmd(padapter, ptdls_sta->hwaddr, TDLS_CH_SW_TO_OFF_CHNL);
 	}
 
 exit:
@@ -2521,7 +2722,11 @@ void rtw_build_tdls_setup_req_ies(_adapter * padapter, struct xmit_frame * pxmit
 		pframe = rtw_tdls_set_qos_cap(pframe, pattrib);
 
 #ifdef CONFIG_80211AC_VHT
-	if ((padapter->mlmepriv.htpriv.ht_option == _TRUE) && (pregistrypriv->vht_enable == _TRUE) && (pmlmeext->cur_channel > 14)) {
+	if ((padapter->mlmepriv.htpriv.ht_option == _TRUE) && (pmlmeext->cur_channel > 14)
+		&& REGSTY_IS_11AC_ENABLE(pregistrypriv)
+		&& hal_chk_proto_cap(padapter, PROTO_CAP_11AC)
+		&& (!padapter->mlmepriv.country_ent || COUNTRY_CHPLAN_EN_11AC(padapter->mlmepriv.country_ent))
+	) {
 		pframe = rtw_tdls_set_aid(padapter, pframe, pattrib);
 		pframe = rtw_tdls_set_vht_cap(padapter, pframe, pattrib);
 	}
@@ -2617,7 +2822,11 @@ void rtw_build_tdls_setup_rsp_ies(_adapter * padapter, struct xmit_frame * pxmit
 		pframe = rtw_tdls_set_qos_cap(pframe, pattrib);
 
 #ifdef CONFIG_80211AC_VHT
-	if ((padapter->mlmepriv.htpriv.ht_option == _TRUE) && (pregistrypriv->vht_enable == _TRUE) && (pmlmeext->cur_channel > 14)) {
+	if ((padapter->mlmepriv.htpriv.ht_option == _TRUE) && (pmlmeext->cur_channel > 14)
+		&& REGSTY_IS_11AC_ENABLE(pregistrypriv)
+		&& hal_chk_proto_cap(padapter, PROTO_CAP_11AC)
+		&& (!padapter->mlmepriv.country_ent || COUNTRY_CHPLAN_EN_11AC(padapter->mlmepriv.country_ent))
+	) {
 		pframe = rtw_tdls_set_aid(padapter, pframe, pattrib);
 		pframe = rtw_tdls_set_vht_cap(padapter, pframe, pattrib);
 		pframe = rtw_tdls_set_vht_op_mode_notify(padapter, pframe, pattrib, pmlmeext->cur_bwmode);
@@ -2689,8 +2898,12 @@ void rtw_build_tdls_setup_cfm_ies(_adapter * padapter, struct xmit_frame * pxmit
 		pframe = rtw_tdls_set_wmm_params(padapter, pframe, pattrib);
 
 #ifdef CONFIG_80211AC_VHT
-	if ((padapter->mlmepriv.htpriv.ht_option == _TRUE) && (pregistrypriv->vht_enable == _TRUE) 
-		&& (ptdls_sta->vhtpriv.vht_option == _TRUE) && (pmlmeext->cur_channel > 14)) {
+	if ((padapter->mlmepriv.htpriv.ht_option == _TRUE)
+		&& (ptdls_sta->vhtpriv.vht_option == _TRUE) && (pmlmeext->cur_channel > 14)
+		&& REGSTY_IS_11AC_ENABLE(pregistrypriv)
+		&& hal_chk_proto_cap(padapter, PROTO_CAP_11AC)
+		&& (!padapter->mlmepriv.country_ent || COUNTRY_CHPLAN_EN_11AC(padapter->mlmepriv.country_ent))
+	) {
 		pframe = rtw_tdls_set_vht_operation(padapter, pframe, pattrib, pmlmeext->cur_channel);
 		pframe = rtw_tdls_set_vht_op_mode_notify(padapter, pframe, pattrib, pmlmeext->cur_bwmode);
 	}
@@ -2831,11 +3044,11 @@ void rtw_build_tdls_peer_traffic_rsp_ies(_adapter * padapter, struct xmit_frame 
 #ifdef CONFIG_TDLS_CH_SW
 void rtw_build_tdls_ch_switch_req_ies(_adapter * padapter, struct xmit_frame * pxmitframe, u8 *pframe, struct tdls_txmgmt *ptxmgmt)
 {
-
+	struct tdls_info *ptdlsinfo = &padapter->tdlsinfo;
 	struct pkt_attrib	*pattrib = &pxmitframe->attrib;
 	struct sta_priv 	*pstapriv = &padapter->stapriv;
 	struct sta_info *ptdls_sta = rtw_get_stainfo(pstapriv, pattrib->dst);
-	u16 switch_time= CH_SWITCH_TIME * 1000, switch_timeout=CH_SWITCH_TIMEOUT * 1000;
+	u16 switch_time= TDLS_CH_SWITCH_TIME * 1000, switch_timeout=TDLS_CH_SWITCH_TIMEOUT * 1000;
 
 	ptdls_sta->ch_switch_time=switch_time;
 	ptdls_sta->ch_switch_timeout=switch_timeout;
@@ -2845,7 +3058,19 @@ void rtw_build_tdls_ch_switch_req_ies(_adapter * padapter, struct xmit_frame * p
 	pframe = rtw_tdls_set_action(pframe, pattrib, ptxmgmt);
 	pframe = rtw_tdls_set_target_ch(padapter, pframe, pattrib);
 	pframe = rtw_tdls_set_reg_class(pframe, pattrib, ptdls_sta);
-
+	
+	if (ptdlsinfo->chsw_info.ch_offset != HAL_PRIME_CHNL_OFFSET_DONT_CARE) {
+		switch (ptdlsinfo->chsw_info.ch_offset)
+		{
+			case HAL_PRIME_CHNL_OFFSET_LOWER:
+				pframe = rtw_tdls_set_second_channel_offset(pframe, pattrib, SCA);
+				break;
+			case HAL_PRIME_CHNL_OFFSET_UPPER:
+				pframe = rtw_tdls_set_second_channel_offset(pframe, pattrib, SCB);
+				break;
+		}
+	}
+	
 	if (ptdls_sta->tdls_sta_state & TDLS_INITIATOR_STATE)
 		pframe = rtw_tdls_set_linkid(pframe, pattrib, _FALSE);
 	else if (ptdls_sta->tdls_sta_state & TDLS_RESPONDER_STATE)
@@ -2943,7 +3168,7 @@ void _tdls_tpk_timer_hdl(void *FunctionContext)
 	ptdls_sta->TPK_count++;
 	/* TPK_timer expired in a second */
 	/* Retry timer should set at least 301 sec. */
-	if (ptdls_sta->TPK_count >= ptdls_sta->TDLS_PeerKey_Lifetime) {
+	if (ptdls_sta->TPK_count >= (ptdls_sta->TDLS_PeerKey_Lifetime - 3)) {
 		DBG_871X("[TDLS] %s, Re-Setup TDLS link with "MAC_FMT" since TPK lifetime expires!\n", __FUNCTION__, MAC_ARG(ptdls_sta->hwaddr));
 		ptdls_sta->TPK_count=0;
 		_rtw_memcpy(txmgmt.peer, ptdls_sta->hwaddr, ETH_ALEN);
@@ -2960,40 +3185,8 @@ void _tdls_ch_switch_timer_hdl(void *FunctionContext)
 	_adapter *padapter = ptdls_sta->padapter;
 	struct tdls_ch_switch *pchsw_info = &padapter->tdlsinfo.chsw_info;
 
-	//DBG_871X("%s %d, tdls_sta_state:0x%08x\n", __FUNCTION__, __LINE__, ptdls_sta->tdls_sta_state);
-
-	if (padapter->mlmeextpriv.cur_channel != rtw_get_oper_ch(padapter)) {
-		if (!(pchsw_info->ch_sw_state & TDLS_PEER_AT_OFF_STATE)) {
-			rtw_tdls_cmd(padapter, ptdls_sta->hwaddr, TDLS_CH_SW_BACK);
-			ATOMIC_SET(&pchsw_info->chsw_on, _FALSE);
-			DBG_871X("[TDLS] %s, can't get traffic from op_ch:%d\n", __FUNCTION__, rtw_get_oper_ch(padapter));
-		} else {
-			//DBG_871X("%s %d\n", __FUNCTION__, __LINE__);
-			//_set_timer(&ptdls_sta->delay_timer, padapter->mlmeextpriv.mlmext_info.bcn_interval - 5 - ptdls_sta->ch_switch_timeout/1000);
-		}
-	} else {
-		//DBG_871X("%s %d, op_ch:%d, tdls_state:0x%08x\n", __FUNCTION__, __LINE__, rtw_get_oper_ch(padapter), ptdls_sta->tdls_sta_state);
-	}
-
-#if 0
-	if (!(pchsw_info->ch_sw_state & TDLS_PEER_AT_OFF_STATE)) {
-		//SelectChannel(padapter, padapter->mlmeextpriv.cur_channel);
-		ATOMIC_SET(&pchsw_info->chsw_on, _FALSE);
-		DBG_871X("%s %d, op_ch:%d, tdls_state:0x%08x\n", __FUNCTION__, __LINE__, rtw_get_oper_ch(padapter), ptdls_sta->tdls_sta_state);
-	}
-
-	if (pchsw_info->ch_sw_state & TDLS_CH_SW_INITIATOR_STATE) {
-		if (padapter->mlmeextpriv.cur_channel != rtw_get_oper_ch(padapter)) {
-			DBG_871X("%s %d\n", __FUNCTION__, __LINE__);
-			_set_timer(&ptdls_sta->delay_timer, padapter->mlmeextpriv.mlmext_info.bcn_interval - 5 - ptdls_sta->ch_switch_timeout/1000);
-			//_set_timer(&ptdls_sta->delay_timer, 1000);
-		} else {
-			DBG_871X("%s %d\n", __FUNCTION__, __LINE__);
-			issue_tdls_ch_switch_req(padapter, ptdls_sta);
-			//_set_timer(&ptdls_sta->delay_timer, 500);
-		}
-	}
-#endif
+	rtw_tdls_cmd(padapter, ptdls_sta->hwaddr, TDLS_CH_SW_END_TO_BASE_CHNL);
+	DBG_871X("[TDLS] %s, can't get traffic from op_ch:%d\n", __FUNCTION__, rtw_get_oper_ch(padapter));
 }
 
 void _tdls_delay_timer_hdl(void *FunctionContext)
@@ -3005,6 +3198,29 @@ void _tdls_delay_timer_hdl(void *FunctionContext)
 	DBG_871X("[TDLS] %s, op_ch:%d, tdls_state:0x%08x\n", __FUNCTION__, rtw_get_oper_ch(padapter), ptdls_sta->tdls_sta_state);
 	pchsw_info->delay_switch_back = _TRUE;
 }
+
+void _tdls_stay_on_base_chnl_timer_hdl(void *FunctionContext)
+{
+	struct sta_info *ptdls_sta = (struct sta_info *)FunctionContext;
+	_adapter *padapter = ptdls_sta->padapter;
+	struct tdls_ch_switch *pchsw_info = &padapter->tdlsinfo.chsw_info;
+
+	if (ptdls_sta != NULL) {
+		issue_tdls_ch_switch_req(padapter, ptdls_sta);
+		pchsw_info->ch_sw_state |= TDLS_WAIT_CH_RSP_STATE;
+	}
+}
+
+void _tdls_ch_switch_monitor_timer_hdl(void *FunctionContext)
+{
+	struct sta_info *ptdls_sta = (struct sta_info *)FunctionContext;
+	_adapter *padapter = ptdls_sta->padapter;
+	struct tdls_ch_switch *pchsw_info = &padapter->tdlsinfo.chsw_info;
+
+	rtw_tdls_cmd(padapter, ptdls_sta->hwaddr, TDLS_CH_SW_END);
+	DBG_871X("[TDLS] %s, does not receive ch sw req\n", __FUNCTION__);
+}
+
 #endif
 
 void _tdls_handshake_timer_hdl(void *FunctionContext)
@@ -3021,11 +3237,11 @@ void _tdls_handshake_timer_hdl(void *FunctionContext)
 		DBG_871X("[TDLS] Handshake time out\n");
 		if (ptdls_sta->tdls_sta_state & TDLS_LINKED_STATE) 
 		{
-			issue_tdls_teardown(padapter, &txmgmt, _TRUE);
+			rtw_tdls_cmd(padapter, ptdls_sta->hwaddr, TDLS_TEARDOWN_STA);
 		}
 		else
 		{
-			rtw_tdls_cmd(padapter, ptdls_sta->hwaddr, TDLS_TEAR_STA);
+			rtw_tdls_cmd(padapter, ptdls_sta->hwaddr, TDLS_TEARDOWN_STA_LOCALLY);
 		}
 	}
 }
@@ -3056,6 +3272,8 @@ void rtw_init_tdls_timer(_adapter *padapter, struct sta_info *psta)
 #ifdef CONFIG_TDLS_CH_SW	
 	_init_timer(&psta->ch_sw_timer, padapter->pnetdev, _tdls_ch_switch_timer_hdl, psta);
 	_init_timer(&psta->delay_timer, padapter->pnetdev, _tdls_delay_timer_hdl, psta);
+	_init_timer(&psta->stay_on_base_chnl_timer, padapter->pnetdev, _tdls_stay_on_base_chnl_timer_hdl, psta);
+	_init_timer(&psta->ch_sw_monitor_timer, padapter->pnetdev, _tdls_ch_switch_monitor_timer_hdl, psta);
 #endif
 	_init_timer(&psta->handshake_timer, padapter->pnetdev, _tdls_handshake_timer_hdl, psta);
 	_init_timer(&psta->pti_timer, padapter->pnetdev, _tdls_pti_timer_hdl, psta);
@@ -3066,7 +3284,9 @@ void rtw_free_tdls_timer(struct sta_info *psta)
 	_cancel_timer_ex(&psta->TPK_timer);
 #ifdef CONFIG_TDLS_CH_SW	
 	_cancel_timer_ex(&psta->ch_sw_timer);
-	_cancel_timer_ex(&psta->delay_timer);
+	_cancel_timer_ex(&psta->delay_timer);	
+	_cancel_timer_ex(&psta->stay_on_base_chnl_timer);
+	_cancel_timer_ex(&psta->ch_sw_monitor_timer);
 #endif
 	_cancel_timer_ex(&psta->handshake_timer);
 	_cancel_timer_ex(&psta->pti_timer);

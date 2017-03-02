@@ -242,7 +242,7 @@ struct sta_info {
 	u8	SNonce[32];
 	u8	ANonce[32];
 	u32	TDLS_PeerKey_Lifetime;
-	u16	TPK_count;
+	u32	TPK_count;
 	_timer	TPK_timer;
 	struct TDLS_PeerKey	tpk;
 #ifdef CONFIG_TDLS_CH_SW	
@@ -251,6 +251,8 @@ struct sta_info {
 	//u8	option;
 	_timer	ch_sw_timer;
 	_timer	delay_timer;
+	_timer	stay_on_base_chnl_timer;
+	_timer	ch_sw_monitor_timer;
 #endif	
 	_timer handshake_timer;
 	u8 alive_count;
@@ -285,13 +287,14 @@ struct sta_info {
 	//AP_Mode:
 	//curr_network(mlme_priv/security_priv/qos/ht) : AP CAP/INFO
 	//sta_info: (AP & STA) CAP/INFO
-		
+
+	unsigned int expire_to;
+
 #ifdef CONFIG_AP_MODE
 
 	_list asoc_list;
 	_list auth_list;
-	 
-	unsigned int expire_to;
+
 	unsigned int auth_seq;
 	unsigned int authalg;
 	unsigned char chg_txt[128];
@@ -517,7 +520,8 @@ struct	sta_priv {
 	_queue wakeup_q;
 	
 	_adapter *padapter;
-	
+
+	u32 adhoc_expire_to;
 
 #ifdef CONFIG_AP_MODE
 	_list asoc_list;
@@ -552,7 +556,7 @@ struct	sta_priv {
 };
 
 
-__inline static u32 wifi_mac_hash(u8 *mac)
+static inline u32 wifi_mac_hash(const u8 *mac)
 {
         u32 x;
 
@@ -577,10 +581,10 @@ extern u32	_rtw_free_sta_priv(struct sta_priv *pstapriv);
 int rtw_stainfo_offset(struct sta_priv *stapriv, struct sta_info *sta);
 struct sta_info *rtw_get_stainfo_by_offset(struct sta_priv *stapriv, int offset);
 
-extern struct sta_info *rtw_alloc_stainfo(struct	sta_priv *pstapriv, u8 *hwaddr);
+extern struct sta_info *rtw_alloc_stainfo(struct	sta_priv *pstapriv, const u8 *hwaddr);
 extern u32	rtw_free_stainfo(_adapter *padapter , struct sta_info *psta);
 extern void rtw_free_all_stainfo(_adapter *padapter);
-extern struct sta_info *rtw_get_stainfo(struct sta_priv *pstapriv, u8 *hwaddr);
+extern struct sta_info *rtw_get_stainfo(struct sta_priv *pstapriv, const u8 *hwaddr);
 extern u32 rtw_init_bcmc_stainfo(_adapter* padapter);
 extern struct sta_info* rtw_get_bcmc_stainfo(_adapter* padapter);
 extern u8 rtw_access_ctrl(_adapter *padapter, u8 *mac_addr);

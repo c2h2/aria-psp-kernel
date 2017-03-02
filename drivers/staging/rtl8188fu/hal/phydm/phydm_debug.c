@@ -1958,8 +1958,11 @@ phydm_fw_trace_handler_8051(
 
 	int i = 0;
 	u1Byte	Extend_c2hSubID = 0, Extend_c2hDbgLen = 0, Extend_c2hDbgSeq = 0;
-	u1Byte	fw_debug_trace[100];
+	u1Byte	fw_debug_trace[128];
 	pu1Byte	Extend_c2hDbgContent = 0;
+	
+	if (CmdLen > 127)
+		return;
 
 	Extend_c2hSubID = Buffer[0];
 	Extend_c2hDbgLen = Buffer[1];

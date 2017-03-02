@@ -707,6 +707,25 @@ void rtl8188f_set_FwPwrMode_cmd(PADAPTER padapter, u8 psmode)
 	_func_exit_;
 }
 
+#ifdef CONFIG_TDLS
+#ifdef CONFIG_TDLS_CH_SW
+void rtl8188f_set_BcnEarly_C2H_Rpt_cmd(PADAPTER padapter, u8 enable)
+{
+	u8	u1H2CSetPwrMode[H2C_PWRMODE_LEN] = {0};
+
+	SET_8188F_H2CCMD_PWRMODE_PARM_MODE(u1H2CSetPwrMode, 1);
+	SET_8188F_H2CCMD_PWRMODE_PARM_RLBM(u1H2CSetPwrMode, 1);
+	SET_8188F_H2CCMD_PWRMODE_PARM_SMART_PS(u1H2CSetPwrMode, 0);
+	SET_8188F_H2CCMD_PWRMODE_PARM_BCN_PASS_TIME(u1H2CSetPwrMode, 0);
+	SET_8188F_H2CCMD_PWRMODE_PARM_ALL_QUEUE_UAPSD(u1H2CSetPwrMode, 0);
+	SET_8188F_H2CCMD_PWRMODE_PARM_BCN_EARLY_C2H_RPT(u1H2CSetPwrMode, enable);
+	SET_8188F_H2CCMD_PWRMODE_PARM_PWR_STATE(u1H2CSetPwrMode, 0x0C);
+	SET_8188F_H2CCMD_PWRMODE_PARM_BYTE5(u1H2CSetPwrMode, 0);
+	FillH2CCmd8188F(padapter, H2C_8188F_SET_PWR_MODE, sizeof(u1H2CSetPwrMode), u1H2CSetPwrMode);
+}
+#endif
+#endif
+
 void rtl8188f_set_FwPsTuneParam_cmd(PADAPTER padapter)
 {
 	struct pwrctrl_priv *pwrpriv = adapter_to_pwrctl(padapter);
@@ -896,9 +915,8 @@ void rtl8188f_set_FwJoinBssRpt_cmd(PADAPTER padapter, u8 mstatus)
 void rtl8188f_Add_RateATid(PADAPTER pAdapter, u64 rate_bitmap, u8 *arg, u8 rssi_level)
 {
 	HAL_DATA_TYPE	*pHalData = GET_HAL_DATA(pAdapter);
-	struct mlme_ext_priv	*pmlmeext = &pAdapter->mlmeextpriv;
-	struct mlme_ext_info	*pmlmeinfo = &(pmlmeext->mlmext_info);
-	struct sta_info	*psta;
+	struct macid_ctl_t *macid_ctl = &pAdapter->dvobj->macid_ctl;
+	struct sta_info	*psta = NULL;
 	u8 mac_id = arg[0];
 	u8 raid = arg[1];
 	u8 shortGI = arg[2];
@@ -906,9 +924,13 @@ void rtl8188f_Add_RateATid(PADAPTER pAdapter, u64 rate_bitmap, u8 *arg, u8 rssi_
 	u32 bitmap = (u32) rate_bitmap;
 	u32 mask = bitmap & 0x0FFFFFFF;
 
-	psta = pmlmeinfo->FW_sta_info[mac_id].psta;
-	if (psta == NULL)
+	if (mac_id < macid_ctl->num)
+		psta = macid_ctl->sta[mac_id];
+	if (psta == NULL) {
+		DBG_871X_LEVEL(_drv_always_, FUNC_ADPT_FMT" macid:%u, sta is NULL\n"
+			, FUNC_ADPT_ARG(pAdapter), mac_id);
 		return;
+	}
 
 	bw = psta->bw_mode;
 

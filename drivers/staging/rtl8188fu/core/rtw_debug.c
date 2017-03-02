@@ -68,7 +68,7 @@ u32 GlobalDebugLevel = _drv_err_;
 void dump_drv_version(void *sel)
 {
 	DBG_871X_SEL_NL(sel, "%s %s\n", DRV_NAME, DRIVERVERSION);
-//	DBG_871X_SEL_NL(sel, "build time: %s %s\n", __DATE__, __TIME__);
+	DBG_871X_SEL_NL(sel, "build time: %s %s\n", __DATE__, __TIME__);
 }
 
 void dump_drv_cfg(void *sel)
@@ -102,6 +102,9 @@ void dump_drv_cfg(void *sel)
 
 #ifdef CONFIG_LOAD_PHY_PARA_FROM_FILE
 	DBG_871X_SEL_NL(sel, "LOAD_PHY_PARA_FROM_FILE - REALTEK_CONFIG_PATH=%s\n", REALTEK_CONFIG_PATH);
+	#if defined(CONFIG_MULTIDRV) || defined(REALTEK_CONFIG_PATH_WITH_IC_NAME_FOLDER)
+	DBG_871X_SEL_NL(sel, "LOAD_PHY_PARA_FROM_FILE - REALTEK_CONFIG_PATH_WITH_IC_NAME_FOLDER\n");
+	#endif
 	#ifdef CONFIG_CALIBRATE_TX_POWER_BY_REGULATORY
 	DBG_871X_SEL_NL(sel, "CONFIG_CALIBRATE_TX_POWER_BY_REGULATORY\n");
 	#endif
@@ -129,7 +132,11 @@ void dump_drv_cfg(void *sel)
 	#ifdef CONFIG_GPIO_WAKEUP
 	DBG_871X_SEL_NL(sel, "CONFIG_GPIO_WAKEUP - WAKEUP_GPIO_IDX:%d\n", WAKEUP_GPIO_IDX);
 	#endif
-#endif	
+#endif
+
+#ifdef CONFIG_TDLS
+	DBG_871X_SEL_NL(sel, "CONFIG_TDLS\n");
+#endif
 
 #ifdef CONFIG_USB_HCI
 	#ifdef CONFIG_SUPPORT_USB_INT	
@@ -1854,6 +1861,24 @@ int proc_get_hw_status(struct seq_file *m, void *v)
 
 	return 0;
 }
+int proc_get_trx_info_debug(struct seq_file *m, void *v)
+{
+	struct net_device *dev = m->private;
+	_adapter *padapter = (_adapter *)rtw_netdev_priv(dev);
+	HAL_DATA_TYPE	*pHalData = GET_HAL_DATA(padapter);
+
+	int i;
+
+
+	/*============  tx info ============	*/
+	rtw_hal_get_def_var(padapter, HW_DEF_RA_INFO_DUMP, m);
+
+	/*============  rx info ============	*/
+	rtw_hal_set_odm_var(padapter, HAL_ODM_RX_INFO_DUMP, m, _FALSE);
+
+
+return 0;
+}
 
 int proc_get_rx_signal(struct seq_file *m, void *v)
 {
@@ -1978,6 +2003,8 @@ ssize_t proc_set_bw_mode(struct file *file, const char __user *buffer, size_t co
 	struct registry_priv	*pregpriv = &padapter->registrypriv;
 	char tmp[32];
 	u32 mode;
+	u8 bw_2g;
+	u8 bw_5g;
 
 	if (count < 1)
 		return -EFAULT;
@@ -1989,13 +2016,14 @@ ssize_t proc_set_bw_mode(struct file *file, const char __user *buffer, size_t co
 
 	if (buffer && !copy_from_user(tmp, buffer, count)) {
 
-		int num = sscanf(tmp, "%d ", &mode);
+		int num = sscanf(tmp, "%x ", &mode);
+		bw_5g = mode >> 4;
+		bw_2g = mode & 0x0f;
 
-		if( pregpriv &&  mode < 2 )
-		{
+		if (pregpriv && bw_2g <= 4 && bw_5g <= 4) {
 
 			pregpriv->bw_mode = mode;
-			printk("bw_mode=%d\n", mode);
+			printk("bw_mode=0x%x\n", mode);
 
 		}
 	}
@@ -2036,9 +2064,8 @@ ssize_t proc_set_ampdu_enable(struct file *file, const char __user *buffer, size
 
 		int num = sscanf(tmp, "%d ", &mode);
 
-		if( pregpriv && mode < 3 )
-		{
-			pregpriv->ampdu_enable= mode;
+		if (pregpriv && mode < 2) {
+			pregpriv->ampdu_enable = mode;
 			printk("ampdu_enable=%d\n", mode);
 		}
 

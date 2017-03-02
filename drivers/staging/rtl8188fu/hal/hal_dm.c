@@ -88,6 +88,8 @@ void Init_ODM_ComInfo(_adapter *adapter)
 
 	ODM_CmnInfoInit(pDM_Odm, ODM_CMNINFO_PLATFORM, ODM_CE);
 
+	rtw_odm_init_ic_type(adapter);
+
 	if (rtw_get_intf_type(adapter) == RTW_GSPI)
 		ODM_CmnInfoInit(pDM_Odm, ODM_CMNINFO_INTERFACE, ODM_ITRF_SDIO);
 	else
@@ -160,6 +162,8 @@ void Init_ODM_ComInfo(_adapter *adapter)
 	ODM_CmnInfoInit(pDM_Odm, ODM_CMNINFO_RFE_TYPE, pHalData->RFEType);
 
 	ODM_CmnInfoInit(pDM_Odm, ODM_CMNINFO_EXT_TRSW, 0);
+
+	ODM_CmnInfoInit(pDM_Odm, ODM_CMNINFO_RF_ANTENNA_TYPE, pHalData->TRxAntDivType);
 
 	/* Pointer reference */
 	ODM_CmnInfoHook(pDM_Odm, ODM_CMNINFO_TX_UNI, &(dvobj->traffic_stat.tx_bytes));

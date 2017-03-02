@@ -211,10 +211,11 @@ bool rtw_pwr_unassociated_idle(_adapter *adapter)
 		|| check_fwstate(pmlmepriv, WIFI_UNDER_LINKING|WIFI_UNDER_WPS)
 		|| check_fwstate(pmlmepriv, WIFI_AP_STATE)
 		|| check_fwstate(pmlmepriv, WIFI_ADHOC_MASTER_STATE|WIFI_ADHOC_STATE)
-		#if defined(CONFIG_P2P) && defined(CONFIG_IOCTL_CFG80211) && defined(CONFIG_P2P_IPS)
+		#if defined(CONFIG_P2P) && defined(CONFIG_IOCTL_CFG80211)
 		|| pcfg80211_wdinfo->is_ro_ch
 		#elif defined(CONFIG_P2P)
-		|| !rtw_p2p_chk_state(pwdinfo, P2P_STATE_NONE)
+		|| rtw_p2p_chk_state(pwdinfo, P2P_STATE_IDLE)
+		|| rtw_p2p_chk_state(pwdinfo, P2P_STATE_LISTEN)
 		#endif
 		#if defined(CONFIG_P2P) && defined(CONFIG_IOCTL_CFG80211)
 		|| rtw_get_passing_time_ms(pcfg80211_wdinfo->last_ro_ch_time) < 3000
@@ -237,10 +238,11 @@ bool rtw_pwr_unassociated_idle(_adapter *adapter)
 			|| check_fwstate(b_pmlmepriv, WIFI_UNDER_LINKING|WIFI_UNDER_WPS)
 			|| check_fwstate(b_pmlmepriv, WIFI_AP_STATE)
 			|| check_fwstate(b_pmlmepriv, WIFI_ADHOC_MASTER_STATE|WIFI_ADHOC_STATE)
-			#if defined(CONFIG_P2P) && defined(CONFIG_IOCTL_CFG80211) && defined(CONFIG_P2P_IPS)
+			#if defined(CONFIG_P2P) && defined(CONFIG_IOCTL_CFG80211)
 			|| b_pcfg80211_wdinfo->is_ro_ch
 			#elif defined(CONFIG_P2P)
-			|| !rtw_p2p_chk_state(b_pwdinfo, P2P_STATE_NONE)
+			|| rtw_p2p_chk_state(b_pwdinfo, P2P_STATE_IDLE)
+			|| rtw_p2p_chk_state(b_pwdinfo, P2P_STATE_LISTEN)
 			#endif
 			#if defined(CONFIG_P2P) && defined(CONFIG_IOCTL_CFG80211)
 			|| rtw_get_passing_time_ms(b_pcfg80211_wdinfo->last_ro_ch_time) < 3000
@@ -689,10 +691,8 @@ u8 PS_RDY_CHECK(_adapter * padapter)
 		|| check_fwstate(pmlmepriv, WIFI_UNDER_LINKING|WIFI_UNDER_WPS)
 		|| check_fwstate(pmlmepriv, WIFI_AP_STATE)
 		|| check_fwstate(pmlmepriv, WIFI_ADHOC_MASTER_STATE|WIFI_ADHOC_STATE)
-		#if defined(CONFIG_P2P) && defined(CONFIG_IOCTL_CFG80211) && defined(CONFIG_P2P_IPS)
+		#if defined(CONFIG_P2P) && defined(CONFIG_IOCTL_CFG80211)
 		|| pcfg80211_wdinfo->is_ro_ch
-		#elif defined(CONFIG_P2P)
-		|| !rtw_p2p_chk_state(pwdinfo, P2P_STATE_NONE)
 		#endif
 		|| rtw_is_scan_deny(padapter)
 #ifdef CONFIG_TDLS
@@ -905,8 +905,6 @@ _func_enter_;
 			else
 				pwrpriv->lps_leave_cnts = 0;
 #ifdef CONFIG_TDLS
-			_enter_critical_bh(&pstapriv->sta_hash_lock, &irqL);
-
 			for(i=0; i< NUM_STA; i++)
 			{
 				phead = &(pstapriv->sta_hash[i]);
@@ -921,8 +919,6 @@ _func_enter_;
 					plist = get_next(plist);
 				}
 			}
-
-			_exit_critical_bh(&pstapriv->sta_hash_lock, &irqL);
 #endif //CONFIG_TDLS
 
 			pwrpriv->pwr_mode = ps_mode;
@@ -984,8 +980,6 @@ _func_enter_;
 			else
 				pwrpriv->lps_enter_cnts = 0;
 #ifdef CONFIG_TDLS
-			_enter_critical_bh(&pstapriv->sta_hash_lock, &irqL);
-
 			for(i=0; i< NUM_STA; i++)
 			{
 				phead = &(pstapriv->sta_hash[i]);
@@ -1000,8 +994,6 @@ _func_enter_;
 					plist = get_next(plist);
 				}
 			}
-
-			_exit_critical_bh(&pstapriv->sta_hash_lock, &irqL);
 #endif //CONFIG_TDLS
 
 #ifdef CONFIG_BT_COEXIST
@@ -2187,6 +2179,7 @@ _func_enter_;
 	/*default low active*/
 	pwrctrlpriv->is_high_active = HIGH_ACTIVE;
 	val8 = (pwrctrlpriv->is_high_active == 0) ? 1 : 0;
+	rtw_hal_switch_gpio_wl_ctrl(padapter, WAKEUP_GPIO_IDX, _TRUE);
 	rtw_hal_set_output_gpio(padapter, WAKEUP_GPIO_IDX, val8);
 	DBG_871X("%s: set GPIO_%d %d as default.\n",
 		 __func__, WAKEUP_GPIO_IDX, val8);

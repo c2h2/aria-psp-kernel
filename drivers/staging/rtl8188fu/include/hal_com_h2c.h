@@ -32,12 +32,14 @@ enum h2c_cmd{
 	H2C_KEEP_ALIVE = 0x03,
 	H2C_DISCON_DECISION = 0x04,	
 	H2C_PSD_OFFLOAD = 0x05,	
+	H2C_CUSTOMER_STR_REQ = 0x06,
 	H2C_AP_OFFLOAD = 0x08,	
 	H2C_BCN_RSVDPAGE = 0x09,	
 	H2C_PROBERSP_RSVDPAGE = 0x0A,	
 	H2C_FCS_RSVDPAGE = 0x10,	
 	H2C_FCS_INFO = 0x11,	
 	H2C_AP_WOW_GPIO_CTRL = 0x13,
+	H2C_CHNL_SWITCH_OPER_OFFLOAD = 0x1C,
 
 	//PoweSave Class: 001
 	H2C_SET_PWR_MODE = 0x20,
@@ -92,6 +94,9 @@ enum h2c_cmd{
 
 	H2C_RESET_TSF = 0xC0,
 	H2C_BCNHWSEQ = 0xC2,
+	H2C_CUSTOMER_STR_W1 = 0xC6,
+	H2C_CUSTOMER_STR_W2 = 0xC7,
+	H2C_CUSTOMER_STR_W3 = 0xC8,
 	H2C_MAXID,
 };
 
@@ -201,7 +206,8 @@ enum h2c_cmd{
 #define H2C_MSR_ROLE_GC		3
 #define H2C_MSR_ROLE_GO		4
 #define H2C_MSR_ROLE_TDLS	5
-#define H2C_MSR_ROLE_MAX	6
+#define H2C_MSR_ROLE_ADHOC	6
+#define H2C_MSR_ROLE_MAX	7
 
 extern const char * const _h2c_msr_role_str[];
 #define h2c_msr_role_str(role) (((role) >= H2C_MSR_ROLE_MAX) ? _h2c_msr_role_str[H2C_MSR_ROLE_MAX] : _h2c_msr_role_str[(role)])
@@ -227,6 +233,37 @@ s32 rtw_hal_set_FwMediaStatusRpt_range_cmd(_adapter *adapter, bool opmode, bool 
 #define SET_H2CCMD_DISCONDECISION_PARM_ADOPT(__pH2CCmd, __Value)		SET_BITS_TO_LE_1BYTE(__pH2CCmd, 1, 1, __Value)
 #define SET_H2CCMD_DISCONDECISION_PARM_CHECK_PERIOD(__pH2CCmd, __Value)	SET_BITS_TO_LE_1BYTE(__pH2CCmd+1, 0, 8, __Value)
 #define SET_H2CCMD_DISCONDECISION_PARM_TRY_PKT_NUM(__pH2CCmd, __Value)	SET_BITS_TO_LE_1BYTE(__pH2CCmd+2, 0, 8, __Value)
+
+#ifdef CONFIG_RTW_CUSTOMER_STR
+#define RTW_CUSTOMER_STR_LEN 16
+#define RTW_CUSTOMER_STR_FMT "%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x"
+#define RTW_CUSTOMER_STR_ARG(x) ((u8 *)(x))[0], ((u8 *)(x))[1], ((u8 *)(x))[2], ((u8 *)(x))[3], ((u8 *)(x))[4], ((u8 *)(x))[5], \
+	((u8 *)(x))[6], ((u8 *)(x))[7], ((u8 *)(x))[8], ((u8 *)(x))[9], ((u8 *)(x))[10], ((u8 *)(x))[11], \
+	((u8 *)(x))[12], ((u8 *)(x))[13], ((u8 *)(x))[14], ((u8 *)(x))[15]
+
+/* H2C_CUSTOMER_STR_REQ  0x06 */
+#define H2C_CUSTOMER_STR_REQ_LEN 1
+#define SET_H2CCMD_CUSTOMER_STR_REQ_EN(__pH2CCmd, __Value)	SET_BITS_TO_LE_1BYTE(((u8 *)(__pH2CCmd)), 0, 1, (__Value))
+s32 rtw_hal_h2c_customer_str_req(_adapter *adapter);
+s32 rtw_hal_customer_str_read(_adapter *adapter, u8 *cs);
+
+/* H2C_CUSTOMER_STR_W1 0xC6 */
+#define H2C_CUSTOMER_STR_W1_LEN 7
+#define SET_H2CCMD_CUSTOMER_STR_W1_EN(__pH2CCmd, __Value)	SET_BITS_TO_LE_1BYTE(((u8 *)(__pH2CCmd)), 0, 1, (__Value))
+#define H2CCMD_CUSTOMER_STR_W1_BYTE0(__pH2CCmd)				(((u8 *)(__pH2CCmd)) + 1)
+
+/* H2C_CUSTOMER_STR_W2 0xC7 */
+#define H2C_CUSTOMER_STR_W2_LEN 7
+#define SET_H2CCMD_CUSTOMER_STR_W2_EN(__pH2CCmd, __Value)	SET_BITS_TO_LE_1BYTE(((u8 *)(__pH2CCmd)), 0, 1, (__Value))
+#define H2CCMD_CUSTOMER_STR_W2_BYTE6(__pH2CCmd)				(((u8 *)(__pH2CCmd)) + 1)
+
+/* H2C_CUSTOMER_STR_W3 0xC8 */
+#define H2C_CUSTOMER_STR_W3_LEN 5
+#define SET_H2CCMD_CUSTOMER_STR_W3_EN(__pH2CCmd, __Value)	SET_BITS_TO_LE_1BYTE(((u8 *)(__pH2CCmd)), 0, 1, (__Value))
+#define H2CCMD_CUSTOMER_STR_W3_BYTE12(__pH2CCmd)			(((u8 *)(__pH2CCmd)) + 1)
+s32 rtw_hal_h2c_customer_str_write(_adapter *adapter, const u8 *cs);
+s32 rtw_hal_customer_str_write(_adapter *adapter, const u8 *cs);
+#endif /* CONFIG_RTW_CUSTOMER_STR */
 
 //_AP_Offload 0x08
 #define SET_H2CCMD_AP_WOWLAN_EN(__pH2CCmd, __Value)			SET_BITS_TO_LE_1BYTE(__pH2CCmd, 0, 8, __Value)
@@ -311,6 +348,12 @@ s32 rtw_hal_set_FwMediaStatusRpt_range_cmd(_adapter *adapter, bool opmode, bool 
 #define SET_H2CCMD_RSVDPAGE_LOC_P2P_PD_RSP(__pH2CCmd, __Value)	SET_BITS_TO_LE_1BYTE((__pH2CCmd)+4, 0, 8, __Value)
 #endif //CONFIG_P2P_WOWLAN
 
+/* CHNL_SWITCH_OPER_OFFLOAD_0x1C */
+#define SET_H2CCMD_CH_SW_OPER_OFFLOAD_CH_NUM(__pH2CCmd, __Value)	SET_BITS_TO_LE_1BYTE(__pH2CCmd, 0, 8, __Value)
+#define SET_H2CCMD_CH_SW_OPER_OFFLOAD_BW_MODE(__pH2CCmd, __Value)	SET_BITS_TO_LE_1BYTE((__pH2CCmd) + 1, 0, 2, __Value)
+#define SET_H2CCMD_CH_SW_OPER_OFFLOAD_BW_40M_SC(__pH2CCmd, __Value)	SET_BITS_TO_LE_1BYTE((__pH2CCmd) + 1, 2, 3, __Value)
+#define SET_H2CCMD_CH_SW_OPER_OFFLOAD_BW_80M_SC(__pH2CCmd, __Value)	SET_BITS_TO_LE_1BYTE((__pH2CCmd) + 1, 5, 3, __Value)
+#define SET_H2CCMD_CH_SW_OPER_OFFLOAD_RFE_TYPE(__pH2CCmd, __Value)	SET_BITS_TO_LE_1BYTE((__pH2CCmd) + 2, 0, 4, __Value)
 //---------------------------------------------------------------------------------------------------------//
 //-------------------------------------------    Structure    --------------------------------------------------//
 //---------------------------------------------------------------------------------------------------------//

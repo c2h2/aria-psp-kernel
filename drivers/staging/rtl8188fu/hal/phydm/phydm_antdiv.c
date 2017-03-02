@@ -310,7 +310,7 @@ odm_UpdateTxAnt(
 	pDM_FatTable->antsel_b[MacId] = (TxAnt&BIT1)>>1;
 	pDM_FatTable->antsel_c[MacId] = (TxAnt&BIT2)>>2;
 	
-	//ODM_RT_TRACE(pDM_Odm,ODM_COMP_ANT_DIV, ODM_DBG_LOUD, ("[Tx from TxInfo]: MacID:(( %d )),  TxAnt = (( %s ))\n", MacId,(Ant==MAIN_ANT)?"MAIN_ANT":"AUX_ANT"));
+	ODM_RT_TRACE(pDM_Odm, ODM_COMP_ANT_DIV, ODM_DBG_LOUD, ("[Tx from TxInfo]: MacID:(( %d )),  TxAnt = (( %s ))\n", MacId, (Ant == MAIN_ANT)?"MAIN_ANT":"AUX_ANT"));
 	//ODM_RT_TRACE(pDM_Odm,ODM_COMP_ANT_DIV, ODM_DBG_LOUD,("antsel_tr_mux=(( 3'b%d%d%d ))\n",pDM_FatTable->antsel_c[MacId] , pDM_FatTable->antsel_b[MacId] , pDM_FatTable->antsel_a[MacId] ));
 	
 }
@@ -2014,7 +2014,6 @@ odm_HW_AntDiv(
 		{
 			ODM_RT_TRACE(pDM_Odm,ODM_COMP_ANT_DIV, ODM_DBG_LOUD, ("[Linked !!!]\n"));
 			odm_AntDiv_on_off(pDM_Odm, ANTDIV_ON);
-			odm_Tx_By_TxDesc_or_Reg(pDM_Odm , TX_BY_DESC);
 			
 			//if(pDM_Odm->SupportICType == ODM_RTL8821 )
 				//ODM_SetBBReg(pDM_Odm, 0x800 , BIT25, 0); //CCK AntDiv function disable
@@ -2047,6 +2046,12 @@ odm_HW_AntDiv(
 			#endif
 		}	
 	}	
+
+	if (pDM_Odm->bOneEntryOnly == TRUE)
+		odm_Tx_By_TxDesc_or_Reg(pDM_Odm, TX_BY_REG);
+	else
+		odm_Tx_By_TxDesc_or_Reg(pDM_Odm, TX_BY_DESC);
+		
 
 	//ODM_RT_TRACE(pDM_Odm,ODM_COMP_ANT_DIV, ODM_DBG_LOUD, ("\n AntDiv Start =>\n"));
 
@@ -2316,6 +2321,7 @@ odm_S0S1_SwAntDiv(
 		ODM_RT_TRACE(pDM_Odm,ODM_COMP_ANT_DIV, ODM_DBG_LOUD, ("[No Link!!!]\n"));
 		if(pDM_FatTable->bBecomeLinked == TRUE)
 		{
+			odm_Tx_By_TxDesc_or_Reg(pDM_Odm, TX_BY_REG);
 			if (pDM_Odm->SupportICType == ODM_RTL8723B) {
 				
 				ODM_RT_TRACE(pDM_Odm, ODM_COMP_ANT_DIV, ODM_DBG_LOUD, ("Set REG 948[9:6]=0x0\n"));
@@ -2347,6 +2353,11 @@ odm_S0S1_SwAntDiv(
 			pDM_FatTable->bBecomeLinked = pDM_Odm->bLinked;
 		}
 	}
+
+	if (pDM_Odm->bOneEntryOnly == TRUE)
+		odm_Tx_By_TxDesc_or_Reg(pDM_Odm, TX_BY_REG);
+	else
+		odm_Tx_By_TxDesc_or_Reg(pDM_Odm, TX_BY_DESC);
 	
 	ODM_RT_TRACE(pDM_Odm, ODM_COMP_ANT_DIV, ODM_DBG_LOUD, ("[%d] { try_flag=(( %d )), Step=(( %d )), Double_chk_flag = (( %d )) }\n",
 		__LINE__,pDM_SWAT_Table->try_flag,Step,pDM_SWAT_Table->Double_chk_flag));
@@ -3017,10 +3028,14 @@ odm_FastAntTraining(
 		if(pDM_FatTable->bBecomeLinked ==FALSE)
 		{
 			ODM_RT_TRACE(pDM_Odm,ODM_COMP_ANT_DIV, ODM_DBG_LOUD, ("[Linked!!!]\n"));
-			odm_Tx_By_TxDesc_or_Reg(pDM_Odm , TX_BY_DESC);
 			pDM_FatTable->bBecomeLinked = pDM_Odm->bLinked;
 		}
 	}
+
+	if (pDM_Odm->bOneEntryOnly == TRUE)
+		odm_Tx_By_TxDesc_or_Reg(pDM_Odm, TX_BY_REG);
+	else
+		odm_Tx_By_TxDesc_or_Reg(pDM_Odm, TX_BY_DESC);
 
 		
         if(pDM_Odm->SupportICType == ODM_RTL8188E)
@@ -3514,11 +3529,15 @@ odm_FastAntTraining_hl_smart_antenna_type1(
 			
 			/*pdm_sat_table->fast_training_beam_num = 0;*/
 			/*phydm_set_all_ant_same_beam_num(pDM_Odm);*/
-			odm_Tx_By_TxDesc_or_Reg(pDM_Odm, TX_BY_DESC);
 			
 			pDM_FatTable->bBecomeLinked = pDM_Odm->bLinked;
 		}
 	}
+	
+	if (pDM_Odm->bOneEntryOnly == TRUE)
+		odm_Tx_By_TxDesc_or_Reg(pDM_Odm, TX_BY_REG);
+	else
+		odm_Tx_By_TxDesc_or_Reg(pDM_Odm, TX_BY_DESC);
 
 	/*ODM_RT_TRACE(pDM_Odm, ODM_COMP_ANT_DIV, ODM_DBG_LOUD, ("HL Smart Ant Training: State (( %d ))\n", pDM_FatTable->FAT_State));*/
 
@@ -4092,7 +4111,7 @@ ODM_AntDiv(
 		if(pDM_Odm->AntType != pDM_Odm->pre_AntType)
 		{
 			odm_AntDiv_on_off(pDM_Odm, ANTDIV_ON);
-			odm_Tx_By_TxDesc_or_Reg(pDM_Odm , TX_BY_DESC);
+			/*odm_Tx_By_TxDesc_or_Reg(pDM_Odm, TX_BY_DESC);*/
 		}
 		pDM_Odm->pre_AntType=pDM_Odm->AntType;
 	}
@@ -4526,18 +4545,7 @@ ODM_AntDiv_Config(
 				pDM_Odm->SupportAbility &= ~(ODM_BB_ANT_DIV);
 		}
 #elif (DM_ODM_SUPPORT_TYPE & (ODM_CE))
-
-		ODM_RT_TRACE(pDM_Odm,ODM_COMP_ANT_DIV, ODM_DBG_LOUD, ("CE Config Antenna Diversity\n"));
-		if(pDM_Odm->SupportICType & ODM_ANTDIV_SUPPORT)
-		{
-			pDM_Odm->SupportAbility |= ODM_BB_ANT_DIV;	
-		}
-		
-		if(pDM_Odm->SupportICType==ODM_RTL8723B)
-		{
-			pDM_Odm->AntDivType = S0S1_SW_ANTDIV;
-		}				
-
+		/* do noting, branch only */
 #elif (DM_ODM_SUPPORT_TYPE & (ODM_AP))
 
 	ODM_RT_TRACE(pDM_Odm,ODM_COMP_ANT_DIV, ODM_DBG_LOUD, ("AP Config Antenna Diversity\n"));

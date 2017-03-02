@@ -361,7 +361,7 @@ _func_enter_;
 			rtw_disassoc_cmd(padapter, 0, _TRUE);
 
 			if (check_fwstate(pmlmepriv, _FW_LINKED) == _TRUE)
-				rtw_indicate_disconnect(padapter);
+				rtw_indicate_disconnect(padapter, 0, _FALSE);
 
 			rtw_free_assoc_resources(padapter, 1);
 
@@ -451,7 +451,7 @@ _func_enter_;
 					rtw_disassoc_cmd(padapter, 0, _TRUE);
 
 					if (check_fwstate(pmlmepriv, _FW_LINKED) == _TRUE)
-						rtw_indicate_disconnect(padapter);
+						rtw_indicate_disconnect(padapter, 0, _FALSE);
 						
 					rtw_free_assoc_resources(padapter, 1);
 
@@ -480,7 +480,7 @@ _func_enter_;
 			rtw_disassoc_cmd(padapter, 0, _TRUE);
 
 			if (check_fwstate(pmlmepriv, _FW_LINKED) == _TRUE)
-				rtw_indicate_disconnect(padapter);
+				rtw_indicate_disconnect(padapter, 0, _FALSE);
 			
 			rtw_free_assoc_resources(padapter, 1);
 
@@ -644,7 +644,7 @@ _func_enter_;
 	       {
 			if(check_fwstate(pmlmepriv, _FW_LINKED) == _TRUE)
 			{		
-				rtw_indicate_disconnect(padapter); //will clr Linked_state; before this function, we must have chked whether  issue dis-assoc_cmd or not
+				rtw_indicate_disconnect(padapter, 0, _FALSE); /*will clr Linked_state; before this function, we must have checked whether issue dis-assoc_cmd or not*/
 			}
 	       }
 		
@@ -707,7 +707,7 @@ _func_enter_;
 		RT_TRACE(_module_rtl871x_ioctl_set_c_,_drv_info_,("MgntActrtw_set_802_11_disassociate: rtw_indicate_disconnect\n"));
 
 		rtw_disassoc_cmd(padapter, 0, _TRUE);
-		rtw_indicate_disconnect(padapter);
+		rtw_indicate_disconnect(padapter, 0, _FALSE);
 		//modify for CONFIG_IEEE80211W, none 11w can use it
 		rtw_free_assoc_resources_cmd(padapter);
 		if (_FAIL == rtw_pwr_wakeup(padapter))
@@ -1449,17 +1449,11 @@ int rtw_set_channel_plan(_adapter *adapter, u8 channel_plan)
 */
 int rtw_set_country(_adapter *adapter, const char *country_code)
 {
-	int channel_plan;
-
-	channel_plan = rtw_get_chplan_from_country(country_code);
-
-	if (channel_plan == -1) {
-		DBG_871X_LEVEL(_drv_always_, "%s unsupported country_code:%s\n", __func__, country_code);
-		return _FAIL;
-	}
-
-	DBG_871X_LEVEL(_drv_always_, "%s country_code:%s mapping to chplan:0x%02x\n", __func__, country_code, channel_plan);
-	return rtw_set_channel_plan(adapter, channel_plan);
+#ifdef CONFIG_RTW_IOCTL_SET_COUNTRY
+	return rtw_set_country_cmd(adapter, RTW_CMDF_WAIT_ACK, country_code, 1);
+#else
+	return _FAIL;
+#endif
 }
 
 /*
