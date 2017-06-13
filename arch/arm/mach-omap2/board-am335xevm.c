@@ -241,14 +241,14 @@ static struct snd_platform_data am335x_aria_snd_data1 = {
 
 static struct omap2_hsmmc_info am335x_mmc[] __initdata = {
 	{
+		.mmc            = 0,	/* will be set at runtime */
+	},
+	{
 		.mmc            = 1,
 		.caps           = MMC_CAP_4_BIT_DATA,
 		.gpio_cd        = GPIO_TO_PIN(0, 6),
 		.gpio_wp        = GPIO_TO_PIN(3, 18),
 		.ocr_mask       = MMC_VDD_32_33 | MMC_VDD_33_34, /* 3V3 */
-	},
-	{
-		.mmc            = 0,	/* will be set at runtime */
 	},
 	{
 		.mmc            = 0,	/* will be set at runtime */
@@ -1007,6 +1007,18 @@ static struct pinmux_config uart1_wl12xx_pin_mux[] = {
 	{NULL, 0},
 };
 
+static struct pinmux_config uart1_pin_mux[] = {
+	{"uart1_rxd.uart1_rxd", OMAP_MUX_MODE0 | AM33XX_PIN_INPUT_PULLUP},
+	{"uart1_txd.uart1_txd", OMAP_MUX_MODE0 | AM33XX_PULL_ENBL},
+	{NULL, 0},
+};
+
+static struct pinmux_config uart4_pin_mux[] = {
+	{"uart0_ctsn.uart4_rxd", OMAP_MUX_MODE0 | AM33XX_PIN_INPUT_PULLUP},
+	{"uart0_rtsn.uart4_txd", OMAP_MUX_MODE0 | AM33XX_PULL_ENBL},
+	{NULL, 0},
+};
+
 static struct pinmux_config wl12xx_pin_mux[] = {
 	{"gpmc_a0.gpio1_16", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{"mcasp0_ahclkr.gpio3_17", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
@@ -1702,11 +1714,11 @@ static void mmc1_init(int evm_id, int profile)
 	setup_pin_mux(mmc1_wp_only_pin_mux);
 	setup_pin_mux(mmc1_cd_only_pin_mux);
 
-	am335x_mmc[1].mmc = 2;
-	am335x_mmc[1].caps = MMC_CAP_4_BIT_DATA;
-	am335x_mmc[1].gpio_cd = GPIO_TO_PIN(2, 2);
-	am335x_mmc[1].gpio_wp = GPIO_TO_PIN(1, 29);
-	am335x_mmc[1].ocr_mask = MMC_VDD_32_33 | MMC_VDD_33_34; /* 3V3 */
+	am335x_mmc[0].mmc = 2;
+	am335x_mmc[0].caps = MMC_CAP_4_BIT_DATA;
+	am335x_mmc[0].gpio_cd = GPIO_TO_PIN(2, 2);
+	am335x_mmc[0].gpio_wp = GPIO_TO_PIN(1, 29);
+	am335x_mmc[0].ocr_mask = MMC_VDD_32_33 | MMC_VDD_33_34; /* 3V3 */
 
 	/* mmc will be initialized when mmc0_init is called */
 	return;
@@ -1715,14 +1727,14 @@ static void mmc1_init(int evm_id, int profile)
 static void mmc1_wl12xx_init(int evm_id, int profile)
 {
 	setup_pin_mux(mmc1_common_pin_mux);
-	am335x_mmc[1].mmc = 2;
-	am335x_mmc[1].name = "wl1271";
-	am335x_mmc[1].caps = MMC_CAP_4_BIT_DATA | MMC_CAP_POWER_OFF_CARD;
-	am335x_mmc[1].nonremovable = true;
-	am335x_mmc[1].pm_caps = MMC_PM_KEEP_POWER;
-	am335x_mmc[1].gpio_cd = -EINVAL;
-	am335x_mmc[1].gpio_wp = -EINVAL;
-	am335x_mmc[1].ocr_mask = MMC_VDD_32_33 | MMC_VDD_33_34; /* 3V3 */
+	am335x_mmc[0].mmc = 2;
+	am335x_mmc[0].name = "wl1271";
+	am335x_mmc[0].caps = MMC_CAP_4_BIT_DATA | MMC_CAP_POWER_OFF_CARD;
+	am335x_mmc[0].nonremovable = true;
+	am335x_mmc[0].pm_caps = MMC_PM_KEEP_POWER;
+	am335x_mmc[0].gpio_cd = -EINVAL;
+	am335x_mmc[0].gpio_wp = -EINVAL;
+	am335x_mmc[0].ocr_mask = MMC_VDD_32_33 | MMC_VDD_33_34; /* 3V3 */
 }
 
 static void mmc1_emmc_init(int evm_id, int profile)
@@ -1730,11 +1742,11 @@ static void mmc1_emmc_init(int evm_id, int profile)
 	setup_pin_mux(mmc1_common_pin_mux);
 	setup_pin_mux(mmc1_dat4_7_pin_mux);
 
-	am335x_mmc[1].mmc = 2;
-	am335x_mmc[1].caps = MMC_CAP_8_BIT_DATA;
-	am335x_mmc[1].gpio_cd = -EINVAL;
-	am335x_mmc[1].gpio_wp = -EINVAL;
-	am335x_mmc[1].ocr_mask = MMC_VDD_32_33 | MMC_VDD_33_34; /* 3V3 */
+	am335x_mmc[0].mmc = 2;
+	am335x_mmc[0].caps = MMC_CAP_8_BIT_DATA;
+	am335x_mmc[0].gpio_cd = -EINVAL;
+	am335x_mmc[0].gpio_wp = -EINVAL;
+	am335x_mmc[0].ocr_mask = MMC_VDD_32_33 | MMC_VDD_33_34; /* 3V3 */
 
 	/* mmc will be initialized when mmc0_init is called */
 	return;
@@ -1744,13 +1756,13 @@ static void mmc2_wl12xx_init(int evm_id, int profile)
 {
 	setup_pin_mux(mmc2_wl12xx_pin_mux);
 
-	am335x_mmc[1].mmc = 3;
-	am335x_mmc[1].name = "wl1271";
-	am335x_mmc[1].caps = MMC_CAP_4_BIT_DATA | MMC_CAP_POWER_OFF_CARD;
-	am335x_mmc[1].nonremovable = true;
-	am335x_mmc[1].gpio_cd = -EINVAL;
-	am335x_mmc[1].gpio_wp = -EINVAL;
-	am335x_mmc[1].ocr_mask = MMC_VDD_32_33 | MMC_VDD_33_34; /* 3V3 */
+	am335x_mmc[0].mmc = 3;
+	am335x_mmc[0].name = "wl1271";
+	am335x_mmc[0].caps = MMC_CAP_4_BIT_DATA | MMC_CAP_POWER_OFF_CARD;
+	am335x_mmc[0].nonremovable = true;
+	am335x_mmc[0].gpio_cd = -EINVAL;
+	am335x_mmc[0].gpio_wp = -EINVAL;
+	am335x_mmc[0].ocr_mask = MMC_VDD_32_33 | MMC_VDD_33_34; /* 3V3 */
 
 	/* mmc will be initialized when mmc0_init is called */
 	return;
@@ -1759,6 +1771,16 @@ static void mmc2_wl12xx_init(int evm_id, int profile)
 static void uart1_wl12xx_init(int evm_id, int profile)
 {
 	setup_pin_mux(uart1_wl12xx_pin_mux);
+}
+
+static void uart1_init(int evm_id, int profile)
+{
+	setup_pin_mux(uart1_pin_mux);
+}
+
+static void uart4_init(int evm_id, int profile)
+{
+	setup_pin_mux(uart4_pin_mux);
 }
 
 static void wl12xx_bluetooth_enable(void)
@@ -1827,7 +1849,7 @@ static void wl12xx_init(int evm_id, int profile)
 	if (wl12xx_set_platform_data(&am335xevm_wlan_data))
 		pr_err("error setting wl12xx data\n");
 
-	dev = am335x_mmc[1].dev;
+	dev = am335x_mmc[0].dev;
 	if (!dev) {
 		pr_err("wl12xx mmc device initialization failed\n");
 		goto out;
@@ -2328,7 +2350,8 @@ static struct evm_dev_cfg aria_cfg[] = {
 	//{evm_nand_init, DEV_ON_BASEBOARD, PROFILE_ALL},
 	{mmc1_emmc_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{mmc0_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
-	{uart1_wl12xx_init, DEV_ON_BASEBOARD, PROFILE_ALL},
+	{uart1_init, DEV_ON_BASEBOARD, PROFILE_ALL},
+	{uart4_init, DEV_ON_BASEBOARD, PROFILE_ALL},
 	{uart2_init, DEV_ON_BASEBOARD, PROFILE_ALL},
 	//{spi0_init,     DEV_ON_BASEBOARD, PROFILE_ALL},
 	{NULL, 0, 0},
@@ -2506,7 +2529,7 @@ static void setup_beaglebone_old(void)
 	pr_info("The board is a AM335x Beaglebone < Rev A3.\n");
 
 	/* Beagle Bone has Micro-SD slot which doesn't have Write Protect pin */
-	am335x_mmc[0].gpio_wp = -EINVAL;
+	am335x_mmc[1].gpio_wp = -EINVAL;
 
 	_configure_device(BEAGLE_BONE_OLD, beaglebone_old_dev_cfg,
 								PROFILE_NONE);
@@ -2523,7 +2546,7 @@ static void setup_beaglebone(void)
 	pr_info("The board is a AM335x Beaglebone.\n");
 
 	/* Beagle Bone has Micro-SD slot which doesn't have Write Protect pin */
-	am335x_mmc[0].gpio_wp = -EINVAL;
+	am335x_mmc[1].gpio_wp = -EINVAL;
 
 	_configure_device(BEAGLE_BONE_A3, beaglebone_dev_cfg, PROFILE_NONE);
 
@@ -2539,7 +2562,7 @@ static void setup_beagleboneblack(void)
 	pr_info("The board is a AM335x Beaglebone Black.\n");
 
 	/* Beagle Bone has Micro-SD slot which doesn't have Write Protect pin */
-	am335x_mmc[0].gpio_wp = -EINVAL;
+	am335x_mmc[1].gpio_wp = -EINVAL;
 
 	_configure_device(BEAGLE_BONE_BLACK, beagleboneblack_dev_cfg,
 				PROFILE_NONE);
@@ -2554,7 +2577,7 @@ static void setup_aria(void){
     pr_info("The board is an Aria.\n");
 
     /* Aria has Micro-SD slot which doesn't have Write Protect pin */
-    am335x_mmc[0].gpio_wp = -EINVAL;
+    am335x_mmc[1].gpio_wp = -EINVAL;
 
     _configure_device(ARIA_BOARD, aria_cfg, PROFILE_NONE);
 
@@ -2571,7 +2594,7 @@ static void setup_starterkit(void)
 	pr_info("The board is a AM335x Starter Kit.\n");
 
 	/* Starter Kit has Micro-SD slot which doesn't have Write Protect pin */
-	am335x_mmc[0].gpio_wp = -EINVAL;
+	am335x_mmc[1].gpio_wp = -EINVAL;
 
 	_configure_device(EVM_SK, evm_sk_dev_cfg, PROFILE_NONE);
 
