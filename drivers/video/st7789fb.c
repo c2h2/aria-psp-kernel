@@ -41,8 +41,12 @@
 #define SPI_BLOCK_SIZE 32768
 
 static bool invert_color = false;
+static int screen_type = 0;
+
 module_param(invert_color, bool, 0);
+module_param(screen_type, int, 0);
 MODULE_PARM_DESC(invert_color, "Invert screen color.");
+MODULE_PARM_DESC(screen_type, "Set screen type.");
 
 static struct fb_var_screeninfo st7789_var = {
 	.height		= 204,
@@ -267,10 +271,20 @@ static void st7789fb_deferred_io(struct fb_info *info,
 	st7789_send_data(dd, 0xEF);
 
 	st7789_send_cmd(dd, 0x2b);
-	st7789_send_data(dd, 0);
-	st7789_send_data(dd, 0);
-	st7789_send_data(dd, 0);
-	st7789_send_data(dd, 0xCB);
+	if(screen_type==1)
+	{
+		st7789_send_data(dd, 0);
+		st7789_send_data(dd, 35);
+		st7789_send_data(dd, 0);
+		st7789_send_data(dd, 274);
+	}
+	else
+	{
+		st7789_send_data(dd, 0);
+		st7789_send_data(dd, 0);
+		st7789_send_data(dd, 0);
+		st7789_send_data(dd, 0xCB);
+	}
 
 	st7789_send_cmd(dd, 0x2c);
 
