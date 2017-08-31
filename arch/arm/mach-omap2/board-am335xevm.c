@@ -2728,8 +2728,9 @@ static void setup_aria(void){
 	//regulator_has_full_constraints();  //this may cause net or audio fail, plz invstigate.
 
 	//am33xx_cpsw_init(AM33XX_CPSW_MODE_MII, NULL, NULL);
-
-	make_spread_spectrum();
+	
+	//disable ss
+	//make_spread_spectrum();
 }
 
 
