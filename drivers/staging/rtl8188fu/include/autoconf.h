@@ -30,7 +30,7 @@
 #endif
 #define CONFIG_USB_HCI
 
-#define PLATFORM_LINUX 1
+#define PLATFORM_LINUX
 
 #define RTL8188F_USB_MAC_LOOPBACK 0
 
@@ -55,7 +55,6 @@
 	/* #define CONFIG_DRV_ISSUE_PROV_REQ */ /* IOT FOR S2 */
 
 	#define CONFIG_SET_SCAN_DENY_TIMER
-	/*#define SUPPLICANT_RTK_VERSION_LOWER_THAN_JB42*/ /* wpa_supplicant realtek version <= jb42 will be defined this */
 #endif
 
 #define CONFIG_AP_MODE
@@ -105,12 +104,11 @@
 /* #define CONFIG_CONCURRENT_MODE */	/* Set from Makefile */
 #ifdef CONFIG_CONCURRENT_MODE
 	#define CONFIG_TSF_RESET_OFFLOAD			/* For 2 PORT TSF SYNC. */
-	/* #define CONFIG_HWPORT_SWAP	*/			/* Port0->Sec , Port1 -> Pri */
 	#define CONFIG_RUNTIME_PORT_SWITCH
+
 	/* #define DBG_RUNTIME_PORT_SWITCH */
 	#define CONFIG_SCAN_BACKOP
 
-	/* #define CONFIG_MULTI_VIR_IFACES */ /* besides primary&secondary interfaces, extend to support more interfaces */
 #endif /* CONFIG_CONCURRENT_MODE */
 
 #define CONFIG_LAYER2_ROAMING
@@ -138,8 +136,6 @@
 	#define CONFIG_ACTIVE_KEEP_ALIVE_CHECK
 #endif
 
-#define CONFIG_C2H_PACKET_EN
-
 #define CONFIG_RF_POWER_TRIM
 
 #define DISABLE_BB_RF	0
@@ -152,7 +148,6 @@
 #define CONFIG_USB_TX_AGGREGATION
 #define CONFIG_USB_RX_AGGREGATION
 
-#define USB_INTERFERENCE_ISSUE /* this should be checked in all usb interface */
 
 #define CONFIG_GLOBAL_UI_PID
 
@@ -207,6 +202,10 @@
 /* #define CONFIG_CHECK_AC_LIFETIME	*/ /* Check packet lifetime of 4 ACs. */
 
 #define CONFIG_EMBEDDED_FWIMG
+
+#ifdef CONFIG_EMBEDDED_FWIMG
+	#define	LOAD_FW_HEADER_FROM_DRIVER
+#endif
 /* #define CONFIG_FILE_FWIMG */
 
 #define CONFIG_LONG_DELAY_ISSUE
@@ -230,36 +229,30 @@
 	#define MP_DRIVER	0
 #endif /* !CONFIG_MP_INCLUDED */
 
-#ifdef CONFIG_POWER_SAVING
-	#define CONFIG_IPS
-	#define CONFIG_LPS
+#define CONFIG_IPS
+#define CONFIG_LPS
 
-	#ifdef CONFIG_IPS
-	/* #define CONFIG_IPS_LEVEL_2	1  */ /*enable this to set default IPS mode to IPS_LEVEL_2 */
-	#endif
+#ifdef CONFIG_IPS
+/* #define CONFIG_IPS_LEVEL_2	1  */ /*enable this to set default IPS mode to IPS_LEVEL_2 */
+#endif
 
-	#if defined(CONFIG_LPS) && defined(CONFIG_SUPPORT_USB_INT)
-		/* #define CONFIG_LPS_LCLK */
-	#endif
+#if defined(CONFIG_LPS)
+	#define CONFIG_LPS_LCLK
+#endif
 
-	#ifdef CONFIG_LPS_LCLK
-		#define CONFIG_XMIT_THREAD_MODE
+#ifdef CONFIG_LPS_LCLK
+	/* #define CONFIG_XMIT_THREAD_MODE */
+	#ifndef CONFIG_SUPPORT_USB_INT
+		#define LPS_RPWM_WAIT_MS 300
+		#define CONFIG_DETECT_CPWM_BY_POLLING
 	#endif
-#endif /* CONFIG_POWER_SAVING */
+#endif
 
 #ifdef CONFIG_BT_COEXIST
 	/* for ODM and outsrc BT-Coex */
-	#define BT_30_SUPPORT 1
-
 	#ifndef CONFIG_LPS
 		#define CONFIG_LPS	/* download reserved page to FW */
 	#endif
-
-	#ifndef CONFIG_C2H_PACKET_EN
-		#define CONFIG_C2H_PACKET_EN
-	#endif
-#else /* !ONFIG_BT_COEXIST */
-	#define BT_30_SUPPORT 0
 #endif /* CONFIG_BT_COEXIST */
 
 #ifdef CONFIG_WOWLAN
@@ -306,18 +299,15 @@
 /*
  * Debug Related Configure
  */
-#define CONFIG_DEBUG /* DBG_871X, etc... */
-#ifdef CONFIG_DEBUG
+#ifdef CONFIG_RTW_DEBUG
 	#define DBG	1	/* for ODM & BTCOEX debug */
 	#define DBG_PHYDM_MORE 0
-#else /* !CONFIG_DEBUG */
+#else /* !CONFIG_RTW_DEBUG */
 	#define DBG	0	/* for ODM & BTCOEX debug */
 	#define DBG_PHYDM_MORE 0
-#endif /* CONFIG_DEBUG */
+#endif /* CONFIG_RTW_DEBUG */
 
-#if DBG_PHYDM_MORE
-	#define CONFIG_DEBUG_RTL871X /* RT_TRACE, RT_PRINT_DATA, _func_enter_, _func_exit_ */
-#endif /* DBG_MORE */
+
 
 #define CONFIG_PROC_DEBUG
 
@@ -346,5 +336,6 @@
 
 #define DBG_HAL_INIT_PROFILING
 
-#define DBG_MEMORY_LEAK	1
+#define DBG_MEMORY_LEAK
 */
+#define	DBG_RX_DFRAME_RAW_DATA

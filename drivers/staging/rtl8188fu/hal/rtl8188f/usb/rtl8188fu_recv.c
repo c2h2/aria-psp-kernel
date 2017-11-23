@@ -30,4 +30,3 @@ void rtl8188fu_free_recv_priv(_adapter *padapter)
 {
 	usb_free_recv_priv(padapter, USB_INTR_CONTENT_LENGTH);
 }
-

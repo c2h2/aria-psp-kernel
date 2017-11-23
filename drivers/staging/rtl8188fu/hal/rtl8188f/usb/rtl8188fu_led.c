@@ -127,4 +127,3 @@ rtl8188fu_DeInitSwLeds(
 	DeInitLed(&(ledpriv->SwLed0));
 	DeInitLed(&(ledpriv->SwLed1));
 }
-
