@@ -120,10 +120,18 @@ static void pm_parse_6000(struct pm *pm)
 
 	if ((pm->data[0] & 0xbf) == 0x30 && pm->packetsize == ++pm->idx) {
 		if (pm_checkpacket(pm->data)) {
+#if 0
 			input_report_abs(dev, ABS_X,
 					pm->data[2] * 256 + pm->data[1]);
 			input_report_abs(dev, ABS_Y,
 					pm->data[4] * 256 + pm->data[3]);
+#endif
+			input_report_abs(dev, ABS_X,
+					0x3ff - (pm->data[4] * 256 + pm->data[3]));
+			input_report_abs(dev, ABS_Y,
+					0x3ff - (pm->data[2] * 256 + pm->data[1]));
+
+
 			input_report_key(dev, BTN_TOUCH, pm->data[0] & 0x40);
 			input_sync(dev);
 		}

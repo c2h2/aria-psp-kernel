@@ -153,7 +153,7 @@ static const struct ssc_data per_dpll_data = {
 static const struct display_panel disp_panel = {
 	WVGA,
 	32,
-	32,
+	24,
 	COLOR_ACTIVE,
 };
 
@@ -186,13 +186,13 @@ static struct lcd_ctrl_config lcd_cfg = {
 	.ac_bias		= 255,
 	.ac_bias_intrpt		= 0,
 	.dma_burst_sz		= 16,
-	.bpp			= 32,
+	.bpp			= 24,
 	.fdd			= 0x80,
 	.tft_alt_mode		= 0,
 	.stn_565_mode		= 0,
 	.mono_8bit_mode		= 0,
-	.invert_line_clock	= 1,
-	.invert_frm_clock	= 1,
+	.invert_line_clock	= 0,
+	.invert_frm_clock	= 0,
 	.sync_edge		= 0,
 	.sync_ctrl		= 1,
 	.raster_order		= 0,
@@ -214,6 +214,12 @@ struct da8xx_lcdc_platform_data  NHD_480272MF_ATXI_pdata = {
 	.manu_name              = "NHD",
 	.controller_data        = &lcd_cfg,
 	.type                   = "NHD-4.3-ATXI#-T-1",
+};
+
+struct da8xx_lcdc_platform_data  VGA_pdata = {
+	.manu_name              = "VGA",
+	.controller_data        = &lcd_cfg,
+	.type                   = "VGA",
 };
 
 #include "common.h"
@@ -674,7 +680,7 @@ static struct pinmux_config aria_mii1_pin_mux[] = {
 	{"mii1_rxd0.mii1_rxd0", OMAP_MUX_MODE0 | AM33XX_PIN_INPUT_PULLDOWN},
 	{"mdio_data.mdio_data", OMAP_MUX_MODE0 | AM33XX_PIN_INPUT_PULLUP},
 	{"mdio_clk.mdio_clk", OMAP_MUX_MODE0 | AM33XX_PIN_OUTPUT_PULLUP},
-        {"ecap0_in_pwm0_out.gpio0_7", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT_PULLUP},
+        {"emu0.gpio3_7", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{NULL, 0},
 };
 
@@ -827,25 +833,34 @@ static struct pinmux_config aria_gpio_led_mux[] = {
 
 /* pinmux for gpio asclepius  */
 static struct pinmux_config asclepius_gpio_mux[] = {
-	{"uart1_ctsn.gpio0_12", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
-	{"gpmc_a0.gpio1_16", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
-	{"gpmc_a1.gpio1_17", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
+	{"mcasp0_fsx.gpio3_15", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP },
+	{"mcasp0_axr1.gpio3_20", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP },
+	{"mcasp0_ahclkx.gpio3_21", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP },
+
+	{"mcasp0_ahclkr.gpio3_17", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+	{"mcasp0_aclkr.gpio3_18", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+
+        {"ecap0_in_pwm0_out.gpio0_7", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+
+	{"spi0_d1.gpio0_4", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+	{"mcasp0_axr0.gpio3_16", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
+	{"gpmc_clk.gpio2_1", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+
+	{"gpmc_a1.gpio1_17", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{"gpmc_a2.gpio1_18", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+
 	{"gpmc_a3.gpio1_19", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
-	{"gpmc_a4.gpio1_20", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+	{"gpmc_a4.gpio1_20", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
 	{"gpmc_a5.gpio1_21", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
 	{"gpmc_a6.gpio1_22", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
 	{"gpmc_a7.gpio1_23", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
-	{"gpmc_a8.gpio1_24", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+	{"gpmc_a8.gpio1_24", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
 	{"gpmc_a9.gpio1_25", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{"gpmc_a10.gpio1_26", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{"gpmc_a11.gpio1_27", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
-	{"gpmc_clk.gpio2_1", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
-	{"mcasp0_aclkx.gpio3_14", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
-	{"mcasp0_axr0.gpio3_16", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
-	{"mcasp0_aclkr.gpio3_18", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
-	{"mcasp0_fsr.gpio3_19", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+	{"gpmc_ben1.gpio1_28", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{"gpmc_csn3.gpio2_0", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+
 	{NULL, 0},
 };
 
@@ -1117,12 +1132,6 @@ static struct pinmux_config wl12xx_pin_mux_sk[] = {
 	{NULL, 0},
 };
 
-static struct pinmux_config cap_touch_pin_mux[] = {
-	{"mcasp0_ahclkx.gpio3_21", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP }, /* interrupt */
-	{"mcasp0_axr1.gpio3_20", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT_PULLUP }, /* RESET maybe choose something */
- 	{NULL, 0 },
-};
-
 static bool backlight_enable;
 
 static void enable_ecap0(int evm_id, int profile)
@@ -1189,28 +1198,17 @@ out:
 	return ret;
 }
 
-static uint lcd_screen_size = 7;
-core_param(lcd_screen_size, lcd_screen_size, uint, 0444);
-
 static void lcdc_init(int evm_id, int profile)
 {
 	struct da8xx_lcdc_platform_data *lcdc_pdata;
 	setup_pin_mux(lcdc_pin_mux);
 
-	if (conf_disp_pll(300000000)) {
+	if (conf_disp_pll(240000000)) {
 		pr_info("Failed configure display PLL, not attempting to"
 				"register LCDC\n");
 		return;
 	}
-	//lcdc_pdata = &TFC_S9700RTWV35TR_01B_pdata;
-	if(lcd_screen_size==4)
-	{
-		lcdc_pdata = &NHD_480272MF_ATXI_pdata;
-	}
-	else
-	{
-		lcdc_pdata = &SAT079AT50DHY0_A4_pdata;
-	}
+	lcdc_pdata = &VGA_pdata;
 	lcdc_pdata->get_context_loss_count = omap_pm_get_dev_context_loss_count;
 
 	if (am33xx_register_lcdc(lcdc_pdata))
@@ -1756,23 +1754,14 @@ static void i2c1_init(int evm_id, int profile)
 }
 
 static struct i2c_board_info am335x_i2c2_boardinfo[] = {
-#if 0
-        {
-                I2C_BOARD_INFO("ds1307", 0x68),
-        },
-#endif
 	{
-		I2C_BOARD_INFO("rx8025", 0x32),
-	},
-	{
-		I2C_BOARD_INFO("GDIX1001:00", 0x5D),
+		I2C_BOARD_INFO("bq32000", 0x68),
 	},
 };
 
 static void i2c2_init(int evm_id, int profile)
 {
 	setup_pin_mux(i2c2_pin_mux);
-	setup_pin_mux(cap_touch_pin_mux);
 	omap_register_i2c_bus(3, 400, am335x_i2c2_boardinfo,
 			ARRAY_SIZE(am335x_i2c2_boardinfo));
 	return;
@@ -2203,25 +2192,19 @@ static void asclepius_gpio_init(int evm_id, int profile)
 {
         setup_pin_mux(asclepius_gpio_mux);
 
-	gpio_request_one(GPIO_TO_PIN(1, 16),
-		GPIOF_OUT_INIT_HIGH, "gpio_1_16");
-	gpio_free(GPIO_TO_PIN(1, 16));
+	gpio_request_one(GPIO_TO_PIN(3, 18),
+		GPIOF_OUT_INIT_LOW, "gpio_3_18");
+	gpio_free(GPIO_TO_PIN(3, 18));
+
+	gpio_request_one(GPIO_TO_PIN(1, 17),
+		GPIOF_OUT_INIT_HIGH, "gpio_1_17");
+	gpio_free(GPIO_TO_PIN(1, 17));
 
 	gpio_request_one(GPIO_TO_PIN(1, 18),
 		GPIOF_OUT_INIT_HIGH, "gpio_1_18");
+	mdelay(100);
+	gpio_direction_output(GPIO_TO_PIN(1, 18), 0);
 	gpio_free(GPIO_TO_PIN(1, 18));
-
-	gpio_request_one(GPIO_TO_PIN(1, 24),
-		GPIOF_OUT_INIT_HIGH, "gpio_1_24");
-	gpio_free(GPIO_TO_PIN(1, 24));
-
-	gpio_request_one(GPIO_TO_PIN(0, 20),
-		GPIOF_OUT_INIT_HIGH, "gpio_0_20");
-	gpio_free(GPIO_TO_PIN(0, 20));
-
-	gpio_request_one(GPIO_TO_PIN(2, 0),
-		GPIOF_OUT_INIT_HIGH, "gpio_2_0");
-	gpio_free(GPIO_TO_PIN(2, 0));
 }
 
 
@@ -2554,10 +2537,10 @@ static struct evm_dev_cfg aria_cfg[] = {
 	//{evm_nand_init, DEV_ON_BASEBOARD, PROFILE_ALL},
 	{mmc1_emmc_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{mmc0_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
-	{i2c1_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
+	//{i2c1_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{i2c2_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	//{spi0_init,     DEV_ON_BASEBOARD, PROFILE_ALL},
-        //{uart2_init,     DEV_ON_BASEBOARD, PROFILE_ALL},
+        {uart2_init,     DEV_ON_BASEBOARD, PROFILE_ALL},
         {uart1_init, DEV_ON_BASEBOARD, PROFILE_ALL},
         {uart4_init, DEV_ON_BASEBOARD, PROFILE_ALL},
 	{NULL, 0, 0},
@@ -2792,7 +2775,7 @@ static void setup_aria(void){
 
     am33xx_cpsw_init(AM33XX_CPSW_MODE_MII, NULL, NULL);
 
-	make_spread_spectrum();
+	//make_spread_spectrum();
 }
 
 

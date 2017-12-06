@@ -96,6 +96,7 @@
 #define LCD_AC_BIAS_FREQUENCY(x)		((x) << 8)
 #define LCD_SYNC_CTRL				BIT(25)
 #define LCD_SYNC_EDGE				BIT(24)
+#define LCD_DE_INVERT				BIT(23)
 #define LCD_INVERT_PIXEL_CLOCK			BIT(22)
 #define LCD_INVERT_LINE_CLOCK			BIT(21)
 #define LCD_INVERT_FRAME_CLOCK			BIT(20)
@@ -304,6 +305,19 @@ static struct da8xx_panel known_lcd_panels[] = {
                 .pxl_clk = 30000000,
                 .invert_pxl_clk = 0,
         },
+        [5] = {
+                .name = "VGA",
+                .width = 800,
+                .height = 600,
+                .hfp = 40,
+                .hbp = 88,
+                .hsw = 128,
+                .vfp = 1,
+                .vbp = 23,
+                .vsw = 4,
+                .pxl_clk = 40000000,
+                .invert_pxl_clk = 1,
+        },
 };
 
 static inline bool is_raster_enabled(void)
@@ -481,11 +495,26 @@ static void lcd_cfg_horizontal_sync(int back_porch, int pulse_width,
 {
 	u32 reg;
 
-	reg = lcdc_read(LCD_RASTER_TIMING_0_REG) & 0xf;
-	reg |= ((back_porch & 0xff) << 24)
-	    | ((front_porch & 0xff) << 16)
-	    | ((pulse_width & 0x3f) << 10);
+	reg = lcdc_read(LCD_RASTER_TIMING_0_REG) & 0x3ff;
+	reg |= (((back_porch-1) & 0xff) << 24)
+	    | (((front_porch-1) & 0xff) << 16)
+	    | (((pulse_width-1) & 0x3f) << 10);
 	lcdc_write(reg, LCD_RASTER_TIMING_0_REG);
+
+	/*
+	 * LCDC Version 2 adds some extra bits that increase the allowable
+	 * size of the horizontal timing registers.
+	 * remember that the registers use 0 to represent 1 so all values
+	 * that get set into register need to be decremented by 1
+	 */
+	if (lcd_revision == LCD_VERSION_2) {
+		/* Mask off the bits we want to change */
+		reg = lcdc_read(LCD_RASTER_TIMING_2_REG) & ~0x780000ff;
+		reg |= ((front_porch-1) & 0x300) >> 8;
+		reg |= ((back_porch-1) & 0x300) >> 4;
+		reg |= ((pulse_width-1) & 0x3c0) << 21;
+		lcdc_write(reg, LCD_RASTER_TIMING_2_REG);
+	}
 }
 
 static void lcd_cfg_vertical_sync(int back_porch, int pulse_width,
@@ -496,7 +525,7 @@ static void lcd_cfg_vertical_sync(int back_porch, int pulse_width,
 	reg = lcdc_read(LCD_RASTER_TIMING_1_REG) & 0x3ff;
 	reg |= ((back_porch & 0xff) << 24)
 	    | ((front_porch & 0xff) << 16)
-	    | ((pulse_width & 0x3f) << 10);
+	    | (((pulse_width-1) & 0x3f) << 10);
 	lcdc_write(reg, LCD_RASTER_TIMING_1_REG);
 }
 
@@ -557,6 +586,8 @@ static int lcd_cfg_display(const struct lcd_ctrl_config *cfg)
 		reg |= LCD_INVERT_LINE_CLOCK;
 	else
 		reg &= ~LCD_INVERT_LINE_CLOCK;
+
+	/* reg |= LCD_DE_INVERT;*/
 
 	if (cfg->invert_frm_clock)
 		reg |= LCD_INVERT_FRAME_CLOCK;
@@ -646,6 +677,7 @@ static int lcd_cfg_frame_buffer(struct da8xx_fb_par *par, u32 width, u32 height,
 	return 0;
 }
 
+#define CNVT_TOHW(val, width) ((((val) << (width)) + 0x7FFF - (val)) >> 16)
 static int fb_setcolreg(unsigned regno, unsigned red, unsigned green,
 			      unsigned blue, unsigned transp,
 			      struct fb_info *info)
@@ -661,48 +693,67 @@ static int fb_setcolreg(unsigned regno, unsigned red, unsigned green,
 	if (info->fix.visual == FB_VISUAL_DIRECTCOLOR)
 		return 1;
 
-	if (info->var.bits_per_pixel == 8) {
-		red >>= 4;
-		green >>= 8;
-		blue >>= 12;
+	if (info->var.bits_per_pixel > 16 && lcd_revision == LCD_VERSION_1)
+		return -EINVAL;
 
-		pal = (red & 0x0f00);
-		pal |= (green & 0x00f0);
-		pal |= (blue & 0x000f);
+	switch (info->fix.visual) {
+	case FB_VISUAL_TRUECOLOR:
+		red = CNVT_TOHW(red, info->var.red.length);
+		green = CNVT_TOHW(green, info->var.green.length);
+		blue = CNVT_TOHW(blue, info->var.blue.length);
+		break;
+	case FB_VISUAL_PSEUDOCOLOR:
+		switch (info->var.bits_per_pixel) {
+		case 4:
+			if (regno > 15)
+				return -EINVAL;
 
-		if (palette[regno] != pal) {
-			update_hw = 1;
+			if (info->var.grayscale) {
+				pal = regno;
+			} else {
+				red >>= 4;
+				green >>= 8;
+				blue >>= 12;
+
+				pal = red & 0x0f00;
+				pal |= green & 0x00f0;
+				pal |= blue & 0x000f;
+			}
+			if (regno == 0)
+				pal |= 0x2000;
 			palette[regno] = pal;
+			break;
+
+		case 8:
+			red >>= 4;
+			green >>= 8;
+			blue >>= 12;
+
+			pal = (red & 0x0f00);
+			pal |= (green & 0x00f0);
+			pal |= (blue & 0x000f);
+
+			if (palette[regno] != pal) {
+				update_hw = 1;
+				palette[regno] = pal;
+			}
+			break;
 		}
-	} else if ((info->var.bits_per_pixel == 16) && regno < 16) {
-		red >>= (16 - info->var.red.length);
-		red <<= info->var.red.offset;
+		break;
+	}
 
-		green >>= (16 - info->var.green.length);
-		green <<= info->var.green.offset;
+	/* Truecolor has hardware independent palette */
+	if (info->fix.visual == FB_VISUAL_TRUECOLOR) {
+		u32 v;
 
-		blue >>= (16 - info->var.blue.length);
-		blue <<= info->var.blue.offset;
+		if (regno > 15)
+			return -EINVAL;
 
-		par->pseudo_palette[regno] = red | green | blue;
+		v = (red << info->var.red.offset) |
+			(green << info->var.green.offset) |
+			(blue << info->var.blue.offset);
 
-		if (palette[0] != 0x4000) {
-			update_hw = 1;
-			palette[0] = 0x4000;
-		}
-	} else if (((info->var.bits_per_pixel == 32) && regno < 32) ||
-		    ((info->var.bits_per_pixel == 24) && regno < 24)) {
-		red >>= (24 - info->var.red.length);
-		red <<= info->var.red.offset;
-
-		green >>= (24 - info->var.green.length);
-		green <<= info->var.green.offset;
-
-		blue >>= (24 - info->var.blue.length);
-		blue <<= info->var.blue.offset;
-
-		par->pseudo_palette[regno] = red | green | blue;
-
+		((u32 *) (info->pseudo_palette))[regno] = v;
 		if (palette[0] != 0x4000) {
 			update_hw = 1;
 			palette[0] = 0x4000;
@@ -715,6 +766,7 @@ static int fb_setcolreg(unsigned regno, unsigned red, unsigned green,
 
 	return 0;
 }
+#undef CNVT_TOHW
 
 static void lcd_reset(struct da8xx_fb_par *par)
 {
@@ -1409,6 +1461,8 @@ static int __devinit fb_probe(struct platform_device *device)
 		lcd_revision = LCD_VERSION_1;
 		break;
 	}
+
+	dev_info(&device->dev, "LCD version %d:%x\n", lcd_revision, lcdc_read(LCD_PID_REG));
 
 	for (i = 0, lcdc_info = known_lcd_panels;
 		i < ARRAY_SIZE(known_lcd_panels);
