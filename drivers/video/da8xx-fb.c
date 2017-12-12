@@ -1033,11 +1033,11 @@ static int fb_check_var(struct fb_var_screeninfo *var,
 		var->transp.length = 0;
 		break;
 	case 16:		/* RGB 565 */
-		var->red.offset = 11;
+		var->red.offset = 0;
 		var->red.length = 5;
 		var->green.offset = 5;
 		var->green.length = 6;
-		var->blue.offset = 0;
+		var->blue.offset = 11;
 		var->blue.length = 5;
 		var->transp.offset = 0;
 		var->transp.length = 0;

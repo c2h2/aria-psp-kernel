@@ -153,7 +153,7 @@ static const struct ssc_data per_dpll_data = {
 static const struct display_panel disp_panel = {
 	WVGA,
 	32,
-	24,
+	16,
 	COLOR_ACTIVE,
 };
 
@@ -718,7 +718,7 @@ static struct pinmux_config i2c2_pin_mux[] = {
 /* Module pin mux for mcasp1 */
 static struct pinmux_config mcasp1_pin_mux[] = {
 	{"mii1_crs.mcasp1_aclkx", OMAP_MUX_MODE4 | AM33XX_PIN_INPUT_PULLDOWN},
-	{"mii1_rxerr.mcasp1_fsx", OMAP_MUX_MODE4 | AM33XX_PIN_INPUT_PULLDOWN},
+	{"mcasp0_fsr.mcasp1_fsx", OMAP_MUX_MODE3 | AM33XX_PIN_INPUT_PULLDOWN},
 	{"mii1_col.mcasp1_axr2", OMAP_MUX_MODE4 | AM33XX_PIN_INPUT_PULLDOWN},
 	{"rmii1_refclk.mcasp1_axr3", OMAP_MUX_MODE4 |
 						AM33XX_PIN_INPUT_PULLDOWN},
@@ -827,7 +827,6 @@ static struct pinmux_config gpio_led_mux[] = {
 static struct pinmux_config aria_gpio_led_mux[] = {
 //	{"mcasp0_ahclkr.gpio3_17", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
 	{"mcasp0_aclkr.gpio3_18", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
-	{"mcasp0_fsr.gpio3_19", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
 	{NULL, 0},
 };
 
@@ -1776,7 +1775,7 @@ static void mcasp1_init(int evm_id, int profile)
 	case EVM_SK:
 		am335x_register_mcasp(&am335x_evm_sk_snd_data1, 1);
 		break;
-    case ARIA_BOARD:
+	case ARIA_BOARD:
 		am335x_register_mcasp(&am335x_aria_snd_data1, 1);
 		break;
 	default:
@@ -2132,11 +2131,6 @@ static struct gpio_led aria_gpio_leds[] = {
 		.name			= "am335x:ARIA:heartbeat",
 		.gpio			= GPIO_TO_PIN(3, 18),	/* LD2 */
 		.default_trigger	= "heartbeat",
-	},
-	{
-		.name			= "am335x:ARIA:mmc0",
-		.gpio			= GPIO_TO_PIN(3, 19),	/* LD1 */
-		.default_trigger	= "mmc0",
 	},
 };
 
@@ -2763,17 +2757,17 @@ static void setup_beagleboneblack(void)
 }
 
 static void setup_aria(void){
-    pr_info("The board is an Aria.\n");
+	pr_info("The board is an Aria.\n");
 
-    /* Aria has Micro-SD slot which doesn't have Write Protect pin */
-    am335x_mmc[1].gpio_wp = -EINVAL;
+	/* Aria has Micro-SD slot which doesn't have Write Protect pin */
+	am335x_mmc[1].gpio_wp = -EINVAL;
 
-    _configure_device(ARIA_BOARD, aria_cfg, PROFILE_NONE);
+	_configure_device(ARIA_BOARD, aria_cfg, PROFILE_NONE);
 
 	/* TPS65217 regulator has full constraints */
 	//regulator_has_full_constraints();  //this may cause net or audio fail, plz invstigate.
 
-    am33xx_cpsw_init(AM33XX_CPSW_MODE_MII, NULL, NULL);
+	am33xx_cpsw_init(AM33XX_CPSW_MODE_MII, NULL, NULL);
 
 	//make_spread_spectrum();
 }
