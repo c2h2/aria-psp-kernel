@@ -50,6 +50,7 @@
 #define LCD_PL_LOAD_DONE		BIT(6)
 #define LCD_FIFO_UNDERFLOW		BIT(5)
 #define LCD_SYNC_LOST			BIT(2)
+#define LCD_FRAME_DONE			BIT(0)
 
 /* LCD DMA Control Register */
 #define LCD_DMA_BURST_SIZE(x)		((x) << 4)
@@ -138,6 +139,9 @@
 #define WAIT_FOR_FRAME_DONE	true
 #define NO_WAIT_FOR_FRAME_DONE	false
 
+#define	CLK_MIN_DIV	2
+#define	CLK_MAX_DIV	255
+
 static resource_size_t da8xx_fb_reg_base;
 static struct resource *lcdc_regs;
 static unsigned int lcd_revision;
@@ -165,6 +169,7 @@ struct da8xx_panel {
 	int		vsw;		/* Vertical Sync Pulse Width */
 	unsigned int	pxl_clk;	/* Pixel clock */
 	unsigned char	invert_pxl_clk;	/* Invert Pixel clock */
+	unsigned int	sync;		/* sync flag */
 };
 
 struct da8xx_fb_par {
@@ -195,8 +200,8 @@ struct da8xx_fb_par {
 	unsigned int		which_dma_channel_done;
 #ifdef CONFIG_CPU_FREQ
 	struct notifier_block	freq_transition;
-	unsigned int		lcd_fck_rate;
 #endif
+	unsigned int		lcd_fck_rate;
 	void (*panel_power_ctrl)(int);
 	struct da8xx_panel	*lcdc_info;
 	struct lcd_ctrl_config	*lcd_cfg;
@@ -248,6 +253,7 @@ static struct da8xx_panel known_lcd_panels[] = {
 		.vsw = 0,
 		.pxl_clk = 4608000,
 		.invert_pxl_clk = 1,
+		.sync = FB_SYNC_HOR_HIGH_ACT | FB_SYNC_VERT_HIGH_ACT,
 	},
 	/* Sharp LK043T1DG01 */
 	[1] = {
@@ -262,6 +268,7 @@ static struct da8xx_panel known_lcd_panels[] = {
 		.vsw = 10,
 		.pxl_clk = 7833600,
 		.invert_pxl_clk = 0,
+		.sync = FB_SYNC_HOR_HIGH_ACT | FB_SYNC_VERT_HIGH_ACT,
 	},
 	/* ThreeFive S9700RTWV35TR */
 	[2] = {
@@ -276,6 +283,7 @@ static struct da8xx_panel known_lcd_panels[] = {
 		.vsw = 2,
 		.pxl_clk = 30000000,
 		.invert_pxl_clk = 0,
+		.sync = FB_SYNC_HOR_HIGH_ACT | FB_SYNC_VERT_HIGH_ACT,
 	},
 	/* Newhaven Display */
 	[3] = {
@@ -290,6 +298,7 @@ static struct da8xx_panel known_lcd_panels[] = {
 		.vsw = 10,
 		.pxl_clk = 9000000,
 		.invert_pxl_clk = 0,
+		.sync = FB_SYNC_HOR_HIGH_ACT | FB_SYNC_VERT_HIGH_ACT,
 	},
 	/* SAT079AT50DHY0-A4 */
         [4] = {
@@ -304,6 +313,7 @@ static struct da8xx_panel known_lcd_panels[] = {
                 .vsw = 5,
                 .pxl_clk = 30000000,
                 .invert_pxl_clk = 0,
+		.sync = FB_SYNC_HOR_HIGH_ACT | FB_SYNC_VERT_HIGH_ACT,
         },
         [5] = {
                 .name = "VGA",
@@ -317,6 +327,7 @@ static struct da8xx_panel known_lcd_panels[] = {
                 .vsw = 4,
                 .pxl_clk = 40000000,
                 .invert_pxl_clk = 1,
+		.sync = FB_SYNC_HOR_HIGH_ACT | FB_SYNC_VERT_HIGH_ACT,
         },
 };
 
@@ -409,7 +420,7 @@ static void lcd_blit(int load_mode, struct da8xx_fb_par *par)
 			reg_int = lcdc_read(LCD_INT_ENABLE_SET_REG) |
 				LCD_V2_END_OF_FRAME0_INT_ENA |
 				LCD_V2_END_OF_FRAME1_INT_ENA |
-				LCD_V2_UNDERFLOW_INT_ENA | LCD_SYNC_LOST;
+				LCD_FRAME_DONE | LCD_SYNC_LOST;
 			lcdc_write(reg_int, LCD_INT_ENABLE_SET_REG);
 		}
 		reg_dma |= LCD_DUAL_FRAME_BUFFER_ENABLE;
@@ -447,7 +458,7 @@ static void lcd_blit(int load_mode, struct da8xx_fb_par *par)
 }
 
 /* Configure the Burst Size and fifo threhold of DMA */
-static int lcd_cfg_dma(int burst_size,  int fifo_th)
+static int lcd_cfg_dma(int burst_size, int fifo_th)
 {
 	u32 reg;
 
@@ -466,10 +477,9 @@ static int lcd_cfg_dma(int burst_size,  int fifo_th)
 		reg |= LCD_DMA_BURST_SIZE(LCD_DMA_BURST_8);
 		break;
 	case 16:
+	default:
 		reg |= LCD_DMA_BURST_SIZE(LCD_DMA_BURST_16);
 		break;
-	default:
-		return -EINVAL;
 	}
 
 	reg |= (fifo_th << 8);
@@ -529,7 +539,8 @@ static void lcd_cfg_vertical_sync(int back_porch, int pulse_width,
 	lcdc_write(reg, LCD_RASTER_TIMING_1_REG);
 }
 
-static int lcd_cfg_display(const struct lcd_ctrl_config *cfg)
+static int lcd_cfg_display(const struct lcd_ctrl_config *cfg,
+	struct da8xx_panel *panel)
 {
 	u32 reg;
 	u32 reg_int;
@@ -551,7 +562,9 @@ static int lcd_cfg_display(const struct lcd_ctrl_config *cfg)
 		break;
 
 	case COLOR_PASSIVE:
-		if (cfg->stn_565_mode)
+		/* AC bias applicable only for Pasive panels */
+		lcd_cfg_ac_bias(cfg->ac_bias, cfg->ac_bias_intrpt);
+		if (cfg->bpp == 12 && cfg->stn_565_mode)
 			reg |= LCD_STN_565_ENABLE;
 		break;
 
@@ -582,14 +595,12 @@ static int lcd_cfg_display(const struct lcd_ctrl_config *cfg)
 	else
 		reg &= ~LCD_SYNC_EDGE;
 
-	if (cfg->invert_line_clock)
+	if ((panel->sync & FB_SYNC_HOR_HIGH_ACT) == 0)
 		reg |= LCD_INVERT_LINE_CLOCK;
 	else
 		reg &= ~LCD_INVERT_LINE_CLOCK;
 
-	/* reg |= LCD_DE_INVERT;*/
-
-	if (cfg->invert_frm_clock)
+	if ((panel->sync & FB_SYNC_VERT_HIGH_ACT) == 0)
 		reg |= LCD_INVERT_FRAME_CLOCK;
 	else
 		reg &= ~LCD_INVERT_FRAME_CLOCK;
@@ -603,6 +614,9 @@ static int lcd_cfg_frame_buffer(struct da8xx_fb_par *par, u32 width, u32 height,
 		u32 bpp, u32 raster_order)
 {
 	u32 reg;
+
+	if (bpp > 16 && lcd_revision == LCD_VERSION_1)
+		return -EINVAL;
 
 	/* Set the Panel Width */
 	/* Pixels per line = (PPL + 1)*16 */
@@ -648,24 +662,21 @@ static int lcd_cfg_frame_buffer(struct da8xx_fb_par *par, u32 width, u32 height,
 	if (raster_order)
 		reg |= LCD_RASTER_ORDER;
 
-	if (bpp == 24)
-		reg |= (LCD_TFT_MODE | LCD_V2_TFT_24BPP_MODE);
-	else if (bpp == 32)
-		reg |= (LCD_TFT_MODE | LCD_V2_TFT_24BPP_MODE
-				| LCD_V2_TFT_24BPP_UNPACK);
-
-	lcdc_write(reg, LCD_RASTER_CTRL_REG);
+	par->palette_sz = 16 * 2;
 
 	switch (bpp) {
 	case 1:
 	case 2:
 	case 4:
 	case 16:
-	case 24:
-	case 32:
-		par->palette_sz = 16 * 2;
 		break;
-
+	case 24:
+		reg |= LCD_V2_TFT_24BPP_MODE;
+		break;
+	case 32:
+		reg |= LCD_V2_TFT_24BPP_MODE;
+		reg |= LCD_V2_TFT_24BPP_UNPACK;
+		break;
 	case 8:
 		par->palette_sz = 256 * 2;
 		break;
@@ -673,6 +684,8 @@ static int lcd_cfg_frame_buffer(struct da8xx_fb_par *par, u32 width, u32 height,
 	default:
 		return -EINVAL;
 	}
+
+	lcdc_write(reg, LCD_RASTER_CTRL_REG);
 
 	return 0;
 }
@@ -768,7 +781,7 @@ static int fb_setcolreg(unsigned regno, unsigned red, unsigned green,
 }
 #undef CNVT_TOHW
 
-static void lcd_reset(struct da8xx_fb_par *par)
+static void da8xx_fb_lcd_reset(void)
 {
 	/* DMA has to be disabled */
 	lcdc_write(0, LCD_DMA_CTRL_REG);
@@ -828,7 +841,7 @@ static int lcd_init(struct da8xx_fb_par *par, const struct lcd_ctrl_config *cfg,
 	lcd_cfg_horizontal_sync(panel->hbp, panel->hsw, panel->hfp);
 
 	/* Configure for disply */
-	ret = lcd_cfg_display(cfg);
+	ret = lcd_cfg_display(cfg, panel);
 	if (ret < 0)
 		return ret;
 
@@ -1492,16 +1505,14 @@ static int __devinit fb_probe(struct platform_device *device)
 	par = da8xx_fb_info->par;
 	par->dev = &device->dev;
 	par->lcdc_clk = fb_clk;
-#ifdef CONFIG_CPU_FREQ
 	par->lcd_fck_rate = clk_get_rate(fb_clk);
-#endif
 	par->pxl_clk = lcdc_info->pxl_clk;
 	if (fb_pdata->panel_power_ctrl) {
 		par->panel_power_ctrl = fb_pdata->panel_power_ctrl;
 		par->panel_power_ctrl(1);
 	}
 
-	lcd_reset(par);
+	da8xx_fb_lcd_reset();
 
 	/* allocate frame buffer */
 	par->vram_size = lcdc_info->width * lcdc_info->height * lcd_cfg->bpp;
