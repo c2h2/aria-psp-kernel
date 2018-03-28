@@ -32,6 +32,8 @@
 
 #define PLATFORM_LINUX 1
 
+#define CONFIG_TX_BCAST2UNI
+
 #define RTL8188F_USB_MAC_LOOPBACK 0
 
 /*
