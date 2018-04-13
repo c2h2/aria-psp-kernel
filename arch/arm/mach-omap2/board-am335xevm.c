@@ -741,10 +741,6 @@ static struct pinmux_config uart2_pin_mux[] = {
 /* pinmux for gpio based key */
 static struct pinmux_config gpio_keys_pin_mux[] = {
 	{"mcasp0_ahclkr.gpio3_17", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
-//	{"gpmc_wait0.gpio0_30", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
-//	{"gpmc_oen_ren.gpio2_3", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
-//	{"gpmc_advn_ale.gpio2_2", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
-//	{"gpmc_ben0_cle.gpio2_5", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
 	{NULL, 0},
 };
 
@@ -764,6 +760,12 @@ static struct pinmux_config aria_gpio_led_mux[] = {
 	{NULL, 0},
 };
 
+static struct pinmux_config aria_gen_gpio_pin_mux[] = {
+	{"mcasp0_ahclkx.gpio3_21", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+	{"gpmc_a8.gpio1_24", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+	{"gpmc_a9.gpio1_25", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+	{NULL, 0},
+};
 
 static struct pinmux_config gpio_ddr_vtt_enb_pin_mux[] = {
 	{"ecap0_in_pwm0_out.pio0_7", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
@@ -1977,6 +1979,7 @@ static struct gpio_keys_button am335x_evm_gpio_buttons[] = {
 		.code                   = KEY_F1,
 		.gpio                   = GPIO_TO_PIN(3, 17),
 		.desc                   = "CALL_KEY_F1",
+		.active_low		= 1,
 	},
 };
 
@@ -2029,14 +2032,14 @@ static struct gpio_led aria_gpio_leds[] = {
 		.name			= "am335x:ARIA:green",
 		.gpio			= GPIO_TO_PIN(3, 18),	/* LD25 */
 		.default_trigger	= "green",
-		.active_low             = 1,
+		.active_low             = 0,
                 .default_state          = LEDS_GPIO_DEFSTATE_OFF
 	},
 	{
 		.name			= "am335x:ARIA:red",
 		.gpio			= GPIO_TO_PIN(0, 20),	/* LD26 */
 		.default_trigger	= "red",
-		.active_low             = 1,
+		.active_low             = 0,
                 .default_state          = LEDS_GPIO_DEFSTATE_OFF
 	},
 };
@@ -2086,6 +2089,12 @@ static void aria_gpio_led_init(int evm_id, int profile)
 	err = platform_device_register(&aria_leds_gpio);
 	if (err)
 		pr_err("failed to register gpio led device\n");
+}
+
+static void aria_gen_gpio_init(int evm_id, int profile)
+{
+	setup_pin_mux(aria_gen_gpio_pin_mux);
+	return;
 }
 
 
@@ -2317,10 +2326,11 @@ static struct evm_dev_cfg beagleboneblack_dev_cfg[] = {
 
 static struct evm_dev_cfg aria_cfg[] = {
 	{am335x_rtc_init, DEV_ON_BASEBOARD, PROFILE_NONE},
-	{enable_ecap2,     DEV_ON_BASEBOARD, PROFILE_ALL},
+	//{enable_ecap2,     DEV_ON_BASEBOARD, PROFILE_ALL},
 	{mfd_tscadc_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{lcdc_init,	DEV_ON_BASEBOARD, PROFILE_NONE },
-	{aria_gpio_led_init,  DEV_ON_BASEBOARD, PROFILE_ALL},
+	{aria_gpio_led_init, DEV_ON_BASEBOARD, PROFILE_ALL},
+	{aria_gen_gpio_init, DEV_ON_BASEBOARD, PROFILE_ALL},
 	{tps65217_init, DEV_ON_BASEBOARD, PROFILE_NONE},
 	{mcasp1_init, DEV_ON_BASEBOARD, PROFILE_NONE},
 	{aria_mii1_init, DEV_ON_BASEBOARD, PROFILE_NONE},
