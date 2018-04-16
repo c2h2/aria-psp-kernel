@@ -740,7 +740,12 @@ static struct pinmux_config uart2_pin_mux[] = {
 
 /* pinmux for gpio based key */
 static struct pinmux_config gpio_keys_pin_mux[] = {
-	{"mcasp0_fsx.gpio3_15", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
+	{"gpmc_a3.gpio1_19", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
+	{"gpmc_a4.gpio1_20", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
+	{"gpmc_a5.gpio1_21", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
+	{"gpmc_a6.gpio1_22", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
+	{"gpmc_a7.gpio1_23", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
+	{"gpmc_a8.gpio1_24", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
 	{NULL, 0},
 };
 
@@ -755,31 +760,23 @@ static struct pinmux_config gpio_led_mux[] = {
 
 /* pinmux for led device */
 static struct pinmux_config aria_gpio_led_mux[] = {
-	{"gpmc_clk.gpio2_1", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+	{"mcasp0_aclkx.gpio3_14", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+	{"mcasp0_axr0.gpio3_16", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+	{"mcasp0_aclkr.gpio3_18", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+	{"mcasp0_ahclkx.gpio3_21", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{NULL, 0},
 };
 
 static struct pinmux_config aria_gen_gpio_pin_mux[] = {
-	{"gpmc_a0.gpio1_16", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
-	{"gpmc_a1.gpio1_17", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
-	{"gpmc_a2.gpio1_18", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
-	{"gpmc_a3.gpio1_19", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
-	{"gpmc_a4.gpio1_20", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
-	{"gpmc_a5.gpio1_21", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
-	{"gpmc_a6.gpio1_22", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
-	{"gpmc_a7.gpio1_23", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
-	{"mcasp0_axr1.gpio3_20", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
-	{"mcasp0_ahclkx.gpio3_21", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
+	{"gpmc_a10.gpio1_26", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},	
 
-	{"mcasp0_aclkx.gpio3_14", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
-	{"xdma_event_intr1.gpio0_20", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
-	{"gpmc_ben1.gpio1_28", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
-	{"mcasp0_fsr.gpio3_19", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
-	{"mcasp0_axr0.gpio3_16", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
-	{"gpmc_a11.gpio1_27", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{"spi0_d1.gpio0_4", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
-	{"mcasp0_ahclkr.gpio3_17", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
-	{"mcasp0_aclkr.gpio3_18", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+	{"xdma_event_intr1.gpio0_20", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+	{"mcasp0_axr1.gpio3_20", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+	{"spi0_cs0.gpio0_5", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+	{"mcasp0_fsr.gpio3_19", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+	{"gpmc_ben1.gpio1_28", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+	{"spi0_sclk.gpio0_2", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 
 	{NULL, 0},
 };
@@ -2005,8 +2002,38 @@ static void mmc0_no_cd_init(int evm_id, int profile)
 static struct gpio_keys_button am335x_evm_gpio_buttons[] = {
 	{
 		.code                   = KEY_F1,
-		.gpio                   = GPIO_TO_PIN(3, 15),
+		.gpio                   = GPIO_TO_PIN(1, 19),
 		.desc                   = "CALL_KEY_F1",
+		.active_low		= 1,
+	},
+	{
+		.code                   = KEY_F2,
+		.gpio                   = GPIO_TO_PIN(1, 20),
+		.desc                   = "CALL_KEY_F2",
+		.active_low		= 1,
+	},
+	{
+		.code                   = KEY_F3,
+		.gpio                   = GPIO_TO_PIN(1, 21),
+		.desc                   = "CALL_KEY_F3",
+		.active_low		= 1,
+	},
+	{
+		.code                   = KEY_F4,
+		.gpio                   = GPIO_TO_PIN(1, 22),
+		.desc                   = "CALL_KEY_F4",
+		.active_low		= 1,
+	},
+	{
+		.code                   = KEY_F5,
+		.gpio                   = GPIO_TO_PIN(1, 23),
+		.desc                   = "CALL_KEY_F5",
+		.active_low		= 1,
+	},
+	{
+		.code                   = KEY_F6,
+		.gpio                   = GPIO_TO_PIN(1, 24),
+		.desc                   = "CALL_KEY_F6",
 		.active_low		= 1,
 	},
 };
@@ -2058,8 +2085,29 @@ static struct gpio_led gpio_leds[] = {
 static struct gpio_led aria_gpio_leds[] = {
 	{
 		.name			= "am335x:ARIA:led1",
-		.gpio			= GPIO_TO_PIN(2, 1),	/* LD25 */
+		.gpio			= GPIO_TO_PIN(3, 14),
 		.default_trigger	= "led1",
+		.active_low             = 0,
+                .default_state          = LEDS_GPIO_DEFSTATE_OFF
+	},
+	{
+		.name			= "am335x:ARIA:led2",
+		.gpio			= GPIO_TO_PIN(3, 16),	/* LD25 */
+		.default_trigger	= "led2",
+		.active_low             = 0,
+                .default_state          = LEDS_GPIO_DEFSTATE_OFF
+	},
+	{
+		.name			= "am335x:ARIA:led3",
+		.gpio			= GPIO_TO_PIN(3, 18),	/* LD25 */
+		.default_trigger	= "led3",
+		.active_low             = 0,
+                .default_state          = LEDS_GPIO_DEFSTATE_OFF
+	},
+	{
+		.name			= "am335x:ARIA:led4",
+		.gpio			= GPIO_TO_PIN(3, 21),	/* LD25 */
+		.default_trigger	= "led4",
 		.active_low             = 0,
                 .default_state          = LEDS_GPIO_DEFSTATE_OFF
 	},
@@ -2358,7 +2406,6 @@ static struct evm_dev_cfg aria_cfg[] = {
 	{mmc1_emmc_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{mmc0_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{uart1_init, DEV_ON_BASEBOARD, PROFILE_ALL},
-	{uart2_init, DEV_ON_BASEBOARD, PROFILE_ALL},
 	{uart4_init, DEV_ON_BASEBOARD, PROFILE_ALL},
 	{NULL, 0, 0},
 };
