@@ -2351,7 +2351,7 @@ static struct evm_dev_cfg aria_cfg[] = {
 	{lcdc_init,	DEV_ON_BASEBOARD, PROFILE_NONE },
 	{aria_gpio_led_init, DEV_ON_BASEBOARD, PROFILE_ALL},
 	{aria_gen_gpio_init, DEV_ON_BASEBOARD, PROFILE_ALL},
-	{tps65217_init, DEV_ON_BASEBOARD, PROFILE_NONE},
+	//{tps65217_init, DEV_ON_BASEBOARD, PROFILE_NONE},
 	{mcasp1_init, DEV_ON_BASEBOARD, PROFILE_NONE},
 	{aria_mii1_init, DEV_ON_BASEBOARD, PROFILE_NONE},
 	{gpio_keys_init,  DEV_ON_BASEBOARD, PROFILE_ALL},
