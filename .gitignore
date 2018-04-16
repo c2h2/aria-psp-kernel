@@ -87,3 +87,6 @@ GTAGS
 *.log
 
 !.config
+
+deploy/
+config.old
