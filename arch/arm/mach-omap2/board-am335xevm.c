@@ -2024,7 +2024,7 @@ static struct gpio_keys_button am335x_evm_gpio_buttons[] = {
 		.active_low		= 1,
 	},
 	{
-		.code                   = KEY_F6,
+		.code                   = KEY_F5,
 		.gpio                   = GPIO_TO_PIN(1, 24),
 		.desc                   = "CALL_KEY_F5",
 		.active_low		= 1,
