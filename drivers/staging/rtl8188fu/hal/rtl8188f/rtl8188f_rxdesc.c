@@ -66,4 +66,3 @@ void rtl8188f_query_rx_desc_status(union recv_frame *precvframe, u8 *pdesc)
 		/* pattrib->tsfl=(u8)GET_RX_STATUS_DESC_TSFL_8188F(pdesc); */
 	}
 }
-

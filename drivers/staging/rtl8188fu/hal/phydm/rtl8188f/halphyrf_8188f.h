@@ -30,106 +30,122 @@
 #define	RF_T_METER_8188F			0x42
 
 
-void ConfigureTxpowerTrack_8188F(
-	PTXPWRTRACK_CFG	pConfig
-	);
-
-void DoIQK_8188F(
-	PVOID		pDM_VOID,
-	u1Byte 		DeltaThermalIndex,
-	u1Byte		ThermalValue,	
-	u1Byte 		Threshold
-	);
-
-VOID
-ODM_TxPwrTrackSetPwr_8188F(
-	IN	PVOID		pDM_VOID,
-	PWRTRACK_METHOD 	Method,
-	u1Byte 				RFPath,
-	u1Byte 				ChannelMappedIndex
-	);
-
-//1 7.	IQK
-
-void	
-PHY_IQCalibrate_8188F(	
-#if (DM_ODM_SUPPORT_TYPE & ODM_AP)
-	IN PDM_ODM_T		pDM_Odm,
-#else
-	IN PADAPTER	Adapter,
-#endif
-	IN	BOOLEAN 	bReCovery,
-	IN	BOOLEAN 	bRestore);
-
-
-//
-// LC calibrate
-//
-void	
-PHY_LCCalibrate_8188F(
-	IN	PVOID		pDM_VOID
+void configure_txpower_track_8188f(
+	struct _TXPWRTRACK_CFG	*p_config
 );
 
-//
-// AP calibrate
-//
-void	
-PHY_APCalibrate_8188F(		
+void do_iqk_8188f(
+	void		*p_dm_void,
+	u8		delta_thermal_index,
+	u8		thermal_value,
+	u8		threshold
+);
+
+void
+odm_tx_pwr_track_set_pwr_8188f(
+	void		*p_dm_void,
+	enum pwrtrack_method	method,
+	u8				rf_path,
+	u8				channel_mapped_index
+);
+
+/* 1 7.	IQK */
+
+void
+phy_iq_calibrate_8188f(
 #if (DM_ODM_SUPPORT_TYPE & ODM_AP)
-	IN PDM_ODM_T		pDM_Odm,
+	struct PHY_DM_STRUCT		*p_dm_odm,
 #else
-	IN	PADAPTER	pAdapter,
+	struct _ADAPTER	*adapter,
 #endif
-							IN 	s1Byte		delta);
-void	
-PHY_DigitalPredistortion_8188F(		IN	PADAPTER	pAdapter);
+	boolean	is_recovery,
+	boolean	is_restore);
 
 
-VOID
-_PHY_SaveADDARegisters_8188F(
+/*
+ * LC calibrate
+ *   */
+void
+phy_lc_calibrate_8188f(
+	void		*p_dm_void
+);
+
+/*
+ * AP calibrate
+ *   */
+void
+phy_ap_calibrate_8188f(
 #if (DM_ODM_SUPPORT_TYPE & ODM_AP)
-	IN PDM_ODM_T		pDM_Odm,
+	struct PHY_DM_STRUCT		*p_dm_odm,
 #else
-	IN	PADAPTER	pAdapter,
+	struct _ADAPTER	*p_adapter,
 #endif
-	IN	pu4Byte		ADDAReg,
-	IN	pu4Byte		ADDABackup,
-	IN	u4Byte		RegisterNum
-	);
+	s8		delta);
+void
+phy_digital_predistortion_8188f(struct _ADAPTER	*p_adapter);
 
-VOID
-_PHY_PathADDAOn_8188F(
+
+void
+_phy_save_adda_registers_8188f(
 #if (DM_ODM_SUPPORT_TYPE & ODM_AP)
-	IN PDM_ODM_T		pDM_Odm,
+	struct PHY_DM_STRUCT		*p_dm_odm,
 #else
-	IN	PADAPTER	pAdapter,
+	struct _ADAPTER	*p_adapter,
 #endif
-	IN	pu4Byte		ADDAReg,
-	IN	BOOLEAN		isPathAOn,
-	IN	BOOLEAN		is2T
-	);
+	u32		*adda_reg,
+	u32		*adda_backup,
+	u32		register_num
+);
 
-VOID
-_PHY_MACSettingCalibration_8188F(
+void
+_phy_path_adda_on_8188f(
 #if (DM_ODM_SUPPORT_TYPE & ODM_AP)
-	IN PDM_ODM_T		pDM_Odm,
+	struct PHY_DM_STRUCT		*p_dm_odm,
 #else
-	IN	PADAPTER	pAdapter,
+	struct _ADAPTER	*p_adapter,
 #endif
-	IN	pu4Byte		MACReg,
-	IN	pu4Byte		MACBackup	
-	);
+	u32		*adda_reg,
+	boolean		is_path_a_on,
+	boolean		is2T
+);
 
-
-VOID
-_PHY_PathAStandBy(
+void
+_phy_mac_setting_calibration_8188f(
 #if (DM_ODM_SUPPORT_TYPE & ODM_AP)
-	IN PDM_ODM_T		pDM_Odm
+	struct PHY_DM_STRUCT		*p_dm_odm,
 #else
-	IN	PADAPTER	pAdapter
+	struct _ADAPTER	*p_adapter,
 #endif
-	);
+	u32		*mac_reg,
+	u32		*mac_backup
+);
 
-								
-#endif	// #ifndef __HAL_PHY_RF_8188E_H__								
 
+void
+_phy_path_a_stand_by(
+#if (DM_ODM_SUPPORT_TYPE & ODM_AP)
+	struct PHY_DM_STRUCT		*p_dm_odm
+#else
+	struct _ADAPTER	*p_adapter
+#endif
+);
+
+void phy_set_rf_path_switch_8188f(
+#if (DM_ODM_SUPPORT_TYPE & ODM_AP)
+	struct PHY_DM_STRUCT *p_dm_odm,
+#else
+	struct _ADAPTER *p_adapter,
+#endif
+	boolean is_main
+);
+
+void phy_active_large_power_detection_8188f(
+#if (DM_ODM_SUPPORT_TYPE & ODM_AP)
+		struct PHY_DM_STRUCT		*p_dm_odm
+#else
+		struct _ADAPTER *p_adapter
+#endif
+);
+
+
+#endif	/*  #ifndef __HAL_PHY_RF_8188E_H__ */

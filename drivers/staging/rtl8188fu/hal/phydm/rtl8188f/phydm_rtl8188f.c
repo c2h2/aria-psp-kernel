@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Copyright(c) 2007 - 2011 Realtek Corporation. All rights reserved.
- *                                        
+ *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of version 2 of the GNU General Public License as
  * published by the Free Software Foundation.
@@ -18,24 +18,23 @@
  *
  ******************************************************************************/
 
-//============================================================
-// include files
-//============================================================
+/* ************************************************************
+ * include files
+ * ************************************************************ */
 
 #include "mp_precomp.h"
 #include "../phydm_precomp.h"
 
 #if (RTL8188F_SUPPORT == 1)
 
- s1Byte
+s8
 odm_CCKRSSI_8188F(
-	IN		u1Byte	LNA_idx,
-	IN		u1Byte	VGA_idx
-	)
+	u8	LNA_idx,
+	u8	VGA_idx
+)
 {
-	s1Byte	rx_pwr_all=0x00;
-	switch(LNA_idx)
-	{
+	s8	rx_pwr_all = 0x00;
+	switch (LNA_idx) {
 	case 7:
 		if (VGA_idx <= 27)
 			rx_pwr_all = -100 + 2 * (27 - VGA_idx);
@@ -60,13 +59,4 @@ odm_CCKRSSI_8188F(
 	}
 	return	rx_pwr_all;
 }
-
-#endif		// end if RTL8188F 
-
-
-
-
-
-
-
-
+#endif
