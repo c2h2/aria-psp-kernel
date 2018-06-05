@@ -1,6 +1,8 @@
 #!/bin/sh
 # cross compile arm kernel for am335x itc coreboard.
 
+export PATH=/opt/gcc-linaro-arm-linux-gnueabihf-4.7-2013.03-20130313_linux/bin:$PATH
+
 export CROSS_COMPILE=arm-linux-gnueabihf-
 
 DATE=`date +%Y%m%d-%H%M`

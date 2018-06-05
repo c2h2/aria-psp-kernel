@@ -84,7 +84,7 @@ static int g_usb_hub_rst_gpio=	GPIO_TO_PIN(3, 19);
 static int g_usb_hub_en_gpio=	GPIO_TO_PIN(2, 0);
 static int g_4g_rst_gpio=	GPIO_TO_PIN(3, 14);
 static int g_4g_wakeup_gpio=	GPIO_TO_PIN(3, 16);
-static int g_4g_interrupt_gpio=	GPIO_TO_PIN(3, 15);
+static int g_4g_enable_gpio=	GPIO_TO_PIN(3, 15);
 
 
 /* Descriptor for Spread Spectrum Clocking */
@@ -853,6 +853,7 @@ static struct pinmux_config slyx_gpio_mux[] = {
 	{"gpmc_a11.gpio1_27", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{"gpmc_clk.gpio2_1", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
 	{"mcasp0_aclkx.gpio3_14", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
+	{"mcasp0_fsx.gpio3_15", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{"mcasp0_axr0.gpio3_16", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
 	{"mcasp0_aclkr.gpio3_18", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{"mcasp0_fsr.gpio3_19", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
@@ -2219,10 +2220,11 @@ static void slyx_gpio_init(int evm_id, int profile)
   	gpio_direction_output(g_usb_hub_en_gpio, 1);
 
 	gpio_request(g_4g_rst_gpio, "4g_rst");
-	gpio_request(g_4g_interrupt_gpio, "4g_interrupt");
+	gpio_request(g_4g_enable_gpio, "4g_enable");
 
-  	gpio_direction_output(g_4g_rst_gpio, 1);
-  	gpio_direction_output(g_4g_wakeup_gpio, 1);
+  	//gpio_direction_output(g_4g_rst_gpio, 1);
+  	//gpio_direction_output(g_4g_wakeup_gpio, 1);
+	//gpio_direction_output(g_4g_enable_gpio, 1);
 
 
 	//gpio_request(
