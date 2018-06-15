@@ -2436,6 +2436,14 @@ static int am33xx_evm_tx_clk_dly_phy_fixup(struct phy_device *phydev)
 	return 0;
 }
 
+static int am33xx_evm_aria_phy_fixup(struct phy_device *phydev)
+{
+	phydev->supported &= ~(SUPPORTED_100baseT_Half |
+            SUPPORTED_10baseT_Half | SUPPORTED_10baseT_Full);
+
+	return 0;
+}
+
 #define AM33XX_VDD_CORE_OPP50_UV		1100000
 #define AM33XX_OPP120_FREQ		600000000
 #define AM33XX_OPPTURBO_FREQ		720000000
@@ -2623,17 +2631,20 @@ static void setup_beagleboneblack(void)
 }
 
 static void setup_aria(void){
-    pr_info("The board is an Aria.\n");
+	pr_info("The board is an Aria.\n");
 
-    /* Aria has Micro-SD slot which doesn't have Write Protect pin */
-    am335x_mmc[1].gpio_wp = -EINVAL;
+	/* Aria has Micro-SD slot which doesn't have Write Protect pin */
+	am335x_mmc[1].gpio_wp = -EINVAL;
 
-    _configure_device(ARIA_BOARD, aria_cfg, PROFILE_NONE);
+	_configure_device(ARIA_BOARD, aria_cfg, PROFILE_NONE);
 
 	/* TPS65217 regulator has full constraints */
 	//regulator_has_full_constraints();  //this may cause net or audio fail, plz invstigate.
 
-    am33xx_cpsw_init(AM33XX_CPSW_MODE_MII, NULL, NULL);
+	phy_register_fixup_for_uid(AM335X_EVM_PHY_ID, AM335X_EVM_PHY_MASK,
+		am33xx_evm_aria_phy_fixup);
+
+	am33xx_cpsw_init(AM33XX_CPSW_MODE_MII, NULL, NULL);
 }
 
 
