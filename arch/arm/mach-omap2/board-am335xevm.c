@@ -43,6 +43,7 @@
 #include <linux/pwm/pwm.h>
 #include <linux/rtc/rtc-omap.h>
 #include <linux/opp.h>
+#include <linux/tca6416_keypad.h>
 
 /* LCD controller is similar to DA850 */
 #include <video/da8xx-fb.h>
@@ -167,11 +168,11 @@ static struct tsc_data am335x_touchscreen_data  = {
 };
 
 static struct adc_data am335x_adc_data = {
-	.adc_channels = 4,
+	.adc_channels = 8,
 };
 
 static struct mfd_tscadc_board tscadc = {
-	.tsc_init = &am335x_touchscreen_data,
+//	.tsc_init = &am335x_touchscreen_data,
 	.adc_init = &am335x_adc_data,
 };
 
@@ -762,7 +763,14 @@ static struct pinmux_config aria_gpio_led_mux[] = {
 	{"mcasp0_aclkx.gpio3_14", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{"mcasp0_axr0.gpio3_16", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{"mcasp0_aclkr.gpio3_18", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+	{"gpmc_a9.gpio1_25", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+	{"gpmc_a8.gpio1_24", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{"mcasp0_ahclkx.gpio3_21", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+	{NULL, 0},
+};
+
+static struct pinmux_config aria_tca6416_keypad_gpio_pin_mux[] = {
+	{"gpmc_a7.gpio1_23", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
 	{NULL, 0},
 };
 
@@ -1153,7 +1161,7 @@ static void lcdc_init(int evm_id, int profile)
 		return;
 	}
 	//lcdc_pdata = &TFC_S9700RTWV35TR_01B_pdata;
-	lcdc_pdata = &SAT079AT50DHY0_A4_pdata;
+	lcdc_pdata = &NHD_480272MF_ATXI_pdata;
 	lcdc_pdata->get_context_loss_count = omap_pm_get_dev_context_loss_count;
 
 	if (am33xx_register_lcdc(lcdc_pdata))
@@ -1696,14 +1704,82 @@ static void i2c1_init(int evm_id, int profile)
 	return;
 }
 
+#define KEYPAD_IRQ		GPIO_TO_PIN(1, 23)
+#define KEYPAD_PIN_MASK		0xFFC0
+
+#define KEYPAD_BUTTON(ev_type, ev_code, act_low) \
+{						\
+	.type		= ev_type,		\
+	.code		= ev_code,		\
+	.active_low	= act_low,		\
+}
+
+#define KEYPAD_BUTTON_LOW(event_code)	\
+	KEYPAD_BUTTON(EV_KEY, event_code, 1)
+
+static struct tca6416_button aria_tc6416_gpio_keys[] = {
+	KEYPAD_BUTTON_LOW(KEY_A),
+	KEYPAD_BUTTON_LOW(KEY_B),
+	KEYPAD_BUTTON_LOW(KEY_C),
+	KEYPAD_BUTTON_LOW(KEY_D),
+	KEYPAD_BUTTON_LOW(KEY_E),
+	KEYPAD_BUTTON_LOW(KEY_F),
+	KEYPAD_BUTTON_LOW(KEY_G),
+	KEYPAD_BUTTON_LOW(KEY_H),
+	KEYPAD_BUTTON_LOW(KEY_I),
+	KEYPAD_BUTTON_LOW(KEY_J),
+	KEYPAD_BUTTON_LOW(KEY_K),
+	KEYPAD_BUTTON_LOW(KEY_L),
+	KEYPAD_BUTTON_LOW(KEY_M),
+	KEYPAD_BUTTON_LOW(KEY_N),
+	KEYPAD_BUTTON_LOW(KEY_O),
+	KEYPAD_BUTTON_LOW(KEY_P),
+};
+
+static struct tca6416_keys_platform_data aria_tca6416_keys_info = {
+	.buttons	= aria_tc6416_gpio_keys,
+	.nbuttons	= ARRAY_SIZE(aria_tc6416_gpio_keys),
+	.rep		= 0,
+	.use_polling	= 1,
+	.pinmask	= KEYPAD_PIN_MASK,
+};
+
+static int tca6416_keypad_init_irq(void)
+{
+	int ret = 0;
+
+	ret = gpio_request(KEYPAD_IRQ, "tca6416-keypad-irq");
+	if (ret < 0) {
+		printk(KERN_WARNING "failed to request GPIO#%d: %d\n",
+				KEYPAD_IRQ, ret);
+		return ret;
+	}
+	if (gpio_direction_input(KEYPAD_IRQ)) {
+		printk(KERN_WARNING "GPIO#%d cannot be configured as "
+				"input\n", KEYPAD_IRQ);
+		return -ENXIO;
+	}
+
+	return ret;
+}
+
 static struct i2c_board_info am335x_i2c2_boardinfo[] = {
+	{
+		I2C_BOARD_INFO("tca6416-keys", 0x20),
+		.platform_data = &aria_tca6416_keys_info,
+	},
 };
 
 static void i2c2_init(int evm_id, int profile)
 {
 	setup_pin_mux(i2c2_pin_mux);
+	setup_pin_mux(aria_tca6416_keypad_gpio_pin_mux);
+
 	omap_register_i2c_bus(3, 100, am335x_i2c2_boardinfo,
 			ARRAY_SIZE(am335x_i2c2_boardinfo));
+	
+	tca6416_keypad_init_irq();
+
 	return;
 }
 
@@ -2088,22 +2164,36 @@ static struct gpio_led aria_gpio_leds[] = {
 	},
 	{
 		.name			= "am335x:ARIA:led2",
-		.gpio			= GPIO_TO_PIN(3, 16),	/* LD25 */
+		.gpio			= GPIO_TO_PIN(3, 16),
 		.default_trigger	= "led2",
 		.active_low             = 1,
                 .default_state          = LEDS_GPIO_DEFSTATE_OFF
 	},
 	{
 		.name			= "am335x:ARIA:led3",
-		.gpio			= GPIO_TO_PIN(3, 18),	/* LD25 */
+		.gpio			= GPIO_TO_PIN(3, 18),
 		.default_trigger	= "led3",
 		.active_low             = 1,
                 .default_state          = LEDS_GPIO_DEFSTATE_OFF
 	},
 	{
 		.name			= "am335x:ARIA:led4",
-		.gpio			= GPIO_TO_PIN(3, 21),	/* LD25 */
+		.gpio			= GPIO_TO_PIN(1, 25),
 		.default_trigger	= "led4",
+		.active_low             = 1,
+                .default_state          = LEDS_GPIO_DEFSTATE_OFF
+	},
+	{
+		.name			= "am335x:ARIA:led5",
+		.gpio			= GPIO_TO_PIN(1, 24),
+		.default_trigger	= "led5",
+		.active_low             = 1,
+                .default_state          = LEDS_GPIO_DEFSTATE_OFF
+	},
+	{
+		.name			= "am335x:ARIA:led6",
+		.gpio			= GPIO_TO_PIN(3, 21),
+		.default_trigger	= "led6",
 		.active_low             = 1,
                 .default_state          = LEDS_GPIO_DEFSTATE_OFF
 	},
@@ -2393,6 +2483,7 @@ static struct evm_dev_cfg aria_cfg[] = {
 	{am335x_rtc_init, DEV_ON_BASEBOARD, PROFILE_NONE},
 	{mfd_tscadc_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{lcdc_init,	DEV_ON_BASEBOARD, PROFILE_NONE },
+	{enable_ecap2,     DEV_ON_BASEBOARD, PROFILE_ALL},
 	{aria_gpio_led_init, DEV_ON_BASEBOARD, PROFILE_ALL},
 	{aria_gen_gpio_init, DEV_ON_BASEBOARD, PROFILE_ALL},
 	//{tps65217_init, DEV_ON_BASEBOARD, PROFILE_NONE},
@@ -2401,6 +2492,7 @@ static struct evm_dev_cfg aria_cfg[] = {
 	{gpio_keys_init,  DEV_ON_BASEBOARD, PROFILE_ALL},
 	{mmc1_emmc_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{mmc0_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
+	{i2c2_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{uart1_init, DEV_ON_BASEBOARD, PROFILE_ALL},
 	{uart4_init, DEV_ON_BASEBOARD, PROFILE_ALL},
 	{NULL, 0, 0},
