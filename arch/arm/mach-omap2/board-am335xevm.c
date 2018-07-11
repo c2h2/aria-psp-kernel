@@ -652,7 +652,7 @@ static struct pinmux_config i2c2_pin_mux[] = {
 /* Module pin mux for mcasp1 */
 static struct pinmux_config mcasp1_pin_mux[] = {
 	{"mii1_crs.mcasp1_aclkx", OMAP_MUX_MODE4 | AM33XX_PIN_INPUT_PULLDOWN},
-	{"mcasp0_fsr.mcasp1_fsx", OMAP_MUX_MODE4 | AM33XX_PIN_INPUT_PULLDOWN},
+	{"mcasp0_fsr.mcasp1_fsx", OMAP_MUX_MODE3 | AM33XX_PIN_INPUT_PULLDOWN},
 	{"mii1_col.mcasp1_axr2", OMAP_MUX_MODE4 | AM33XX_PIN_INPUT_PULLDOWN},
 	{"rmii1_refclk.mcasp1_axr3", OMAP_MUX_MODE4 |
 						AM33XX_PIN_INPUT_PULLDOWN},
