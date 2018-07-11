@@ -1705,7 +1705,7 @@ static void i2c1_init(int evm_id, int profile)
 }
 
 #define KEYPAD_IRQ		GPIO_TO_PIN(1, 23)
-#define KEYPAD_PIN_MASK		0xFFC0
+#define KEYPAD_PIN_MASK		0x00FF
 
 #define KEYPAD_BUTTON(ev_type, ev_code, act_low) \
 {						\
@@ -1740,8 +1740,9 @@ static struct tca6416_keys_platform_data aria_tca6416_keys_info = {
 	.buttons	= aria_tc6416_gpio_keys,
 	.nbuttons	= ARRAY_SIZE(aria_tc6416_gpio_keys),
 	.rep		= 0,
-	.use_polling	= 1,
+	.use_polling	= 0,
 	.pinmask	= KEYPAD_PIN_MASK,
+	.irq_is_gpio	= 1,
 };
 
 static int tca6416_keypad_init_irq(void)
@@ -1767,19 +1768,19 @@ static struct i2c_board_info am335x_i2c2_boardinfo[] = {
 	{
 		I2C_BOARD_INFO("tca6416-keys", 0x20),
 		.platform_data = &aria_tca6416_keys_info,
+		.irq = KEYPAD_IRQ
 	},
 };
 
 static void i2c2_init(int evm_id, int profile)
 {
-	setup_pin_mux(i2c2_pin_mux);
 	setup_pin_mux(aria_tca6416_keypad_gpio_pin_mux);
+	tca6416_keypad_init_irq();
 
+	setup_pin_mux(i2c2_pin_mux);	
 	omap_register_i2c_bus(3, 100, am335x_i2c2_boardinfo,
 			ARRAY_SIZE(am335x_i2c2_boardinfo));
 	
-	tca6416_keypad_init_irq();
-
 	return;
 }
 
@@ -2489,7 +2490,7 @@ static struct evm_dev_cfg aria_cfg[] = {
 	//{tps65217_init, DEV_ON_BASEBOARD, PROFILE_NONE},
 	{mcasp1_init, DEV_ON_BASEBOARD, PROFILE_NONE},
 	{aria_mii1_init, DEV_ON_BASEBOARD, PROFILE_NONE},
-	{gpio_keys_init,  DEV_ON_BASEBOARD, PROFILE_ALL},
+	//{gpio_keys_init,  DEV_ON_BASEBOARD, PROFILE_ALL},
 	{mmc1_emmc_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{mmc0_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{i2c2_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
