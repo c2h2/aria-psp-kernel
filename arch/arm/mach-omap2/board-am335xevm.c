@@ -1747,6 +1747,11 @@ static const uint32_t aria_matrix_keypad_keys[] = {
 	KEY(1, 3, KEY_N),
 	KEY(2, 3, KEY_O),
 	KEY(3, 3, KEY_P),
+
+	KEY(0, 4, KEY_Q),
+	KEY(1, 4, KEY_R),
+	KEY(2, 4, KEY_S),
+	KEY(3, 4, KEY_T),
 };
 
 const struct matrix_keymap_data aria_matrix_keymap_data = {
@@ -1761,7 +1766,8 @@ static const unsigned int aria_matrix_keypad_row_gpios[] = {
 
 static const unsigned int aria_matrix_keypad_col_gpios[] = {
 	OMAP_MAX_GPIO_LINES + 16, OMAP_MAX_GPIO_LINES + 17,
-	OMAP_MAX_GPIO_LINES + 18, OMAP_MAX_GPIO_LINES + 19
+	OMAP_MAX_GPIO_LINES + 18, OMAP_MAX_GPIO_LINES + 19,
+	OMAP_MAX_GPIO_LINES + 20
 };
 
 static struct matrix_keypad_platform_data aria_matrix_keypad_platform_data = {
@@ -2205,7 +2211,7 @@ static struct gpio_led aria_gpio_leds[] = {
 		.name			= "am335x:ARIA:led5",
 		.gpio			= GPIO_TO_PIN(1, 24),
 		.default_trigger	= "led5",
-		.active_low             = 1,
+		.active_low             = 0,
                 .default_state          = LEDS_GPIO_DEFSTATE_OFF
 	},
 	{
