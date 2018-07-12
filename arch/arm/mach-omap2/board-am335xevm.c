@@ -43,7 +43,7 @@
 #include <linux/pwm/pwm.h>
 #include <linux/rtc/rtc-omap.h>
 #include <linux/opp.h>
-#include <linux/tca6416_keypad.h>
+#include <linux/i2c/pca953x.h>
 
 /* LCD controller is similar to DA850 */
 #include <video/da8xx-fb.h>
@@ -769,7 +769,7 @@ static struct pinmux_config aria_gpio_led_mux[] = {
 	{NULL, 0},
 };
 
-static struct pinmux_config aria_tca6416_keypad_gpio_pin_mux[] = {
+static struct pinmux_config aria_tca6416_gpio_pin_mux[] = {
 	{"gpmc_a7.gpio1_23", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
 	{NULL, 0},
 };
@@ -1704,84 +1704,101 @@ static void i2c1_init(int evm_id, int profile)
 	return;
 }
 
-#define KEYPAD_IRQ		GPIO_TO_PIN(1, 23)
-#define KEYPAD_PIN_MASK		0x00FF
+#define TCA6416_IRQ		GPIO_TO_PIN(1, 23)
 
-#define KEYPAD_BUTTON(ev_type, ev_code, act_low) \
-{						\
-	.type		= ev_type,		\
-	.code		= ev_code,		\
-	.active_low	= act_low,		\
-}
-
-#define KEYPAD_BUTTON_LOW(event_code)	\
-	KEYPAD_BUTTON(EV_KEY, event_code, 1)
-
-static struct tca6416_button aria_tc6416_gpio_keys[] = {
-	KEYPAD_BUTTON_LOW(KEY_A),
-	KEYPAD_BUTTON_LOW(KEY_B),
-	KEYPAD_BUTTON_LOW(KEY_C),
-	KEYPAD_BUTTON_LOW(KEY_D),
-	KEYPAD_BUTTON_LOW(KEY_E),
-	KEYPAD_BUTTON_LOW(KEY_F),
-	KEYPAD_BUTTON_LOW(KEY_G),
-	KEYPAD_BUTTON_LOW(KEY_H),
-	KEYPAD_BUTTON_LOW(KEY_I),
-	KEYPAD_BUTTON_LOW(KEY_J),
-	KEYPAD_BUTTON_LOW(KEY_K),
-	KEYPAD_BUTTON_LOW(KEY_L),
-	KEYPAD_BUTTON_LOW(KEY_M),
-	KEYPAD_BUTTON_LOW(KEY_N),
-	KEYPAD_BUTTON_LOW(KEY_O),
-	KEYPAD_BUTTON_LOW(KEY_P),
+static struct pca953x_platform_data am335xevm_gpio_expander_info = {
+	.gpio_base	= OMAP_MAX_GPIO_LINES + 16,
 };
-
-static struct tca6416_keys_platform_data aria_tca6416_keys_info = {
-	.buttons	= aria_tc6416_gpio_keys,
-	.nbuttons	= ARRAY_SIZE(aria_tc6416_gpio_keys),
-	.rep		= 0,
-	.use_polling	= 0,
-	.pinmask	= KEYPAD_PIN_MASK,
-	.irq_is_gpio	= 1,
-};
-
-static int tca6416_keypad_init_irq(void)
-{
-	int ret = 0;
-
-	ret = gpio_request(KEYPAD_IRQ, "tca6416-keypad-irq");
-	if (ret < 0) {
-		printk(KERN_WARNING "failed to request GPIO#%d: %d\n",
-				KEYPAD_IRQ, ret);
-		return ret;
-	}
-	if (gpio_direction_input(KEYPAD_IRQ)) {
-		printk(KERN_WARNING "GPIO#%d cannot be configured as "
-				"input\n", KEYPAD_IRQ);
-		return -ENXIO;
-	}
-
-	return ret;
-}
 
 static struct i2c_board_info am335x_i2c2_boardinfo[] = {
 	{
-		I2C_BOARD_INFO("tca6416-keys", 0x20),
-		.platform_data = &aria_tca6416_keys_info,
-		.irq = KEYPAD_IRQ
+		I2C_BOARD_INFO("tca6416", 0x20),
+		.platform_data = &am335xevm_gpio_expander_info,
 	},
 };
 
 static void i2c2_init(int evm_id, int profile)
 {
-	setup_pin_mux(aria_tca6416_keypad_gpio_pin_mux);
-	tca6416_keypad_init_irq();
+	setup_pin_mux(i2c2_pin_mux);
 
-	setup_pin_mux(i2c2_pin_mux);	
 	omap_register_i2c_bus(3, 100, am335x_i2c2_boardinfo,
 			ARRAY_SIZE(am335x_i2c2_boardinfo));
 	
 	return;
+}
+
+static const uint32_t aria_matrix_keypad_keys[] = {
+	KEY(0, 0, KEY_A),
+	KEY(1, 0, KEY_B),
+	KEY(2, 0, KEY_C),
+	KEY(3, 0, KEY_D),
+
+	KEY(0, 1, KEY_E),
+	KEY(1, 1, KEY_F),
+	KEY(2, 1, KEY_G),
+	KEY(3, 1, KEY_H),
+
+	KEY(0, 2, KEY_I),
+	KEY(1, 2, KEY_J),
+	KEY(2, 2, KEY_K),
+	KEY(3, 2, KEY_L),
+
+	KEY(0, 3, KEY_M),
+	KEY(1, 3, KEY_N),
+	KEY(2, 3, KEY_O),
+	KEY(3, 3, KEY_P),
+};
+
+const struct matrix_keymap_data aria_matrix_keymap_data = {
+	.keymap      = aria_matrix_keypad_keys,
+	.keymap_size = ARRAY_SIZE(aria_matrix_keypad_keys),
+};
+
+static const unsigned int aria_matrix_keypad_row_gpios[] = {
+	OMAP_MAX_GPIO_LINES + 24, OMAP_MAX_GPIO_LINES + 25,
+	OMAP_MAX_GPIO_LINES + 26, OMAP_MAX_GPIO_LINES + 27
+};
+
+static const unsigned int aria_matrix_keypad_col_gpios[] = {
+	OMAP_MAX_GPIO_LINES + 16, OMAP_MAX_GPIO_LINES + 17,
+	OMAP_MAX_GPIO_LINES + 18, OMAP_MAX_GPIO_LINES + 19
+};
+
+static struct matrix_keypad_platform_data aria_matrix_keypad_platform_data = {
+	.keymap_data       = &aria_matrix_keymap_data,
+	.row_gpios         = aria_matrix_keypad_row_gpios,
+	.num_row_gpios     = ARRAY_SIZE(aria_matrix_keypad_row_gpios),
+	.col_gpios         = aria_matrix_keypad_col_gpios,
+	.num_col_gpios     = ARRAY_SIZE(aria_matrix_keypad_col_gpios),
+	.active_low        = 1,
+	.debounce_ms       = 5,
+	.col_scan_delay_us = 2,
+	.clustered_irq_flags = IRQF_TRIGGER_FALLING,
+};
+
+
+static struct platform_device aria_matrix_keypad = {
+	.name  = "matrix-keypad",
+	.id    = -1,
+	.dev   = {
+		.platform_data = &aria_matrix_keypad_platform_data,
+	},
+};
+
+static void aria_matrix_keypad_init(int evm_id, int profile)
+{
+	int err;
+
+	setup_pin_mux(aria_tca6416_gpio_pin_mux);
+	err = gpio_request(TCA6416_IRQ, "tca6416-irq");
+	err = gpio_direction_input(TCA6416_IRQ);
+	aria_matrix_keypad_platform_data.clustered_irq =
+		gpio_to_irq(TCA6416_IRQ);
+
+	err = platform_device_register(&aria_matrix_keypad);
+	if (err) {
+		pr_err("failed to register matrix keypad (4x4) device\n");
+	}
 }
 
 /* Setup McASP 1 */
@@ -2496,6 +2513,7 @@ static struct evm_dev_cfg aria_cfg[] = {
 	{i2c2_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{uart1_init, DEV_ON_BASEBOARD, PROFILE_ALL},
 	{uart4_init, DEV_ON_BASEBOARD, PROFILE_ALL},
+	{aria_matrix_keypad_init, DEV_ON_BASEBOARD, PROFILE_ALL},
 	{NULL, 0, 0},
 };
 	
