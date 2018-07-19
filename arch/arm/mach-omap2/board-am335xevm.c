@@ -2180,44 +2180,44 @@ static struct gpio_led gpio_leds[] = {
 
 static struct gpio_led aria_gpio_leds[] = {
 	{
-		.name			= "am335x:ARIA:led1",
+		.name			= "am335x:ARIA:led11",
 		.gpio			= GPIO_TO_PIN(3, 14),
-		.default_trigger	= "led1",
+		.default_trigger	= "led11",
 		.active_low             = 1,
                 .default_state          = LEDS_GPIO_DEFSTATE_OFF
 	},
 	{
-		.name			= "am335x:ARIA:led2",
+		.name			= "am335x:ARIA:led12",
 		.gpio			= GPIO_TO_PIN(3, 16),
-		.default_trigger	= "led2",
+		.default_trigger	= "led12",
 		.active_low             = 1,
                 .default_state          = LEDS_GPIO_DEFSTATE_OFF
 	},
 	{
-		.name			= "am335x:ARIA:led3",
+		.name			= "am335x:ARIA:led13",
 		.gpio			= GPIO_TO_PIN(3, 18),
-		.default_trigger	= "led3",
+		.default_trigger	= "led13",
 		.active_low             = 1,
                 .default_state          = LEDS_GPIO_DEFSTATE_OFF
 	},
 	{
-		.name			= "am335x:ARIA:led4",
+		.name			= "am335x:ARIA:led14",
 		.gpio			= GPIO_TO_PIN(1, 25),
-		.default_trigger	= "led4",
+		.default_trigger	= "led14",
 		.active_low             = 1,
                 .default_state          = LEDS_GPIO_DEFSTATE_OFF
 	},
 	{
-		.name			= "am335x:ARIA:led5",
+		.name			= "am335x:ARIA:led15",
 		.gpio			= GPIO_TO_PIN(1, 24),
-		.default_trigger	= "led5",
+		.default_trigger	= "led15",
 		.active_low             = 0,
                 .default_state          = LEDS_GPIO_DEFSTATE_OFF
 	},
 	{
-		.name			= "am335x:ARIA:led6",
+		.name			= "am335x:ARIA:led16",
 		.gpio			= GPIO_TO_PIN(3, 21),
-		.default_trigger	= "led6",
+		.default_trigger	= "led16",
 		.active_low             = 1,
                 .default_state          = LEDS_GPIO_DEFSTATE_OFF
 	},
