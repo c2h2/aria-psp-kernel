@@ -774,7 +774,7 @@ static struct pinmux_config aria_gen_gpio_pin_mux[] = {
 	{"gpmc_a11.gpio1_27", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
 	{"gpmc_clk.gpio2_1", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
 	{"spi0_d0.gpio0_3", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
-	{"mcasp0_aclkx.gpio3_14", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
+	//{"mcasp0_aclkx.gpio3_14", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
 
 	{"spi0_d1.gpio0_4", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{"xdma_event_intr1.gpio0_20", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
@@ -2478,7 +2478,7 @@ static struct evm_dev_cfg aria_cfg[] = {
 	//{tps65217_init, DEV_ON_BASEBOARD, PROFILE_NONE},
 	{mcasp1_init, DEV_ON_BASEBOARD, PROFILE_NONE},
 	{aria_mii1_init, DEV_ON_BASEBOARD, PROFILE_NONE},
-	//{gpio_keys_init,  DEV_ON_BASEBOARD, PROFILE_ALL},
+	{gpio_keys_init,  DEV_ON_BASEBOARD, PROFILE_ALL},
 	{mmc1_emmc_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{mmc0_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{i2c2_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
