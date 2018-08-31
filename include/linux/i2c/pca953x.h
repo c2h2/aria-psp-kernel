@@ -25,6 +25,8 @@ struct pca953x_platform_data {
 				unsigned gpio, unsigned ngpio,
 				void *context);
 	const char	*const *names;
+
+	int		reset_gpio;
 };
 
 #endif /* _LINUX_PCA953X_H */

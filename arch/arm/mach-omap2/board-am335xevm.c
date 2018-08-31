@@ -745,6 +745,11 @@ static struct pinmux_config gpio_keys_pin_mux[] = {
 	{NULL, 0},
 };
 
+static struct pinmux_config tca6416_pin_mux[] = {
+	{"gpmc_a6.gpio1_22", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT_PULLUP},
+	{NULL, 0},
+};
+
 /* pinmux for led device */
 static struct pinmux_config gpio_led_mux[] = {
 	{"gpmc_ad4.gpio1_4", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
@@ -1704,6 +1709,7 @@ static void i2c1_init(int evm_id, int profile)
 
 static struct pca953x_platform_data am335xevm_gpio_expander_info = {
 	.gpio_base	= OMAP_MAX_GPIO_LINES + 16,
+	.reset_gpio	= GPIO_TO_PIN(1, 22)
 };
 
 static struct i2c_board_info am335x_i2c2_boardinfo[] = {
@@ -1716,6 +1722,8 @@ static struct i2c_board_info am335x_i2c2_boardinfo[] = {
 static void i2c2_init(int evm_id, int profile)
 {
 	setup_pin_mux(i2c2_pin_mux);
+
+	setup_pin_mux(tca6416_pin_mux);
 
 	omap_register_i2c_bus(3, 100, am335x_i2c2_boardinfo,
 			ARRAY_SIZE(am335x_i2c2_boardinfo));
@@ -1812,7 +1820,7 @@ static void mcasp1_init(int evm_id, int profile)
 	case EVM_SK:
 		am335x_register_mcasp(&am335x_evm_sk_snd_data1, 1);
 		break;
-    case ARIA_BOARD:
+	case ARIA_BOARD:
 		am335x_register_mcasp(&am335x_aria_snd_data1, 1);
 		break;
 	default:

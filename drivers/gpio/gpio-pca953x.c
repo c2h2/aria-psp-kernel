@@ -22,6 +22,7 @@
 #ifdef CONFIG_OF_GPIO
 #include <linux/of_platform.h>
 #endif
+#include <linux/delay.h>
 
 #define PCA953X_INPUT		0
 #define PCA953X_OUTPUT		1
@@ -87,11 +88,25 @@ struct pca953x_chip {
 	struct gpio_chip gpio_chip;
 	const char *const *names;
 	int	chip_type;
+	int	invert;
+	int	gpios;
+
+	int	reset_gpio;
+	int	reset_state;
 };
+
+static void pca953x_state_reset(struct pca953x_chip *chip);
 
 static int pca953x_write_reg(struct pca953x_chip *chip, int reg, uint16_t val)
 {
+	static int errcount = 0;
 	int ret = 0;
+
+	if(errcount >= 5)
+	{
+		pca953x_state_reset(chip);
+		errcount = 0;
+	}
 
 	if (chip->gpio_chip.ngpio <= 8)
 		ret = i2c_smbus_write_byte_data(chip->client, reg, val);
@@ -115,6 +130,7 @@ static int pca953x_write_reg(struct pca953x_chip *chip, int reg, uint16_t val)
 
 	if (ret < 0) {
 		dev_err(&chip->client->dev, "failed writing register\n");
+		errcount++;
 		return ret;
 	}
 
@@ -123,7 +139,14 @@ static int pca953x_write_reg(struct pca953x_chip *chip, int reg, uint16_t val)
 
 static int pca953x_read_reg(struct pca953x_chip *chip, int reg, uint16_t *val)
 {
+	static int errcount = 0;
 	int ret;
+
+	if(errcount >= 5)
+	{
+		pca953x_state_reset(chip);
+		errcount = 0;
+	}
 
 	if (chip->gpio_chip.ngpio <= 8)
 		ret = i2c_smbus_read_byte_data(chip->client, reg);
@@ -132,6 +155,7 @@ static int pca953x_read_reg(struct pca953x_chip *chip, int reg, uint16_t *val)
 
 	if (ret < 0) {
 		dev_err(&chip->client->dev, "failed reading register\n");
+		errcount++;
 		return ret;
 	}
 
@@ -631,6 +655,39 @@ out:
 	return ret;
 }
 
+static void pca953x_state_reset(struct pca953x_chip *chip)
+{
+	if(chip == NULL)
+	{
+		return;
+	}
+
+	if(chip->reset_state)
+	{
+		return;
+	}
+
+	chip->reset_state = 1;
+
+	if(chip->reset_gpio != -1)
+	{
+		gpio_direction_output(chip->reset_gpio, 1);
+		mdelay(100);
+		gpio_direction_output(chip->reset_gpio, 0);
+		mdelay(100);
+		gpio_direction_output(chip->reset_gpio, 1);
+	}
+
+	if (chip->chip_type == PCA953X_TYPE)
+		device_pca953x_init(chip, chip->invert);
+	else
+		device_pca957x_init(chip, chip->invert);
+
+	chip->reset_state = 0;
+
+	dev_info(&chip->client->dev, "Reset PCA953x Chip!\n");
+}
+
 static int __devinit pca953x_probe(struct i2c_client *client,
 				   const struct i2c_device_id *id)
 {
@@ -643,12 +700,19 @@ static int __devinit pca953x_probe(struct i2c_client *client,
 	if (chip == NULL)
 		return -ENOMEM;
 
+	chip->reset_gpio = -1;
+	chip->reset_state = 0;
+
 	pdata = client->dev.platform_data;
 	if (pdata) {
 		irq_base = pdata->irq_base;
 		chip->gpio_start = pdata->gpio_base;
 		invert = pdata->invert;
 		chip->names = pdata->names;
+		if(pdata->reset_gpio > 0)
+		{
+			chip->reset_gpio = pdata->reset_gpio;
+		}
 	} else {
 		pca953x_get_alt_pdata(client, &chip->gpio_start, &invert);
 #ifdef CONFIG_OF_GPIO
@@ -659,8 +723,20 @@ static int __devinit pca953x_probe(struct i2c_client *client,
 	}
 
 	chip->client = client;
+	chip->invert = invert;
 
 	chip->chip_type = id->driver_data & (PCA953X_TYPE | PCA957X_TYPE);
+	chip->gpios = (id->driver_data & PCA_GPIO_MASK);
+
+	if(chip->reset_gpio != -1)
+	{	
+		gpio_request(chip->reset_gpio, "pca953x-reset");
+		gpio_direction_output(chip->reset_gpio, 1);
+		mdelay(100);
+		gpio_direction_output(chip->reset_gpio, 0);
+		mdelay(100);
+		gpio_direction_output(chip->reset_gpio, 1);
+	}
 
 	mutex_init(&chip->i2c_lock);
 
