@@ -676,6 +676,7 @@ static void pca953x_state_reset(struct pca953x_chip *chip)
 		gpio_direction_output(chip->reset_gpio, 0);
 		mdelay(100);
 		gpio_direction_output(chip->reset_gpio, 1);
+		mdelay(200);
 	}
 
 	if (chip->chip_type == PCA953X_TYPE)
@@ -736,6 +737,7 @@ static int __devinit pca953x_probe(struct i2c_client *client,
 		gpio_direction_output(chip->reset_gpio, 0);
 		mdelay(100);
 		gpio_direction_output(chip->reset_gpio, 1);
+		mdelay(200);
 	}
 
 	mutex_init(&chip->i2c_lock);
