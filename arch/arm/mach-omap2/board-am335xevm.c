@@ -795,6 +795,12 @@ static struct pinmux_config d_can_ia_pin_mux[] = {
 	{NULL, 0},
 };
 
+static struct pinmux_config d_can_aria_pin_mux[] = {
+	{"uart1_ctsn.d_can0_tx", OMAP_MUX_MODE2 | AM33XX_PULL_ENBL},
+	{"uart1_rtsn.d_can0_rx", OMAP_MUX_MODE2 | AM33XX_PIN_INPUT_PULLUP},
+	{NULL, 0},
+};
+
 /* Module pin mux for uart2 */
 static struct pinmux_config uart2_pin_mux[] = {
 	{"spi0_sclk.uart2_rxd", OMAP_MUX_MODE1 | AM33XX_SLEWCTRL_SLOW |
@@ -1731,17 +1737,9 @@ static void lis331dlh_init(int evm_id, int profile)
 }
 
 static struct i2c_board_info am335x_i2c1_boardinfo[] = {
-/*
 	{
-		I2C_BOARD_INFO("tlv320aic3x", 0x1b),
+		I2C_BOARD_INFO("bq32000", 0x68),
 	},
-	{
-		I2C_BOARD_INFO("tsl2550", 0x39),
-	},
-	{
-		I2C_BOARD_INFO("tmp275", 0x48),
-	},
-*/
 };
 
 static void i2c1_init(int evm_id, int profile)
@@ -1753,9 +1751,7 @@ static void i2c1_init(int evm_id, int profile)
 }
 
 static struct i2c_board_info am335x_i2c2_boardinfo[] = {
-	{
-		I2C_BOARD_INFO("bq32000", 0x68),
-	},
+
 };
 
 static void i2c2_init(int evm_id, int profile)
@@ -1968,6 +1964,11 @@ static void d_can_init(int evm_id, int profile)
 			/* Instance One */
 			am33xx_d_can_init(1);
 		}
+		break;
+	case ARIA_BOARD:
+		setup_pin_mux(d_can_aria_pin_mux);
+		/* Instance Zero */
+		am33xx_d_can_init(0);
 		break;
 	default:
 		break;
@@ -2531,12 +2532,13 @@ static struct evm_dev_cfg aria_cfg[] = {
 	//{evm_nand_init, DEV_ON_BASEBOARD, PROFILE_ALL},
 	{mmc1_emmc_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{mmc0_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
-	//{i2c1_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
-	{i2c2_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
+	{i2c1_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
+	//{i2c2_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	//{spi0_init,     DEV_ON_BASEBOARD, PROFILE_ALL},
         {uart2_init,     DEV_ON_BASEBOARD, PROFILE_ALL},
         {uart1_init, DEV_ON_BASEBOARD, PROFILE_ALL},
         {uart4_init, DEV_ON_BASEBOARD, PROFILE_ALL},
+	{d_can_init, DEV_ON_BASEBOARD, PROFILE_ALL},
 	{NULL, 0, 0},
 };
 	
