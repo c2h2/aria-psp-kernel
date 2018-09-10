@@ -22,11 +22,8 @@
 #endif
 
 static int nologo;
-static uint splash_size = 7;
 module_param(nologo, bool, 0);
-module_param(splash_size, uint, 0644);
 MODULE_PARM_DESC(nologo, "Disables startup logo");
-MODULE_PARM_DESC(nologo, "Set splash size");
 
 /* logo's are marked __initdata. Use __init_refok to tell
  * modpost that it is intended that this function uses data
@@ -103,16 +100,9 @@ const struct linux_logo * __init_refok fb_find_logo(int depth)
 		/* M32R Linux logo */
 		logo = &logo_m32r_clut224;
 #endif
-#ifdef CONFIG_LOGO_ASCLEPIUS_70
-		logo = &logo_asclepius70_clut224;
-#endif
-#ifdef CONFIG_LOGO_ASCLEPIUS_50
-		if (splash_size==5)
-			logo = &logo_asclepius50_clut224;
-#endif
-#ifdef CONFIG_LOGO_ASCLEPIUS_43
-		if (splash_size==4)
-			logo = &logo_asclepius43_clut224;
+#ifdef CONFIG_LOGO_NOVOTECH_CLUT224
+		/* Generic Linux logo */
+		logo = &logo_novotech_clut224;
 #endif
 	}
 	return logo;
