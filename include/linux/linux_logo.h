@@ -47,9 +47,7 @@ extern const struct linux_logo logo_superh_vga16;
 extern const struct linux_logo logo_superh_clut224;
 extern const struct linux_logo logo_m32r_clut224;
 extern const struct linux_logo logo_spe_clut224;
-extern const struct linux_logo logo_asclepius43_clut224;
-extern const struct linux_logo logo_asclepius50_clut224;
-extern const struct linux_logo logo_asclepius70_clut224;
+extern const struct linux_logo logo_novotech_clut224;
 
 extern const struct linux_logo *fb_find_logo(int depth);
 #ifdef CONFIG_FB_LOGO_EXTRA
