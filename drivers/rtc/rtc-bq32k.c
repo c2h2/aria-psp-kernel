@@ -147,8 +147,6 @@ static int bq32k_probe(struct i2c_client *client,
 	error = bq32k_read(dev, &reg, BQ32K_MINUTES, 1);
 	if (!error && (reg & BQ32K_OF)) {
 		dev_warn(dev, "Oscillator Failure. Check RTC battery.\n");
-		reg &= ~BQ32K_OF;
-		error = bq32k_write(dev, &reg, BQ32K_MINUTES, 1);
 	}
 	if (error)
 		return error;

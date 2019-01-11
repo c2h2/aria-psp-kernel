@@ -1762,6 +1762,9 @@ static struct i2c_board_info am335x_i2c2_boardinfo[] = {
         },
 #endif
 	{
+		I2C_BOARD_INFO("bq32000", 0x68),
+	},
+	{
 		I2C_BOARD_INFO("rx8025", 0x32),
 	},
 	{
@@ -2408,7 +2411,7 @@ static void make_spread_spectrum(void)
     spread_spectrum_setup(&mpu_dpll_data);
     spread_spectrum_setup(&ddr_dpll_data);
 #endif
-    spread_spectrum_setup(&lcd_dpll_data);
+    //spread_spectrum_setup(&lcd_dpll_data);
 #if 0
     spread_spectrum_setup(&core_dpll_data);
     spread_spectrum_setup(&per_dpll_data);
