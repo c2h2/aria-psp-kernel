@@ -216,6 +216,12 @@ struct da8xx_lcdc_platform_data  NHD_480272MF_ATXI_pdata = {
 	.type                   = "NHD-4.3-ATXI#-T-1",
 };
 
+static struct at24_platform_data test_eeprom_pdata = {
+	.byte_len = SZ_128K / 8,
+	.page_size = 64,
+	.flags = AT24_FLAG_ADDR16,
+};
+
 #include "common.h"
 
 #include <linux/lis3lv02d.h>
@@ -1745,6 +1751,10 @@ static struct i2c_board_info am335x_i2c1_boardinfo[] = {
 		I2C_BOARD_INFO("tmp275", 0x48),
 	},
 */
+	{
+		I2C_BOARD_INFO("24c128", 0x50),
+		.platform_data = &test_eeprom_pdata
+	}
 };
 
 static void i2c1_init(int evm_id, int profile)
