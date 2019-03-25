@@ -152,6 +152,10 @@ enum {
 #define OMAP_I2C_SYSTEST_SCL_O		(1 << 2)	/* SCL line drive out */
 #define OMAP_I2C_SYSTEST_SDA_I		(1 << 1)	/* SDA line sense in */
 #define OMAP_I2C_SYSTEST_SDA_O		(1 << 0)	/* SDA line drive out */
+#define OMAP_I2C_SYSTEST_SCL_I_FUNC	(1 << 8)	/* SCL line input value */
+#define OMAP_I2C_SYSTEST_SCL_O_FUNC	(1 << 7)	/* SCL line output value */
+#define OMAP_I2C_SYSTEST_SDA_I_FUNC	(1 << 6)	/* SDA line input value */
+#define OMAP_I2C_SYSTEST_SDA_O_FUNC	(1 << 5)	/* SDA line output value */
 
 /* OCP_SYSSTATUS bit definitions */
 #define SYSS_RESETDONE_MASK		(1 << 0)
@@ -501,7 +505,7 @@ static void omap_i2c_clock_pulse(struct omap_i2c_dev *dev)
 	reg |= OMAP_I2C_SYSTEST_ST_EN;
 	omap_i2c_write_reg(dev, OMAP_I2C_SYSTEST_REG, reg);
 
-	for (i = 0; i < 9; i) {
+	for (i = 0; i < 9; i++) {
 		reg |= OMAP_I2C_SYSTEST_SCL_O;
 		omap_i2c_write_reg(dev, OMAP_I2C_SYSTEST_REG, reg);
 		mdelay(100);
@@ -513,6 +517,41 @@ static void omap_i2c_clock_pulse(struct omap_i2c_dev *dev)
 	/* Disable testmode */
 	reg &= ~OMAP_I2C_SYSTEST_ST_EN;
 	omap_i2c_write_reg(dev, OMAP_I2C_SYSTEST_REG, reg);
+}
+
+static int omap_i2c_reset(struct omap_i2c_dev *omap)
+{
+	unsigned long timeout;
+	u16 sysc;
+
+	if (omap->rev >= OMAP_I2C_OMAP1_REV_2) {
+		sysc = omap_i2c_read_reg(omap, OMAP_I2C_SYSC_REG);
+
+		/* Disable I2C controller before soft reset */
+		omap_i2c_write_reg(omap, OMAP_I2C_CON_REG,
+			omap_i2c_read_reg(omap, OMAP_I2C_CON_REG) &
+				~(OMAP_I2C_CON_EN));
+
+		omap_i2c_write_reg(omap, OMAP_I2C_SYSC_REG, SYSC_SOFTRESET_MASK);
+		/* For some reason we need to set the EN bit before the
+		 * reset done bit gets set. */
+		timeout = jiffies + OMAP_I2C_TIMEOUT;
+		omap_i2c_write_reg(omap, OMAP_I2C_CON_REG, OMAP_I2C_CON_EN);
+		while (!(omap_i2c_read_reg(omap, OMAP_I2C_SYSS_REG) &
+			 SYSS_RESETDONE_MASK)) {
+			if (time_after(jiffies, timeout)) {
+				dev_warn(omap->dev, "timeout waiting "
+						"for controller reset\n");
+				return -ETIMEDOUT;
+			}
+			msleep(1);
+		}
+
+		/* SYSC register is cleared by the reset; rewrite it */
+		omap_i2c_write_reg(omap, OMAP_I2C_SYSC_REG, sysc);
+	}
+
+	return 0;
 }
 
 static void omap_i2c_bus_recover(struct omap_i2c_dev *dev)
