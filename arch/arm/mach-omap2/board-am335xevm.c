@@ -1750,7 +1750,7 @@ static struct i2c_board_info am335x_i2c1_boardinfo[] = {
 static void i2c1_init(int evm_id, int profile)
 {
 	setup_pin_mux(i2c1_pin_mux);
-	omap_register_i2c_bus(2, 400, am335x_i2c1_boardinfo,
+	omap_register_i2c_bus(2, 100, am335x_i2c1_boardinfo,
 			ARRAY_SIZE(am335x_i2c1_boardinfo));
 	return;
 }
