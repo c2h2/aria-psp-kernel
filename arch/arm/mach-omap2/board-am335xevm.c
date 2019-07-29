@@ -1259,8 +1259,16 @@ static void mii1_init(int evm_id, int profile)
 }
 
 static void aria_mii1_init(int evm_id, int profile){
-    setup_pin_mux(aria_mii1_pin_mux);
-    return;
+	setup_pin_mux(aria_mii1_pin_mux);
+
+	gpio_request_one(GPIO_TO_PIN(0, 7),
+		GPIOF_OUT_INIT_LOW, "gpio_0_7");
+	msleep(20);
+	gpio_set_value(GPIO_TO_PIN(0, 7), 1);
+	msleep(20);
+	//gpio_free(GPIO_TO_PIN(0, 7));
+
+	return;
 }
 
 static void rmii1_init(int evm_id, int profile)
