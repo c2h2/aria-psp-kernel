@@ -678,6 +678,27 @@ static struct pinmux_config aria_mii1_pin_mux[] = {
 	{NULL, 0},
 };
 
+/* Module pin mux for mii2 */
+static struct pinmux_config aria_mii2_pin_mux[] = {
+	{"gpmc_wpn.mii2_rxerr", OMAP_MUX_MODE1 | AM33XX_PIN_INPUT_PULLDOWN},
+	{"gpmc_a0.mii2_txen", OMAP_MUX_MODE1 | AM33XX_PIN_OUTPUT},
+	{"gpmc_a1.mii2_rxdv", OMAP_MUX_MODE1 | AM33XX_PIN_INPUT_PULLDOWN},
+	{"gpmc_a2.mii2_txd3", OMAP_MUX_MODE1 | AM33XX_PIN_OUTPUT},
+	{"gpmc_a3.mii2_txd2", OMAP_MUX_MODE1 | AM33XX_PIN_OUTPUT},
+	{"gpmc_a4.mii2_txd1", OMAP_MUX_MODE1 | AM33XX_PIN_OUTPUT},
+	{"gpmc_a5.mii2_txd0", OMAP_MUX_MODE1 | AM33XX_PIN_OUTPUT},
+	{"gpmc_a6.mii2_txclk", OMAP_MUX_MODE1 | AM33XX_PIN_INPUT_PULLDOWN},
+	{"gpmc_a7.mii2_rxclk", OMAP_MUX_MODE1 | AM33XX_PIN_INPUT_PULLDOWN},
+	{"gpmc_a8.mii2_rxd3", OMAP_MUX_MODE1 | AM33XX_PIN_INPUT_PULLDOWN},
+	{"gpmc_a9.mii1_rxd2", OMAP_MUX_MODE1 | AM33XX_PIN_INPUT_PULLDOWN},
+	{"gpmc_a10.mii1_rxd1", OMAP_MUX_MODE1 | AM33XX_PIN_INPUT_PULLDOWN},
+	{"gpmc_a11.mii1_rxd0", OMAP_MUX_MODE1 | AM33XX_PIN_INPUT_PULLDOWN},
+	{"gpmc_wait0.mii2_crs", OMAP_MUX_MODE1 | AM33XX_PIN_INPUT_PULLDOWN},
+	{"gpmc_ben1.mii2_col", OMAP_MUX_MODE1 | AM33XX_PIN_INPUT_PULLDOWN},
+        {"gpmc_clk.gpio2_1", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT_PULLUP},
+	{NULL, 0},
+};
+
 /* Module pin mux for rmii1 */
 static struct pinmux_config rmii1_pin_mux[] = {
 	{"mii1_crs.rmii1_crs_dv", OMAP_MUX_MODE1 | AM33XX_PIN_INPUT_PULLDOWN},
@@ -822,30 +843,6 @@ static struct pinmux_config aria_gpio_led_mux[] = {
 //	{"mcasp0_ahclkr.gpio3_17", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
 	{"mcasp0_aclkr.gpio3_18", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
 //	{"mcasp0_fsr.gpio3_19", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
-	{NULL, 0},
-};
-
-/* pinmux for gpio asclepius  */
-static struct pinmux_config asclepius_gpio_mux[] = {
-	{"uart1_ctsn.gpio0_12", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
-	{"gpmc_a0.gpio1_16", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
-	{"gpmc_a1.gpio1_17", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
-	{"gpmc_a2.gpio1_18", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
-	{"gpmc_a3.gpio1_19", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
-	{"gpmc_a4.gpio1_20", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
-	{"gpmc_a5.gpio1_21", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
-	{"gpmc_a6.gpio1_22", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
-	{"gpmc_a7.gpio1_23", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
-	{"gpmc_a8.gpio1_24", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
-	{"gpmc_a9.gpio1_25", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
-	{"gpmc_a10.gpio1_26", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
-	{"gpmc_a11.gpio1_27", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
-	{"gpmc_clk.gpio2_1", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
-	{"mcasp0_aclkx.gpio3_14", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
-	{"mcasp0_axr0.gpio3_16", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
-	{"mcasp0_aclkr.gpio3_18", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
-	{"ecap0_in_pwm0_out.gpio0_7", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
-	{"gpmc_csn3.gpio2_0", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{NULL, 0},
 };
 
@@ -1247,8 +1244,14 @@ static void mii1_init(int evm_id, int profile)
 }
 
 static void aria_mii1_init(int evm_id, int profile){
-    setup_pin_mux(aria_mii1_pin_mux);
-    return;
+	setup_pin_mux(aria_mii1_pin_mux);
+	return;
+}
+
+
+static void aria_mii2_init(int evm_id, int profile){
+	setup_pin_mux(aria_mii2_pin_mux);
+	return;
 }
 
 static void rmii1_init(int evm_id, int profile)
@@ -1734,17 +1737,9 @@ static void lis331dlh_init(int evm_id, int profile)
 }
 
 static struct i2c_board_info am335x_i2c1_boardinfo[] = {
-/*
 	{
-		I2C_BOARD_INFO("tlv320aic3x", 0x1b),
+		I2C_BOARD_INFO("rx8025", 0x32),
 	},
-	{
-		I2C_BOARD_INFO("tsl2550", 0x39),
-	},
-	{
-		I2C_BOARD_INFO("tmp275", 0x48),
-	},
-*/
 };
 
 static void i2c1_init(int evm_id, int profile)
@@ -1756,20 +1751,7 @@ static void i2c1_init(int evm_id, int profile)
 }
 
 static struct i2c_board_info am335x_i2c2_boardinfo[] = {
-#if 0
-        {
-                I2C_BOARD_INFO("ds1307", 0x68),
-        },
-#endif
-	{
-		I2C_BOARD_INFO("bq32000", 0x68),
-	},
-	{
-		I2C_BOARD_INFO("rx8025", 0x32),
-	},
-	{
-		I2C_BOARD_INFO("GDIX1001:00", 0x5D),
-	},
+
 };
 
 static void i2c2_init(int evm_id, int profile)
@@ -1790,7 +1772,7 @@ static void mcasp1_init(int evm_id, int profile)
 	case EVM_SK:
 		am335x_register_mcasp(&am335x_evm_sk_snd_data1, 1);
 		break;
-    case ARIA_BOARD:
+	case ARIA_BOARD:
 		am335x_register_mcasp(&am335x_aria_snd_data1, 1);
 		break;
 	default:
@@ -1985,6 +1967,9 @@ static void d_can_init(int evm_id, int profile)
 		}
 		break;
 	default:
+		setup_pin_mux(d_can_gp_pin_mux);
+		/* Instance One */
+		am33xx_d_can_init(1);
 		break;
 	}
 }
@@ -2180,6 +2165,12 @@ static struct platform_device aria_leds_gpio = {
 	},
 };
 
+static struct pinmux_config aria_gen_gpio_mux[] = {
+	{"mcasp0_aclkx.gpio3_14", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
+	{"mcasp0_fsx.gpio3_15", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
+	{"mcasp0_axr0.gpio3_16", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+	{NULL, 0},
+};
 
 static void gpio_led_init(int evm_id, int profile)
 {
@@ -2201,32 +2192,15 @@ static void aria_gpio_led_init(int evm_id, int profile)
 		pr_err("failed to register gpio led device\n");
 }
 
-
-static void asclepius_gpio_init(int evm_id, int profile)
+static void aria_gen_gpio_init(int evm_id, int profile)
 {
-        setup_pin_mux(asclepius_gpio_mux);
+	setup_pin_mux(aria_gen_gpio_mux);
 
-	gpio_request_one(GPIO_TO_PIN(1, 16),
-		GPIOF_OUT_INIT_HIGH, "gpio_1_16");
-	gpio_free(GPIO_TO_PIN(1, 16));
-
-	gpio_request_one(GPIO_TO_PIN(1, 18),
-		GPIOF_OUT_INIT_HIGH, "gpio_1_18");
-	gpio_free(GPIO_TO_PIN(1, 18));
-
-	gpio_request_one(GPIO_TO_PIN(1, 24),
-		GPIOF_OUT_INIT_HIGH, "gpio_1_24");
-	gpio_free(GPIO_TO_PIN(1, 24));
-
-	gpio_request_one(GPIO_TO_PIN(0, 20),
-		GPIOF_OUT_INIT_HIGH, "gpio_0_20");
-	gpio_free(GPIO_TO_PIN(0, 20));
-
-	gpio_request_one(GPIO_TO_PIN(2, 0),
-		GPIOF_OUT_INIT_HIGH, "gpio_2_0");
-	gpio_free(GPIO_TO_PIN(2, 0));
+	/* No available GPIO based watchdog support in legacy kernel. */
+	gpio_request_one(GPIO_TO_PIN(3, 16),
+		GPIOF_OUT_INIT_LOW, "gpio_3_16");
+	gpio_free(GPIO_TO_PIN(3, 16));
 }
-
 
 /* setup spi0 */
 static void spi0_init(int evm_id, int profile)
@@ -2335,74 +2309,74 @@ static void am335x_rtc_init(int evm_id, int profile)
 /* Function for setup SSC */
 static void spread_spectrum_setup(const struct ssc_data* dpll_data)
 {
-    void __iomem* clock_base;
-    struct clk* clock;
-    unsigned int f;
-    unsigned int fm;
-    unsigned int m;
-    unsigned int n;
-    unsigned int ModFreqDivider;
-    unsigned int Exponent;
-    unsigned int Mantissa;
-    unsigned int delta_m_step;
+	void __iomem* clock_base;
+	struct clk* clock;
+	unsigned int f;
+	unsigned int fm;
+	unsigned int m;
+	unsigned int n;
+	unsigned int ModFreqDivider;
+	unsigned int Exponent;
+	unsigned int Mantissa;
+	unsigned int delta_m_step;
 
-    clock_base = ioremap(AM33XX_CM_BASE + AM33XX_CM_WKUP_MOD, 0x1000);
-    if (!clock_base) {
-        printk(KERN_ERR "ioremap spread spectrum clocks failed\n");
-        return;
-    }
+	clock_base = ioremap(AM33XX_CM_BASE + AM33XX_CM_WKUP_MOD, 0x1000);
+	if (!clock_base) {
+	printk(KERN_ERR "ioremap spread spectrum clocks failed\n");
+	return;
+	}
 
-    /* Read PLL dividers m and n */
-    m = readl(clock_base + dpll_data->clksel);
-    n = m & 0x7F;
-    m = (m >> 8) & 0x3FF;
-    // printk(KERN_ERR "%s PLL m = %d, n = %d\n", dpll_data->name, m, n);
+	/* Read PLL dividers m and n */
+	m = readl(clock_base + dpll_data->clksel);
+	n = m & 0x7F;
+	m = (m >> 8) & 0x3FF;
+	// printk(KERN_ERR "%s PLL m = %d, n = %d\n", dpll_data->name, m, n);
 
-    /* Calculate Fref */
-    clock = clk_get(NULL, "sys_clkin_ck");
-    f = clk_get_rate(clock);
-    f = f/(1+n);
-    // printk(KERN_ERR "%s PLL reference clock is %dHz\n", dpll_data->name, f);
+	/* Calculate Fref */
+	clock = clk_get(NULL, "sys_clkin_ck");
+	f = clk_get_rate(clock);
+	f = f/(1+n);
+	// printk(KERN_ERR "%s PLL reference clock is %dHz\n", dpll_data->name, f);
 
-    /* Calculate max. Bandwidth (Modulation Frequency) of PLL */
-    fm = f / 70;
-    // printk(KERN_ERR "%s PLL Bandwidth is %d\n", dpll_data->name, fm);
+	/* Calculate max. Bandwidth (Modulation Frequency) of PLL */
+	fm = f / 70;
+	// printk(KERN_ERR "%s PLL Bandwidth is %d\n", dpll_data->name, fm);
 
-    /* Calculate ModFreqDivider */
-    ModFreqDivider = f/(4 * fm);
-    // printk(KERN_ERR "%s PLL ModFreqDivider is %d\n", dpll_data->name, ModFreqDivider);
+	/* Calculate ModFreqDivider */
+	ModFreqDivider = f/(4 * fm);
+	// printk(KERN_ERR "%s PLL ModFreqDivider is %d\n", dpll_data->name, ModFreqDivider);
 
-    /* Calculate Mantissa/Exponent */
-    Exponent = 0;
-    Mantissa = ModFreqDivider;
-    while ((Mantissa > 127) && (Exponent < 7)) {
-        Exponent++;
-        Mantissa /= 2;
-    }
-    if (Mantissa > 127)
-        Mantissa = 127;
-    // printk(KERN_ERR "%s PLL Mantissa = %d, Exponent = %d\n", dpll_data->name, Mantissa, Exponent);
-    ModFreqDivider = Mantissa << Exponent;
-    // printk(KERN_ERR "%s PLL revised ModFreqDivider is %d\n", dpll_data->name, ModFreqDivider);
+	/* Calculate Mantissa/Exponent */
+	Exponent = 0;
+	Mantissa = ModFreqDivider;
+	while ((Mantissa > 127) && (Exponent < 7)) {
+	Exponent++;
+	Mantissa /= 2;
+	}
+	if (Mantissa > 127)
+	Mantissa = 127;
+	// printk(KERN_ERR "%s PLL Mantissa = %d, Exponent = %d\n", dpll_data->name, Mantissa, Exponent);
+	ModFreqDivider = Mantissa << Exponent;
+	// printk(KERN_ERR "%s PLL revised ModFreqDivider is %d\n", dpll_data->name, ModFreqDivider);
 
-    /* Calculate Modulation steps */
-    delta_m_step = (m * dpll_data->percent) << 18;
-    delta_m_step /= 100;
-    delta_m_step /= ModFreqDivider;
-    if (delta_m_step > 0xFFFFF)
-        delta_m_step = 0xFFFFF;
-    // printk(KERN_ERR "%s PLL Delta_M_Int = %d, Delta_M_Frac = %d\n", dpll_data->name, delta_m_step >> 18, delta_m_step & 0x3FFFF);
+	/* Calculate Modulation steps */
+	delta_m_step = (m * dpll_data->percent) << 18;
+	delta_m_step /= 100;
+	delta_m_step /= ModFreqDivider;
+	if (delta_m_step > 0xFFFFF)
+	delta_m_step = 0xFFFFF;
+	// printk(KERN_ERR "%s PLL Delta_M_Int = %d, Delta_M_Frac = %d\n", dpll_data->name, delta_m_step >> 18, delta_m_step & 0x3FFFF);
 
-    /* Setup Spread Spectrum */
-    writel(delta_m_step, clock_base + dpll_data->deltamstep);
-    writel((Exponent << 8) | Mantissa, clock_base + dpll_data->modfreqdiv);
-    m = readl(clock_base + dpll_data->clkmode);
-    m &= ~0xF000;   // clear all SSC flags
-    m |=  0x1000;   // enable SSC
-    writel(m, clock_base + dpll_data->clkmode);
-    printk(KERN_INFO "%s PLL Spread Spectrum enabled with %d percent\n", dpll_data->name, dpll_data->percent);
+	/* Setup Spread Spectrum */
+	writel(delta_m_step, clock_base + dpll_data->deltamstep);
+	writel((Exponent << 8) | Mantissa, clock_base + dpll_data->modfreqdiv);
+	m = readl(clock_base + dpll_data->clkmode);
+	m &= ~0xF000;   // clear all SSC flags
+	m |=  0x1000;   // enable SSC
+	writel(m, clock_base + dpll_data->clkmode);
+	printk(KERN_INFO "%s PLL Spread Spectrum enabled with %d percent\n", dpll_data->name, dpll_data->percent);
 
-    iounmap(clock_base);
+	iounmap(clock_base);
 }
 
 static void make_spread_spectrum(void)
@@ -2544,25 +2518,23 @@ static struct evm_dev_cfg beagleboneblack_dev_cfg[] = {
 
 static struct evm_dev_cfg aria_cfg[] = {
 	{am335x_rtc_init, DEV_ON_BASEBOARD, PROFILE_NONE},
-	{enable_ecap2,     DEV_ON_BASEBOARD, PROFILE_ALL},
-	//{mfd_tscadc_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
-	{lcdc_init,	DEV_ON_BASEBOARD, PROFILE_NONE },
-	//{aria_gpio_led_init,  DEV_ON_BASEBOARD, PROFILE_ALL},
-	{asclepius_gpio_init,  DEV_ON_BASEBOARD, PROFILE_ALL},
-	//{tps65217_init, DEV_ON_BASEBOARD, PROFILE_NONE},
-	{mcasp1_init, DEV_ON_BASEBOARD, PROFILE_NONE},
+	//{enable_ecap2,     DEV_ON_BASEBOARD, PROFILE_ALL},
+	//{mcasp1_init, DEV_ON_BASEBOARD, PROFILE_NONE},
 	{aria_mii1_init, DEV_ON_BASEBOARD, PROFILE_NONE},
+	{aria_mii2_init, DEV_ON_BASEBOARD, PROFILE_NONE},
 	{usb0_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{usb1_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	//{evm_nand_init, DEV_ON_BASEBOARD, PROFILE_ALL},
 	{mmc1_emmc_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{mmc0_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{i2c1_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
-	{i2c2_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
+	//{i2c2_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	//{spi0_init,     DEV_ON_BASEBOARD, PROFILE_ALL},
-        //{uart2_init,     DEV_ON_BASEBOARD, PROFILE_ALL},
         {uart1_init, DEV_ON_BASEBOARD, PROFILE_ALL},
+        {uart2_init, DEV_ON_BASEBOARD, PROFILE_ALL},
         {uart4_init, DEV_ON_BASEBOARD, PROFILE_ALL},
+	{d_can_init, DEV_ON_BASEBOARD, PROFILE_NONE},
+	{aria_gen_gpio_init, DEV_ON_BASEBOARD, PROFILE_NONE},
 	{NULL, 0, 0},
 };
 	
@@ -2783,19 +2755,19 @@ static void setup_beagleboneblack(void)
 }
 
 static void setup_aria(void){
-    pr_info("The board is an Aria.\n");
+	pr_info("The board is an Aria.\n");
 
-    /* Aria has Micro-SD slot which doesn't have Write Protect pin */
-    am335x_mmc[1].gpio_wp = -EINVAL;
+	/* Aria has Micro-SD slot which doesn't have Write Protect pin */
+	am335x_mmc[1].gpio_wp = -EINVAL;
 
-    _configure_device(ARIA_BOARD, aria_cfg, PROFILE_NONE);
+	_configure_device(ARIA_BOARD, aria_cfg, PROFILE_NONE);
 
 	/* TPS65217 regulator has full constraints */
 	//regulator_has_full_constraints();  //this may cause net or audio fail, plz invstigate.
 
-    am33xx_cpsw_init(AM33XX_CPSW_MODE_MII, NULL, NULL);
+	am33xx_cpsw_init(AM33XX_CPSW_MODE_MII, NULL, NULL);
 
-	make_spread_spectrum();
+	//make_spread_spectrum();
 }
 
 
