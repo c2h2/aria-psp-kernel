@@ -780,12 +780,12 @@ static struct pinmux_config aria_gen_gpio_pin_mux[] = {
 	{"spi0_d1.gpio0_4", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{"mcasp0_ahclkr.gpio3_17", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{"mcasp0_aclkr.gpio3_18", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
-
+	{"ecap0_in_pwm0_out.gpio0_7", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{NULL, 0},
 };
 
 static struct pinmux_config gpio_ddr_vtt_enb_pin_mux[] = {
-	{"ecap0_in_pwm0_out.pio0_7", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+	{"ecap0_in_pwm0_out.gpio0_7", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{NULL, 0},
 };
 
@@ -1035,6 +1035,12 @@ static struct pinmux_config uart1_pin_mux[] = {
 static struct pinmux_config uart4_pin_mux[] = {
 	{"uart0_ctsn.uart4_rxd", OMAP_MUX_MODE1 | AM33XX_PIN_INPUT_PULLUP},
 	{"uart0_rtsn.uart4_txd", OMAP_MUX_MODE1 | AM33XX_PULL_ENBL},
+	{NULL, 0},
+};
+
+static struct pinmux_config uart5_pin_mux[] = {
+	{"lcd_data9.uart5_rxd", OMAP_MUX_MODE4 | AM33XX_PIN_INPUT_PULLUP},
+	{"lcd_data8.uart5_txd", OMAP_MUX_MODE4 | AM33XX_PULL_ENBL},
 	{NULL, 0},
 };
 
@@ -1802,6 +1808,11 @@ static void uart4_init(int evm_id, int profile)
 	setup_pin_mux(uart4_pin_mux);
 }
 
+static void uart5_init(int evm_id, int profile)
+{
+	setup_pin_mux(uart5_pin_mux);
+}
+
 static void wl12xx_bluetooth_enable(void)
 {
 	int status = gpio_request(am335xevm_wlan_data.bt_enable_gpio,
@@ -2114,6 +2125,10 @@ static void aria_gpio_led_init(int evm_id, int profile)
 static void aria_gen_gpio_init(int evm_id, int profile)
 {
 	setup_pin_mux(aria_gen_gpio_pin_mux);
+
+	gpio_request_one(GPIO_TO_PIN(3, 18),
+		GPIOF_OUT_INIT_LOW, "gpio_3_18");
+	gpio_free(GPIO_TO_PIN(3, 18));
 	return;
 }
 
@@ -2347,7 +2362,7 @@ static struct evm_dev_cfg beagleboneblack_dev_cfg[] = {
 static struct evm_dev_cfg aria_cfg[] = {
 	{am335x_rtc_init, DEV_ON_BASEBOARD, PROFILE_NONE},
 	{mfd_tscadc_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
-	{lcdc_init,	DEV_ON_BASEBOARD, PROFILE_NONE },
+	//{lcdc_init,	DEV_ON_BASEBOARD, PROFILE_NONE },
 	//{aria_gpio_led_init, DEV_ON_BASEBOARD, PROFILE_ALL},
 	{aria_gen_gpio_init, DEV_ON_BASEBOARD, PROFILE_ALL},
 	//{tps65217_init, DEV_ON_BASEBOARD, PROFILE_NONE},
@@ -2359,6 +2374,7 @@ static struct evm_dev_cfg aria_cfg[] = {
 	{uart1_init, DEV_ON_BASEBOARD, PROFILE_ALL},
 	{uart2_init, DEV_ON_BASEBOARD, PROFILE_ALL},
 	{uart4_init, DEV_ON_BASEBOARD, PROFILE_ALL},
+	{uart5_init, DEV_ON_BASEBOARD, PROFILE_ALL},
 	{NULL, 0, 0},
 };
 	
