@@ -598,7 +598,7 @@ static struct pinmux_config mii1_pin_mux[] = {
 
 /* Module pin mux for mii1 */
 static struct pinmux_config aria_mii1_pin_mux[] = {
-	//{"mii1_rxerr.mii1_rxerr", OMAP_MUX_MODE0 | AM33XX_PIN_INPUT_PULLDOWN},
+	{"mii1_rxerr.mii1_rxerr", OMAP_MUX_MODE0 | AM33XX_PIN_INPUT_PULLDOWN},
 	{"mii1_txen.mii1_txen", OMAP_MUX_MODE0 | AM33XX_PIN_OUTPUT},
 	{"mii1_rxdv.mii1_rxdv", OMAP_MUX_MODE0 | AM33XX_PIN_INPUT_PULLDOWN},
 	{"mii1_txd3.mii1_txd3", OMAP_MUX_MODE0 | AM33XX_PIN_OUTPUT},
@@ -613,7 +613,7 @@ static struct pinmux_config aria_mii1_pin_mux[] = {
 	{"mii1_rxd0.mii1_rxd0", OMAP_MUX_MODE0 | AM33XX_PIN_INPUT_PULLDOWN},
 	{"mdio_data.mdio_data", OMAP_MUX_MODE0 | AM33XX_PIN_INPUT_PULLUP},
 	{"mdio_clk.mdio_clk", OMAP_MUX_MODE0 | AM33XX_PIN_OUTPUT_PULLUP},
-        {"ecap0_in_pwm0_out.gpio0_7", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT_PULLUP},
+        {"emu0.gpio3_7", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT_PULLUP},
 	{NULL, 0},
 };
 
@@ -651,7 +651,7 @@ static struct pinmux_config i2c2_pin_mux[] = {
 /* Module pin mux for mcasp1 */
 static struct pinmux_config mcasp1_pin_mux[] = {
 	{"mii1_crs.mcasp1_aclkx", OMAP_MUX_MODE4 | AM33XX_PIN_INPUT_PULLDOWN},
-	{"mii1_rxerr.mcasp1_fsx", OMAP_MUX_MODE4 | AM33XX_PIN_INPUT_PULLDOWN},
+	{"mcasp0_fsr.mcasp1_fsx", OMAP_MUX_MODE3 | AM33XX_PIN_INPUT_PULLDOWN},
 	{"mii1_col.mcasp1_axr2", OMAP_MUX_MODE4 | AM33XX_PIN_INPUT_PULLDOWN},
 	{"rmii1_refclk.mcasp1_axr3", OMAP_MUX_MODE4 |
 						AM33XX_PIN_INPUT_PULLDOWN},
@@ -774,7 +774,7 @@ static struct pinmux_config aria_gen_gpio_pin_mux[] = {
 	{"mcasp0_aclkx.gpio3_14", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{"xdma_event_intr1.gpio0_20", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{"gpmc_ben1.gpio1_28", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
-	{"mcasp0_fsr.gpio3_19", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+	//{"mcasp0_fsr.gpio3_19", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{"mcasp0_axr0.gpio3_16", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{"gpmc_a11.gpio1_27", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{"spi0_d1.gpio0_4", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
