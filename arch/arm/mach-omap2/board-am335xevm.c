@@ -2128,15 +2128,9 @@ static struct gpio_led gpio_leds[] = {
 
 static struct gpio_led aria_gpio_leds[] = {
 	{
-		.name			= "am335x:ARIA:heartbeat",
+		.name			= "am335x:ARIA:status",
 		.gpio			= GPIO_TO_PIN(3, 18),	/* LD2 */
-		.default_trigger	= "heartbeat",
-	},
-	{
-		.name			= "am335x:ARIA:mmc0",
-		.gpio			= GPIO_TO_PIN(3, 19),	/* LD1 */
-		.default_trigger	= "mmc0",
-	},
+	}
 };
 
 static struct gpio_led_platform_data gpio_led_info = {
@@ -2535,6 +2529,7 @@ static struct evm_dev_cfg aria_cfg[] = {
         {uart4_init, DEV_ON_BASEBOARD, PROFILE_ALL},
 	{d_can_init, DEV_ON_BASEBOARD, PROFILE_NONE},
 	{aria_gen_gpio_init, DEV_ON_BASEBOARD, PROFILE_NONE},
+	{aria_gpio_led_init, DEV_ON_BASEBOARD, PROFILE_NONE},
 	{NULL, 0, 0},
 };
 	
