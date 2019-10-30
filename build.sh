@@ -25,7 +25,7 @@ build_tgt(){
   
   mkdir -p $DEPLOY
   mkdir -p $DEPLOY/uboot
-
+  mkdir -p $DEPLOY/lib/firmware
 
   make -j$CORES uImage modules firmware ARCH=arm | tee -a $LOG_FILE
   make ARCH=arm modules_install INSTALL_MOD_PATH=$DEPLOY/
