@@ -755,6 +755,7 @@ static struct pinmux_config gpio_led_mux[] = {
 
 /* pinmux for led device */
 static struct pinmux_config aria_gpio_led_mux[] = {
+	{"gpmc_clk.gpio2_1", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{NULL, 0},
 };
 
@@ -767,7 +768,7 @@ static struct pinmux_config aria_gen_gpio_pin_mux[] = {
 	{"gpmc_a5.gpio1_21", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
 	{"gpmc_a6.gpio1_22", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
 	{"gpmc_a7.gpio1_23", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
-	{"gpmc_clk.gpio2_1", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
+
 	{"mcasp0_axr1.gpio3_20", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
 	{"mcasp0_ahclkx.gpio3_21", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
 
@@ -2068,9 +2069,8 @@ static struct gpio_led gpio_leds[] = {
 
 static struct gpio_led aria_gpio_leds[] = {
 	{
-		.name			= "am335x:ARIA:led1",
+		.name			= "am335x:ARIA:state",
 		.gpio			= GPIO_TO_PIN(2, 1),	/* LD25 */
-		.default_trigger	= "led1",
 		.active_low             = 0,
                 .default_state          = LEDS_GPIO_DEFSTATE_OFF
 	},
